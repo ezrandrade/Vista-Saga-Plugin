@@ -87,7 +87,7 @@ class SignatureCoreTest(unittest.TestCase):
         base = Path(__file__).resolve().parents[1]
         plugin = (base/'plugin.py').read_text(encoding='utf-8')
         home = (base/'home_dialog.py').read_text(encoding='utf-8')
-        self.assertIn("'Assinatura Espacial', self.open_signature", plugin)
+        self.assertIn("'Assinatura', self.open_signature", plugin)
         self.assertIn('self.plugin.open_signature', home)
         self.assertNotIn("self.plugin.open_algorithm('assinatura')", home)
         self.assertIn('self.addAlgorithm(AssinaturaAlgorithm())',

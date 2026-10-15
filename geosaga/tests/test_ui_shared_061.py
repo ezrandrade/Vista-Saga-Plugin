@@ -27,7 +27,7 @@ class TemporaryOutputTests(unittest.TestCase):
 
     def test_engines_unchanged_by_gui_update(self):
         text = (ROOT / 'metadata.txt').read_text(encoding='utf-8')
-        self.assertIn('version=0.9.0', text)
+        self.assertIn('version=1.0.0', text)
         from zipfile import ZipFile
         archive = Path('/mnt/data/Vista_Saga_Plugin_QGIS4_v0.6.0_COMBINACAO_MAPAS.zip')
         if not archive.exists():

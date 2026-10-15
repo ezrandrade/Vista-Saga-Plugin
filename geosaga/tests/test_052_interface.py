@@ -11,7 +11,7 @@ def source(name):
 
 class UiConsistencyTests(unittest.TestCase):
     def test_module_names_on_panel_and_menu(self):
-        for title in ('Avaliação Espacial', 'Monitoria Espacial', 'Assinatura Espacial'):
+        for title in ('Avaliação', 'Monitoria', 'Assinatura'):
             self.assertIn(title, source('home_dialog.py'))
             self.assertIn(title, source('plugin.py'))
 
@@ -41,4 +41,4 @@ class UiConsistencyTests(unittest.TestCase):
         self.assertIn("'formato': 'geosaga-avaliacao'", source('evaluation_dialog.py'))
 
     def test_version(self):
-        self.assertIn('version=0.9.0', source('metadata.txt'))
+        self.assertIn('version=1.0.0', source('metadata.txt'))

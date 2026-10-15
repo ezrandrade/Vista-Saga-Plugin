@@ -11,14 +11,14 @@ def source(name):
 class TabsUX062(unittest.TestCase):
     def test_five_cards_share_identical_factory(self):
         panel = source('home_dialog.py')
-        for module in ('Avaliação Espacial', 'Monitoria Espacial', 'Assinatura Espacial',
+        for module in ('Avaliação', 'Monitoria', 'Assinatura',
                        'Combinação de Mapas', 'Conversão de Formatos'):
             self.assertIn(module, panel)
         self.assertIn('self._add_card(cards, index // 3, index % 3', panel)
         self.assertEqual(panel.count('self._add_card('), 1)
         self.assertIn('Escolha um módulo para começar.', panel)
         self.assertIn('Uma nova janela será aberta para cada módulo.', panel)
-        self.assertNotIn('A Avaliação Espacial possui', panel)
+        self.assertNotIn('A Avaliação possui', panel)
         self.assertNotIn('Ferramentas complementares:', panel)
         self.assertIn('Não contém código do programa original', panel)
         self.assertIn('Esdras Andrade', panel)

@@ -18,6 +18,6 @@ class TaskStabilityTests(unittest.TestCase):
         self.assertIn('self.voronoi_dialog.shutdown()', p)
     def test_version(self):
         m=(ROOT/'metadata.txt').read_text(encoding='utf-8')
-        self.assertIn('version=0.9.0',m)
+        self.assertIn('version=1.0.0',m)
 
 if __name__=='__main__':unittest.main()

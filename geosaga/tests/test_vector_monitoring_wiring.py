@@ -21,7 +21,7 @@ class WiringTests(unittest.TestCase):
     def test_metadata_version(self):
         root = Path(__file__).resolve().parents[1]
         meta = (root / 'metadata.txt').read_text(encoding='utf-8')
-        self.assertIn('version=0.9.0', meta)
+        self.assertIn('version=1.0.0', meta)
 
 
 if __name__ == '__main__':

@@ -46,7 +46,7 @@ class EmbeddedFormsRegression(unittest.TestCase):
     def test_panel_credits_and_cards(self):
         text = read('home_dialog.py')
         self.assertEqual(text.count("'Abrir "), 7)
-        for key in ('Avaliação Espacial', 'Monitoria Espacial', 'Assinatura Espacial',
+        for key in ('Avaliação', 'Monitoria', 'Assinatura',
                     'Combinação de Mapas', 'Conversão de Formatos',
                     'Não contém código do programa original', 'Esdras Andrade', 'IGDEMA', 'UFAL'):
             self.assertIn(key, text)
