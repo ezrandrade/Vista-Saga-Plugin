@@ -2,7 +2,7 @@
 
 **Complemento independente de geoprocessamento para QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O projeto reúne procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, **sem incorporar o código do software original** e sem vínculo oficial com seus desenvolvedores.
 
-**Versão:** `1.0.2`. Os sete módulos foram homologados funcionalmente no QGIS 4.2.2 (Windows). A validação Linux/Flatpak, a verificação de instalação limpa e a comparação metodológica com o Vista SAGA/UFRJ permanecem pendentes. A versão 1.0.0 foi submetida ao repositório QGIS, mas bloqueada no exame de segurança por duas exceções silenciosas; a versão 1.0.1 corrige esses trechos e aguarda nova avaliação.
+**Versão:** `1.0.3`. Os sete módulos foram homologados funcionalmente no QGIS 4.2.2 (Windows). A validação Linux/Flatpak, a verificação de instalação limpa e a comparação metodológica com o Vista SAGA/UFRJ permanecem pendentes. A versão 1.0.0 foi submetida ao repositório QGIS, mas bloqueada no exame de segurança por duas exceções silenciosas; a versão 1.0.1 corrige esses trechos e aguarda nova avaliação.
 
 ## Módulos
 
@@ -52,7 +52,7 @@ python scripts/build_release.py
 
 ## Histórico, suporte e licença
 
-- [Notas da versão 1.0.2](geosaga/NOTAS_DA_VERSAO_102.md)
+- [Notas da versão 1.0.3](geosaga/NOTAS_DA_VERSAO_103.md)
 - [Histórico de alterações](geosaga/CHANGELOG.md)
 - [Documentação dos módulos](geosaga/)
 - [Reportar problema ou solicitar melhoria](https://github.com/ezrandrade/Vista-Saga-Plugin/issues)

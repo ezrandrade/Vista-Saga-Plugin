@@ -736,9 +736,9 @@ class EvaluationDialog(QDialog):
                 self.scale_combo.setCurrentIndex(scale_pos)
             self.project_path = path
             for rec, resolved in candidates:
-                existing = next((l for l in QgsProject.instance().mapLayers().values()
-                                 if isinstance(l, QgsRasterLayer) and
-                                 l.source().split('|', 1)[0] == resolved), None)
+                existing = next((candidate_layer for candidate_layer in QgsProject.instance().mapLayers().values()
+                                 if isinstance(candidate_layer, QgsRasterLayer) and
+                                 candidate_layer.source().split('|', 1)[0] == resolved), None)
                 layer = existing or self.iface.addRasterLayer(resolved, rec.get('nome', Path(resolved).stem))
                 if layer and layer.isValid():
                     if not self._add_layer(layer, rec, select=False):

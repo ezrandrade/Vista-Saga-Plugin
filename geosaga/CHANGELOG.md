@@ -1,3 +1,10 @@
+## 1.0.3 — Correções de estilo e qualidade de código
+
+- F402: removida importação local redundante de `QCheckBox` em `combination_dialog.py`.
+- E741: variável ambígua `l` renomeada para `candidate_layer` em `evaluation_dialog.py`.
+- F811: removida importação duplicada de `QAbstractItemView` em `signature_dialog.py`.
+- Nenhum algoritmo matemático, contrato de processamento ou identificador `geosaga:*` foi alterado.
+
 ## 1.0.2 — Correção de enums QGIS 4.x/Qt6
 
 - Corrigidos os seis usos de enums legados reportados pelo verificador de compatibilidade: 3 tarefas canceláveis, 2 tipos de geometria em Voronoi e 1 opção de CRS no conversor.

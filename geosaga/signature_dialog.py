@@ -11,7 +11,6 @@ from qgis.PyQt.QtWidgets import (
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QProgressDialog,
     QPushButton, QTabWidget, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
     QHeaderView, QCheckBox, QScrollArea, QFrame, QTabBar, QListWidget,
-    QAbstractItemView,
 )
 from qgis.core import Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox

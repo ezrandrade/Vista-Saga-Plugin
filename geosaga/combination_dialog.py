@@ -118,7 +118,6 @@ class CombinationDialog(QDialog):
             note.setWordWrap(True)
             out.addRow('', note)
             body.addWidget(output_group)
-            from qgis.PyQt.QtWidgets import QCheckBox
             temporary = QCheckBox('Saída temporária no QGIS (salvar depois se desejar)')
             temporary.setChecked(True)
             temporary.setToolTip('Raster e GeoPackage ficam no diretório temporário da sessão, não apenas na RAM.')
