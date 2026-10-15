@@ -20,7 +20,7 @@ class CombinationWiring(unittest.TestCase):
     def test_metadata(self):
         cfg=configparser.ConfigParser(interpolation=None)
         cfg.read(ROOT/'metadata.txt',encoding='utf-8')
-        self.assertEqual(cfg['general']['version'],'1.0.2')
+        self.assertEqual(cfg['general']['version'],'1.0.3')
         self.assertEqual(cfg['general']['qgisMinimumVersion'],'4.0')
 
     def test_old_modules_not_modified_in_core(self):
