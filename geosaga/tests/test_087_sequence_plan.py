@@ -57,7 +57,7 @@ class SequencePlan087(unittest.TestCase):
     def test_names_public(self):
         self.assertIn('Sequenciador de Mapas', (ROOT / 'plugin.py').read_text())
         self.assertIn('Sequenciador de Mapas', (ROOT / 'home_dialog.py').read_text())
-        self.assertIn('version=1.0.1', (ROOT / 'metadata.txt').read_text())
+        self.assertIn('version=1.0.2', (ROOT / 'metadata.txt').read_text())
         self.assertIn('name=Vista Saga Plugin', (ROOT / 'metadata.txt').read_text())
 
 
