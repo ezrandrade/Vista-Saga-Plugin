@@ -1,0 +1,17 @@
+[general]
+name=Vista Saga Plugin
+description=Geospatial assessment, monitoring, signatures, map combination, format conversion, Voronoi analyses and animated map sequences for QGIS 4.x.
+about=Independent QGIS 4.x geoprocessing plugin. Seven modules: spatial evaluation, spatial monitoring, spatial signatures, thematic map combination, RS2/GeoTIFF/vector conversion, Voronoi analyses (simple, mass, friction, mass and friction, including multiple weighted friction rasters), and map sequencing (raster, vector and mixed) to GIF and PNG. The Voronoi friction model uses straight-line accumulation with an explicitly documented per-cell baseline. Numerical equivalence with the original Vista SAGA/UFRJ has not been established. Independently implemented; not affiliated with the original Vista SAGA/UFRJ project. The internal geosaga package and Processing algorithm identifiers remain unchanged for compatibility. QGIS 4.2.2 Windows was functionally validated by the project tester; Linux/Flatpak requires independent testing.
+version=0.9.0
+qgisMinimumVersion=4.0
+qgisMaximumVersion=4.99
+author=Esdras Andrade
+email=esdras.andrade@igdema.ufal.br
+homepage=https://github.com/ezrandrade/Vista-Saga-Plugin
+repository=https://github.com/ezrandrade/Vista-Saga-Plugin
+tracker=https://github.com/ezrandrade/Vista-Saga-Plugin/issues
+category=Raster
+hasProcessingProvider=yes
+tags=geoprocessing,spatial analysis,environmental assessment,voronoi,raster,temporal maps
+experimental=True
+changelog=0.9.0: preparatory release audit; clarified metadata and documentation; reduced installation package, preserved all runtime Python engines from 0.8.7. Requires clean-install smoke tests and a public GitHub repository before submission. 0.8.7: Raster/Vector/Mixed map sequencer to GIF and PNG. 0.8.6: trajectory-pruning optimization in friction Voronoi. 0.8.4: multiple friction raster interface. 0.8.3: weighted multi-layer friction.

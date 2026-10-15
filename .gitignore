@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+*.egg-info/
+.venv/
+venv/
+
+# QGIS local files
+*.qgs~
+*.qgz~
+*.qgd
+
+# Generated distributions and GIS data
+dist/
+build/
+*.tif
+*.tiff
+*.gpkg
+*.shp
+*.dbf
+*.shx
+*.prj
+*.gif
+
+# Development system
+.DS_Store
+Thumbs.db
