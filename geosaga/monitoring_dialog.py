@@ -1,4 +1,4 @@
-"""Monitoria Espacial — interface nativa QGIS 4.x, sem formulários Processing."""
+"""Monitoria — interface nativa QGIS 4.x, sem formulários Processing."""
 from pathlib import Path
 import traceback
 import re
@@ -25,7 +25,7 @@ class MonitoringDialog(QDialog):
         super().__init__(parent)
         self.iface = iface
         self._task = None
-        self.setWindowTitle('Vista Saga Plugin — Monitoria Espacial')
+        self.setWindowTitle('Vista Saga Plugin — Monitoria')
         self.setMinimumSize(700, 445)
         self.resize(840, 565)
         self.setModal(False)

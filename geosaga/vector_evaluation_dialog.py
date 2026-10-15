@@ -1,4 +1,4 @@
-"""Avaliação Espacial — modalidade vetorial por atributos, QGIS 4 / Qt6.
+"""Avaliação — modalidade vetorial por atributos, QGIS 4 / Qt6.
 
 Esta janela não altera o formulário raster nem oferece fluxo Processing.
 """
@@ -45,7 +45,7 @@ class VectorEvaluationDialog(QWidget):
         self.active = -1
         self._rendering = False
         self.running = False
-        self.setWindowTitle('Vista Saga Plugin — Avaliação Espacial vetorial')
+        self.setWindowTitle('Vista Saga Plugin — Avaliação vetorial')
         self.setMinimumSize(850, 600)
         self.resize(1070, 740)
         self._build()
@@ -429,7 +429,7 @@ class VectorEvaluationDialog(QWidget):
             finally:
                 progress.close()
             if self.load_check.isChecked() or self.temporary_check.isChecked():
-                added = self.iface.addVectorLayer(dest, 'Vista Saga — Avaliação Espacial vetorial', 'ogr')
+                added = self.iface.addVectorLayer(dest, 'Vista Saga — Avaliação vetorial', 'ogr')
                 if not added or not added.isValid():
                     self.status.setText('Arquivo criado, mas não foi possível adicioná-lo ao QGIS.')
             self.status.setText('Avaliação vetorial concluída: ' + dest)

@@ -13,7 +13,7 @@ class VistaSagaPlugin:
         self.iface = iface
         self.provider = None
         self.actions = []
-        self.dialog = None  # preserva estado da Avaliação Espacial, projetos v0.2+
+        self.dialog = None  # preserva estado da Avaliação, projetos v0.2+
         self.home_dialog = None
         self.rs2_dialog = None
         self.monitoring_dialog = None
@@ -30,16 +30,14 @@ class VistaSagaPlugin:
             raise RuntimeError('Não foi possível registrar os algoritmos Vista Saga.')
 
         self._add_menu_action('Painel de módulos', self.open_home, toolbar=True)
-        self._add_menu_action('Avaliação Espacial', self.open_interactive)
-        self._add_menu_action('Conversor RS2 / GeoTIFF / Vetor', self.open_rs2_converter)
-        # A Avaliação Espacial utiliza exclusivamente a interface própria no menu.
-        # O algoritmo geosaga:avaliacao permanece registrado por compatibilidade
-        # com modelos/scripts e arquivos de projeto antigos.
-        self._add_menu_action('Monitoria Espacial', self.open_monitoring)
-        self._add_menu_action('Assinatura Espacial', self.open_signature)
-        self._add_menu_action('Combinação de Mapas', self.open_combination)
+        self._add_menu_action('Assinatura', self.open_signature)
+        self._add_menu_action('Monitoria', self.open_monitoring)
+        self._add_menu_action('Avaliação', self.open_interactive)
         self._add_menu_action('Análises Voronoi', self.open_voronoi)
+        self._add_menu_action('Combinação de Mapas', self.open_combination)
+        self._add_menu_action('Conversão de Formatos', self.open_rs2_converter)
         self._add_menu_action('Sequenciador de Mapas', self.open_sequence)
+        # Os algoritmos geosaga:* mantêm os IDs legados para projetos/modelos antigos.
 
     def _add_menu_action(self, title, callback, toolbar=False):
         action = QAction(title, self.iface.mainWindow())
@@ -86,7 +84,7 @@ class VistaSagaPlugin:
             self.monitoring_dialog.raise_()
             self.monitoring_dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Monitoria Espacial',
+            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Monitoria',
                                  f'Não foi possível abrir a monitoria:\n{exc}')
 
     def open_signature(self, checked=False):
@@ -98,7 +96,7 @@ class VistaSagaPlugin:
             self.signature_dialog.raise_()
             self.signature_dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Assinatura Espacial',
+            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Assinatura',
                                  f'Não foi possível abrir a assinatura:\n{exc}')
 
     def open_combination(self, checked=False):
@@ -147,7 +145,7 @@ class VistaSagaPlugin:
             self.dialog.raise_()
             self.dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Avaliação Espacial',
+            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Avaliação',
                                  f'Não foi possível abrir a avaliação:\n{exc}')
 
     def open_algorithm(self, algorithm):

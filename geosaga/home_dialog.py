@@ -44,28 +44,29 @@ class HomeDialog(QDialog):
         cards.setHorizontalSpacing(12)
         cards.setVerticalSpacing(12)
         modules = [
-            ('01', 'Avaliação Espacial',
-             'Cruze critérios por pesos e notas. Avaliação raster ou vetorial por atributos e sobreposição.',
-             'Abrir avaliação', self.plugin.open_interactive),
-            ('02', 'Monitoria Espacial',
-             'Compare períodos, identifique permanências e mudanças e gere matrizes e relatórios.',
-             'Abrir monitoria', self.plugin.open_monitoring),
-            ('03', 'Assinatura Espacial',
+            ('01', 'Assinatura',
              'Quantifique classes temáticas em áreas de interesse, com estatísticas e áreas.',
              'Abrir assinatura', self.plugin.open_signature),
-            ('04', 'Combinação de Mapas',
-             'Combine categorias de mapas raster ou vetoriais e calcule áreas e percentuais.',
-             'Abrir combinação', self.plugin.open_combination),
-            ('05', 'Conversão de Formatos',
-             'Converta RS2, GeoTIFF e vetores; rasterize ou vetorize mapas.',
-             'Abrir conversor', self.plugin.open_rs2_converter),
-            ('06', 'Análises Voronoi',
+            ('02', 'Monitoria',
+             'Compare períodos, identifique permanências e mudanças e gere matrizes e relatórios.',
+             'Abrir monitoria', self.plugin.open_monitoring),
+            ('03', 'Avaliação',
+             'Cruze critérios por pesos e notas. Avaliação raster ou vetorial por atributos e sobreposição.',
+             'Abrir avaliação', self.plugin.open_interactive),
+            ('04', 'Análises Voronoi',
              'Delimite áreas de influência: simples, massa, atrito e massa com atrito.',
              'Abrir Voronoi', self.plugin.open_voronoi),
+            ('05', 'Combinação de Mapas',
+             'Combine categorias de mapas raster ou vetoriais e calcule áreas e percentuais.',
+             'Abrir combinação', self.plugin.open_combination),
+            ('06', 'Conversão de Formatos',
+             'Converta RS2, GeoTIFF e vetores; rasterize ou vetorize mapas.',
+             'Abrir conversor', self.plugin.open_rs2_converter),
             ('07', 'Sequenciador de Mapas',
              'Anime mapas raster, vetoriais ou mistos por período; exporte GIF e quadros PNG.',
              'Abrir sequenciador', self.plugin.open_sequence),
         ]
+
         for index, (number, name, desc, action, callback) in enumerate(modules):
             self._add_card(cards, index // 3, index % 3, number, name, desc, action, callback)
         for column in range(3):

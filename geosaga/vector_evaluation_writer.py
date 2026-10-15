@@ -118,7 +118,7 @@ def evaluate_vector_layer(layer, criteria, scale, destination, progress=None,
             layer, tmpfile, QgsProject.instance().transformContext(), options)
         if int(result[0]) != 0:
             raise OSError('Erro ao copiar camada para GeoPackage: ' + str(result))
-        output_layer = QgsVectorLayer(tmpfile, 'Avaliação Espacial', 'ogr')
+        output_layer = QgsVectorLayer(tmpfile, 'Avaliação', 'ogr')
         if not output_layer.isValid():
             raise OSError('Não foi possível abrir o GeoPackage temporário.')
         provider = output_layer.dataProvider()

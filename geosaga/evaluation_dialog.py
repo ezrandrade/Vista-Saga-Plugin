@@ -1,4 +1,4 @@
-"""Interface visual de Avaliação Espacial para QGIS 4.x / Qt6.
+"""Interface visual de Avaliação para QGIS 4.x / Qt6.
 
 A classe evita editar JSON: usa tabelas, botões e camadas do projeto QGIS.
 """
@@ -52,7 +52,7 @@ class EvaluationDialog(QDialog):
         self._task = None
         self.project_path = ''
         self._last_scale = 10
-        self.setWindowTitle('Vista Saga Plugin — Avaliação Espacial')
+        self.setWindowTitle('Vista Saga Plugin — Avaliação')
         self.setMinimumSize(900, 610)
         self.resize(1110, 770)
         self.setModal(False)
@@ -645,7 +645,7 @@ class EvaluationDialog(QDialog):
         if task.report_txt:
             msg += f'\nRelatório TXT: {task.report_txt}'
         if self.load_check.isChecked() or self.temporary_check.isChecked():
-            layer = self.iface.addRasterLayer(task.destination, self.title_edit.text().strip() or 'Vista Saga — Avaliação Espacial')
+            layer = self.iface.addRasterLayer(task.destination, self.title_edit.text().strip() or 'Vista Saga — Avaliação')
             if not layer or not layer.isValid():
                 msg += '\n(Atenção: não foi possível adicionar o raster ao QGIS.)'
         self.status.setText('Avaliação concluída. O resultado foi salvo em GeoTIFF.')

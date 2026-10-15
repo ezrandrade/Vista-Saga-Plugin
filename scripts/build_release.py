@@ -7,7 +7,7 @@ from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ROOT / "geosaga"
-OUT = ROOT / "dist" / "Vista_Saga_Plugin_QGIS4_v0.9.0.zip"
+OUT = ROOT / "dist" / "Vista_Saga_Plugin_QGIS4_v1.0.0.zip"
 OUT.parent.mkdir(parents=True, exist_ok=True)
 if not (PLUGIN / "metadata.txt").is_file() or not (PLUGIN / "__init__.py").is_file():
     raise SystemExit("Diretório instalável geosaga inválido.")
@@ -21,7 +21,7 @@ with ZipFile(OUT, "w", ZIP_DEFLATED) as z:
                 path.suffix in {".pyc", ".pyo"}):
             continue
         if path.suffix == ".md" and path.name not in {
-            "README.md", "CHANGELOG.md", "LICENSE.md", "NOTAS_DA_VERSAO_090.md"
+            "README.md", "CHANGELOG.md", "LICENSE.md", "NOTAS_DA_VERSAO_100.md"
         }:
             continue
         z.write(path, rel.as_posix())
