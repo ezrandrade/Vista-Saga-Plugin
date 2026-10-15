@@ -37,8 +37,8 @@ class CombinationWiring(unittest.TestCase):
                 old = z.read('geosaga/'+name)
                 if name == 'evaluation_task.py':
                     # A única alteração permitida é o título público da tarefa.
-                    current = current.replace(b'Vista Saga \\xe2\\x80\\x94 Avalia\\xc3\\xa7\\xc3\\xa3o\\x27',
-                                              b'Vista Saga \\xe2\\x80\\x94 Avalia\\xc3\\xa7\\xc3\\xa3o Espacial\\x27')
+                    current = current.replace(b'Vista Saga \xe2\x80\x94 Avalia\xc3\xa7\xc3\xa3o\x27',
+                                              b'Vista Saga \xe2\x80\x94 Avalia\xc3\xa7\xc3\xa3o Espacial\x27')
                 self.assertEqual(current, old, name)
 
     def test_legend_bridge_from_combined_raster(self):

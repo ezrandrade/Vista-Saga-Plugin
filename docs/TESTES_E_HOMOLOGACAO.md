@@ -1,10 +1,10 @@
-# Testes e homologação — Vista Saga Plugin 0.9.0
+# Testes e homologação — Vista Saga Plugin 1.0.0
 
 ## Confirmado até o momento
 
 - Sete módulos homologados funcionalmente pelo desenvolvedor/testador no QGIS 4.2.2 para Windows.
 - Suíte local automatizada registrada no relatório de auditoria anterior: **324 testes + 12 subtestes**. Isso não equivale a testes de GUI no Qt6.
-- O pacote `0.9.0` retém os motores Python de execução da versão `0.8.7`. Apenas metadados e documentação foram editados na preparação do repositório.
+- Os motores de cálculo da 1.0.0 permanecem idênticos aos da 0.9.0. Mudanças da 1.0.0 se restringem a nomes públicos e ordem da interface, metadados e documentação.
 
 ## Checklist antes da versão 1.0 estável
 

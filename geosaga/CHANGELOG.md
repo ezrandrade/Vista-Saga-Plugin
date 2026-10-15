@@ -1,3 +1,10 @@
+## 1.0.0 — Padronização final da interface pública
+
+- Ordem do menu do QGIS e do painel: Assinatura, Monitoria, Avaliação, Análises Voronoi, Combinação de Mapas, Conversão de Formatos e Sequenciador de Mapas.
+- Removido “Espacial” dos nomes públicos de Assinatura, Monitoria e Avaliação, inclusive títulos de janelas e tarefas; sem alterar IDs legados `geosaga:*`.
+- Nenhuma alteração na matemática dos algoritmos e nos arquivos dos motores de análise.
+- Sete módulos homologados funcionalmente no QGIS 4.2.2 para Windows; Linux/Flatpak e comparação numérica com o Vista SAGA/UFRJ continuam sem validação independente.
+
 ## 0.8.7 — Sequenciador de Mapas: raster, vetor e misto (candidata a homologação)
 
 - Renomeado o módulo **Sequenciador de Imagens** para **Sequenciador de Mapas**.

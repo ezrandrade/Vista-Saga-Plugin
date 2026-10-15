@@ -1,17 +1,17 @@
-# Vista Saga Plugin — versão 0.9.0 (candidata à 1.0)
+# Vista Saga Plugin — versão 1.0.0
 
 Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O programa moderniza procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, sem incorporar o código deste. Não há vínculo institucional com os desenvolvedores do Vista SAGA/UFRJ original.
 
-> Esta versão **não é a publicação final 1.0**. Os módulos foram homologados funcionalmente pelo usuário no QGIS 4.2.2 (Windows); a auditoria de distribuição e os testes de regressão não substituem testes de instalação limpa, Linux/Flatpak, estabilidade e equivalência com o software histórico.
+> **Versão 1.0.0:** os sete módulos foram homologados funcionalmente no QGIS 4.2.2 (Windows). A publicação no repositório oficial de complementos QGIS ainda não ocorreu; os testes de instalação limpa, Linux/Flatpak e equivalência numérica com o software histórico continuam pendentes.
 
 ## Sete módulos
 
-1. **Avaliação Espacial** — classificação multicritério com pesos e notas, em raster ou vetores.
-2. **Monitoria Espacial** — mudanças e permanências entre períodos, mapas, matrizes e relatórios; séries temporais maiores permitem análise de tendências quando atendidas as condições estatísticas.
-3. **Assinatura Espacial** — distribuição de classes temáticas dentro de polígonos de interesse.
-4. **Combinação de Mapas** — cruzamento categórico e cálculo de áreas, em raster ou vetor.
-5. **Conversão de Formatos** — RS2/GeoTIFF/vetor, incluindo vetorização e rasterização.
-6. **Análises Voronoi** — Simples, Massa, Atrito e Massa + Atrito; atrito único ou composição de múltiplos rasters com pesos e notas por classe.
+1. **Assinatura** — distribuição de classes temáticas dentro de polígonos de interesse.
+2. **Monitoria** — mudanças e permanências entre períodos, mapas, matrizes e relatórios; séries temporais maiores permitem análise de tendências quando atendidas as condições estatísticas.
+3. **Avaliação** — classificação multicritério com pesos e notas, em raster ou vetores.
+4. **Análises Voronoi** — Simples, Massa, Atrito e Massa + Atrito; atrito único ou composição de múltiplos rasters com pesos e notas por classe.
+5. **Combinação de Mapas** — cruzamento categórico e cálculo de áreas, em raster ou vetor.
+6. **Conversão de Formatos** — RS2/GeoTIFF/vetor, incluindo vetorização e rasterização.
 7. **Sequenciador de Mapas** — três abas Raster/Vetorial/Misto, ordenação temporal, GIF animado e PNGs opcionais, preservando as camadas de origem.
 
 ## Instalação e compatibilidade
