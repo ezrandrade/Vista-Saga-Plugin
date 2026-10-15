@@ -32,7 +32,7 @@ class VoronoiRasterTask(QgsTask):
     no método finished(), que o QGIS invoca na thread principal.
     """
     def __init__(self, points, destination, wkt, transform, width, height, mode, vectorize, friction_path=None, friction_components=None):
-        super().__init__('Vista Saga — Voronoi raster', QgsTask.CanCancel)
+        super().__init__('Vista Saga — Voronoi raster', QgsTask.Flag.CanCancel)
         self.points = tuple(points)  # Generator é uma dataclass simples, sem QObject.
         self.destination = str(destination)
         self.wkt = str(wkt)
@@ -523,7 +523,7 @@ class VoronoiDialog(QDialog):
         layer = self.point_layer.currentLayer()
         if layer is None or not layer.isValid() or not isinstance(layer,QgsVectorLayer):
             raise ValueError('Selecione uma camada vetorial válida com pontos.')
-        if QgsWkbTypes.geometryType(layer.wkbType()) != QgsWkbTypes.PointGeometry:
+        if QgsWkbTypes.geometryType(layer.wkbType()) != QgsWkbTypes.GeometryType.PointGeometry:
             raise ValueError('O Voronoi necessita de uma camada de pontos; geometrias não pontuais não são aceitas.')
         if not layer.crs().isValid() or not target_crs.isValid():
             raise ValueError('A camada de pontos e a grade precisam ter SRC definido.')
@@ -578,7 +578,7 @@ class VoronoiDialog(QDialog):
             layer=self.area_layer.currentLayer()
             if layer is None or not layer.isValid() or not isinstance(layer,QgsVectorLayer):
                 raise ValueError('Selecione a camada de polígonos que define a área de estudo.')
-            if QgsWkbTypes.geometryType(layer.wkbType())!=QgsWkbTypes.PolygonGeometry:
+            if QgsWkbTypes.geometryType(layer.wkbType())!=QgsWkbTypes.GeometryType.PolygonGeometry:
                 raise ValueError('A área de estudo deve ser poligonal.')
             if not layer.crs().isValid():
                 raise ValueError('Defina o SRC da área de estudo.')

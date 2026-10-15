@@ -1,3 +1,9 @@
+## 1.0.2 — Correção de enums QGIS 4.x/Qt6
+
+- Corrigidos os seis usos de enums legados reportados pelo verificador de compatibilidade: 3 tarefas canceláveis, 2 tipos de geometria em Voronoi e 1 opção de CRS no conversor.
+- Nenhum algoritmo matemático ou formato de arquivo foi alterado.
+- A aprovação depende de novo exame automatizado no repositório QGIS.
+
 ## 1.0.1 — Correção de exceções silenciosas identificadas pelo Bandit
 
 - Removidos dois `except Exception: pass` de `geosaga/rs2_dialog.py` na aplicação opcional de simbologia vetorial RS2 e GeoTIFF.

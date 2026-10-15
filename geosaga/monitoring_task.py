@@ -7,7 +7,7 @@ from .monitoring_engine import run_monitoring
 class MonitoringTask(QgsTask):
     def __init__(self, before, after, output, before_label, after_label, title, callback,
                  descriptive_legend=True, temporal_files=None, legend_lookup=''):
-        super().__init__('Vista Saga — Monitoria', QgsTask.CanCancel)
+        super().__init__('Vista Saga — Monitoria', QgsTask.Flag.CanCancel)
         self.before = before
         self.after = after
         self.output = output

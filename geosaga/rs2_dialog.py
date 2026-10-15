@@ -180,7 +180,7 @@ class RS2ConverterDialog(QDialog):
         self.options_box = QGroupBox('Sistema de referência e carregamento')
         options_form = QFormLayout(self.options_box)
         self.crs_widget = QgsProjectionSelectionWidget()
-        self.crs_widget.setOptionVisible(QgsProjectionSelectionWidget.CrsNotSet, True)
+        self.crs_widget.setOptionVisible(QgsProjectionSelectionWidget.CrsOption.CrsNotSet, True)
         self.crs_widget.setNotSetText('Não definido — atribuir posteriormente')
         self.crs_widget.setCrs(QgsCoordinateReferenceSystem())
         self.crs_widget.setDialogTitle('Selecione o SRC confirmado do RS2')

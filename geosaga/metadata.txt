@@ -2,7 +2,7 @@
 name=Vista Saga Plugin
 description=Geospatial assessment, monitoring, signatures, map combination, format conversion, Voronoi analyses and animated map sequences for QGIS 4.x.
 about=Independent QGIS 4.x geoprocessing plugin. Seven modules: spatial evaluation, spatial monitoring, spatial signatures, thematic map combination, RS2/GeoTIFF/vector conversion, Voronoi analyses (simple, mass, friction, mass and friction, including multiple weighted friction rasters), and map sequencing (raster, vector and mixed) to GIF and PNG. The Voronoi friction model uses straight-line accumulation with an explicitly documented per-cell baseline. Numerical equivalence with the original Vista SAGA/UFRJ has not been established. Independently implemented; not affiliated with the original Vista SAGA/UFRJ project. The internal geosaga package and Processing algorithm identifiers remain unchanged for compatibility. QGIS 4.2.2 Windows was functionally validated by the project tester; Linux/Flatpak requires independent testing.
-version=1.0.1
+version=1.0.2
 qgisMinimumVersion=4.0
 qgisMaximumVersion=4.99
 author=Esdras Andrade
@@ -14,4 +14,4 @@ category=Raster
 hasProcessingProvider=yes
 tags=geoprocessing,spatial analysis,environmental assessment,voronoi,raster,temporal maps
 experimental=False
-changelog=1.0.1: replace broad silent exception handling in optional RS2/GeoTIFF vector symbology with explicit QGIS warning logs; no geospatial engines changed. 1.0.0: final module menu/panel order and shortened public labels (Assinatura, Monitoria, Avaliação). No numerical engines or historical Processing identifiers changed. Seven modules functionally validated on QGIS 4.2.2 Windows; Linux/Flatpak and historical numerical equivalence remain separately unverified. 0.9.0: release audit, QGIS metadata and GitHub repository links. 0.8.7: raster/vector/mixed map sequencer.
+changelog=1.0.2: fix six QGIS 4/Qt6 enum references for QgsTask flags, QgsWkbTypes geometry types and projection-selection CRS option; no numerical engine changes. 1.0.1: replace broad silent exception handling in optional RS2/GeoTIFF vector symbology with explicit QGIS warning logs; no geospatial engines changed. 1.0.0: final module menu/panel order and shortened public labels (Assinatura, Monitoria, Avaliação). No numerical engines or historical Processing identifiers changed. Seven modules functionally validated on QGIS 4.2.2 Windows; Linux/Flatpak and historical numerical equivalence remain separately unverified. 0.9.0: release audit, QGIS metadata and GitHub repository links. 0.8.7: raster/vector/mixed map sequencer.
