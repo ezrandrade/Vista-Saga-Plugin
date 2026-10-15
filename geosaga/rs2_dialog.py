@@ -12,7 +12,7 @@ from qgis.PyQt.QtWidgets import (
     QDoubleSpinBox, QSpinBox, QAbstractItemView,
 )
 from qgis.core import (Qgis, QgsCoordinateReferenceSystem, QgsProject,
-                       QgsRasterLayer, QgsVectorLayer)
+                       QgsRasterLayer, QgsVectorLayer, QgsMessageLog)
 from qgis.gui import QgsMapLayerComboBox, QgsProjectionSelectionWidget
 
 from .rs2_batch import prepare_batch, source_mode, alignment_warnings
@@ -639,9 +639,12 @@ class RS2ConverterDialog(QDialog):
                 categories.append(QgsRendererCategory(code, symbol, label))
             layer.setRenderer(QgsCategorizedSymbolRenderer('CODIGO', categories))
             layer.triggerRepaint()
-        except Exception:
-            # O arquivo vetorial permanece correto sem renderização adicional.
-            pass
+        except Exception as exc:
+            # Falha de simbologia não invalida o vetor exportado; registrar o erro.
+            QgsMessageLog.logMessage(
+                f'Não foi possível aplicar a simbologia RS2 ao vetor: {exc}',
+                'Vista Saga Plugin', Qgis.MessageLevel.Warning,
+            )
 
     @staticmethod
     def _style_tiff_vector(layer, tif_source, omit_background):
@@ -680,8 +683,12 @@ class RS2ConverterDialog(QDialog):
                 for code, label, color in items]
             layer.setRenderer(QgsCategorizedSymbolRenderer('CODIGO', categories))
             layer.triggerRepaint()
-        except Exception:
-            pass
+        except Exception as exc:
+            # A simbologia é opcional: manter o vetor e registrar a falha.
+            QgsMessageLog.logMessage(
+                f'Não foi possível aplicar a simbologia do GeoTIFF ao vetor: {exc}',
+                'Vista Saga Plugin', Qgis.MessageLevel.Warning,
+            )
 
     def _convert(self):
         try:

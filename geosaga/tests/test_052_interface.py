@@ -41,4 +41,4 @@ class UiConsistencyTests(unittest.TestCase):
         self.assertIn("'formato': 'geosaga-avaliacao'", source('evaluation_dialog.py'))
 
     def test_version(self):
-        self.assertIn('version=1.0.0', source('metadata.txt'))
+        self.assertIn('version=1.0.1', source('metadata.txt'))

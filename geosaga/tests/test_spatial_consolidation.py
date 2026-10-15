@@ -41,4 +41,4 @@ class SpatialConsolidationTests(unittest.TestCase):
 
     def test_version(self):
         source = (ROOT / 'metadata.txt').read_text(encoding='utf8')
-        self.assertIn('version=1.0.0', source)
+        self.assertIn('version=1.0.1', source)

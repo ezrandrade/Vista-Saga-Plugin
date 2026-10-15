@@ -1,3 +1,9 @@
+## 1.0.1 — Correção de exceções silenciosas identificadas pelo Bandit
+
+- Removidos dois `except Exception: pass` de `geosaga/rs2_dialog.py` na aplicação opcional de simbologia vetorial RS2 e GeoTIFF.
+- Falhas de renderização agora são registradas como avisos no `QgsMessageLog` (canal Vista Saga Plugin), sem invalidar os arquivos exportados.
+- A matemática dos módulos e os IDs históricos permanecem inalterados.
+
 ## 1.0.0 — Padronização final da interface pública
 
 - Ordem do menu do QGIS e do painel: Assinatura, Monitoria, Avaliação, Análises Voronoi, Combinação de Mapas, Conversão de Formatos e Sequenciador de Mapas.

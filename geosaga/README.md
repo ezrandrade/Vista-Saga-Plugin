@@ -1,8 +1,8 @@
-# Vista Saga Plugin — versão 1.0.0
+# Vista Saga Plugin — versão 1.0.1
 
 Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O programa moderniza procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, sem incorporar o código deste. Não há vínculo institucional com os desenvolvedores do Vista SAGA/UFRJ original.
 
-> **Versão 1.0.0:** os sete módulos foram homologados funcionalmente no QGIS 4.2.2 (Windows). A publicação no repositório oficial de complementos QGIS ainda não ocorreu; os testes de instalação limpa, Linux/Flatpak e equivalência numérica com o software histórico continuam pendentes.
+> **Versão 1.0.1:** os sete módulos foram homologados funcionalmente no QGIS 4.2.2 (Windows). A publicação no repositório oficial de complementos QGIS ainda não ocorreu; os testes de instalação limpa, Linux/Flatpak e equivalência numérica com o software histórico continuam pendentes.
 
 ## Sete módulos
 
