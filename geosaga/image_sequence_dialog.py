@@ -1,3 +1,4 @@
+from .i18n import tr
 """Sequenciador de Mapas do Vista Saga Plugin — Raster / Vetorial / Misto.
 
 Renderiza quadros na thread principal pelo QgsMapRendererSequentialJob. Para
@@ -40,7 +41,7 @@ class ImageSequenceDialog(QDialog):
         self.imported_layers = []
         self._busy = False
         self._movie = None
-        self.setWindowTitle('Vista Saga Plugin — Sequenciador de Mapas')
+        self.setWindowTitle(tr('Vista Saga Plugin — Sequenciador de Mapas'))
         self.setModal(False)
         self.resize(850, 725)
         self.setMinimumWidth(700)
