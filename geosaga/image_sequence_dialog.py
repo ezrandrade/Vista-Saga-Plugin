@@ -1,4 +1,3 @@
-from .i18n import tr
 """Sequenciador de Mapas do Vista Saga Plugin — Raster / Vetorial / Misto.
 
 Renderiza quadros na thread principal pelo QgsMapRendererSequentialJob. Para
@@ -6,6 +5,7 @@ uma camada com campo temporal, usa QgsVectorLayer.materialize() e cópias das
 configurações de simbologia/rotulagem, sem modificar a camada do projeto.
 O GIF continua sendo gerado pelo codificador interno em Python puro.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt, QSize, QRect
