@@ -3,6 +3,7 @@
 O painel reúne sete módulos com a mesma apresentação e navegação.
 """
 from qgis.PyQt.QtCore import Qt
+from .i18n import tr
 from qgis.PyQt.QtWidgets import (
     QDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QPushButton,
     QSizePolicy, QVBoxLayout, QWidget,
@@ -15,7 +16,7 @@ class HomeDialog(QDialog):
     def __init__(self, plugin, parent=None):
         super().__init__(parent)
         self.plugin = plugin
-        self.setWindowTitle('Vista Saga Plugin — Painel de módulos')
+        self.setWindowTitle(tr('Vista Saga Plugin — Painel de módulos'))
         self.setModal(False)
         self.setMinimumSize(820, 590)
         self.resize(1010, 780)
@@ -31,10 +32,7 @@ class HomeDialog(QDialog):
         header = QLabel('Vista Saga Plugin')
         header.setObjectName('vistaSagaTitle')
         root.addWidget(header)
-        description = QLabel(
-            'Escolha um módulo para começar.\n'
-            'Uma nova janela será aberta para cada módulo.'
-        )
+        description = QLabel(tr('Escolha um módulo para começar.\nUma nova janela será aberta para cada módulo.'))
         description.setObjectName('vistaSagaDescription')
         description.setWordWrap(True)
         root.addWidget(description)
@@ -73,20 +71,14 @@ class HomeDialog(QDialog):
             cards.setColumnStretch(column, 1)
         root.addLayout(cards, stretch=1)
 
-        note = QLabel(
-            'Projeto independente inspirado nos procedimentos do Vista SAGA/UFRJ. '
-            'Não contém código do programa original. '
-            'Confira os resultados antes de utilizá-los em estudos técnicos.\n'
-            'Desenvolvedor: Esdras Andrade — Instituto de Geografia, Desenvolvimento '
-            'e Meio Ambiente (IGDEMA), Universidade Federal de Alagoas (UFAL).'
-        )
+        note = QLabel(tr('Projeto independente inspirado nos procedimentos do Vista SAGA/UFRJ. Não contém código do programa original. Confira os resultados antes de utilizá-los em estudos técnicos.\nDesenvolvedor: Esdras Andrade — Instituto de Geografia, Desenvolvimento e Meio Ambiente (IGDEMA), Universidade Federal de Alagoas (UFAL).'))
         note.setObjectName('vistaSagaFootnote')
         note.setWordWrap(True)
         root.addWidget(note)
 
         footer = QHBoxLayout()
         footer.addStretch(1)
-        close = QPushButton('Fechar painel')
+        close = QPushButton(tr('Fechar painel'))
         close.setObjectName('vistaSagaClose')
         close.clicked.connect(self.close)
         footer.addWidget(close)
@@ -103,16 +95,16 @@ class HomeDialog(QDialog):
         number_label = QLabel(number)
         number_label.setObjectName('vistaSagaNumber')
         contents.addWidget(number_label)
-        title_label = QLabel(title)
+        title_label = QLabel(tr(title))
         title_label.setObjectName('vistaSagaCardTitle')
         title_label.setWordWrap(True)
         contents.addWidget(title_label)
-        description_label = QLabel(description)
+        description_label = QLabel(tr(description))
         description_label.setObjectName('vistaSagaCardDescription')
         description_label.setWordWrap(True)
         description_label.setAlignment(Qt.AlignmentFlag.AlignTop)
         contents.addWidget(description_label, 1)
-        action = QPushButton(button_text)
+        action = QPushButton(tr(button_text))
         action.setObjectName('vistaSagaAction')
         action.clicked.connect(callback)
         contents.addWidget(action)
