@@ -6,9 +6,9 @@
 
 **Site oficial e apresentação do projeto:** [vistasagaplugin.wordpress.com](https://vistasagaplugin.wordpress.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
 
-**Versão estável consolidada: `1.0.4` (31/10/2026).** Internacionalização homologada em português brasileiro e inglês, acesso direto aos sete módulos por botão com menu suspenso, identidade visual própria e validação funcional relatada em Windows 11 e Linux/Flatpak. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
+**Versão estável do código-fonte: `1.0.4` (31/10/2026).** Internacionalização homologada em português brasileiro e inglês, acesso direto aos sete módulos por botão com menu suspenso, identidade visual própria e validação funcional relatada em Windows 11 e Linux/Flatpak. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
 
-> **Sincronização de código pendente:** o ZIP instalável 1.0.4 foi consolidado separadamente, mas seus arquivos ainda não foram incorporados integralmente à branch `main` do GitHub. O `geosaga/metadata.txt` da branch `main` permanece em 1.0.3 até essa incorporação. Não utilize o botão **Code → Download ZIP** como se fosse o pacote instalável 1.0.4. [Notas da versão 1.0.4](geosaga/NOTAS_DA_VERSAO_104.md).
+> **Código-fonte 1.0.4 sincronizado:** os 80 arquivos do ZIP instalável 1.0.4 foram conferidos por identificador de conteúdo Git e estão idênticos na branch `main`, inclusive `geosaga/metadata.txt` (`version=1.0.4`), traduções, código e ícones. O histórico das versões anteriores permanece no GitHub. **A publicação da Release 1.0.4 no GitHub e o envio ao catálogo oficial do QGIS são etapas separadas**. Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.4](geosaga/NOTAS_DA_VERSAO_104.md).
 
 ## Módulos
 
@@ -68,4 +68,4 @@ Licença **GNU GPL-3.0-or-later**; consulte [`LICENSE`](LICENSE) e a cópia incl
 
 ---
 
-*Independent QGIS 4.x plugin for geospatial evaluation, monitoring, signatures, thematic overlays, format conversion, weighted Voronoi analyses and animated raster/vector maps. The seven modules have been functionally tested on QGIS 4.2.2 for Windows and on Linux/Flatpak. Version 1.0.4 has been consolidated as an installable ZIP with an integrated dropdown menu and Portuguese/English localization; full source synchronization into GitHub main and QGIS plugin repository submission remain pending.*
+*Independent QGIS 4.x plugin for geospatial evaluation, monitoring, signatures, thematic overlays, format conversion, weighted Voronoi analyses and animated raster/vector maps. The seven modules have been functionally tested on QGIS 4.2.2 for Windows and on Linux/Flatpak. Version 1.0.4 has been consolidated as an installable ZIP with an integrated dropdown menu and Portuguese/English localization; source files have been synchronized with GitHub main, while creation of a GitHub Release and submission to the official QGIS plugin repository remain separate pending steps.*
