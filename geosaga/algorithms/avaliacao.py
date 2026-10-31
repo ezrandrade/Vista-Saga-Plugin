@@ -1,5 +1,6 @@
 """Avaliação ambiental multicritério por pesos e notas, sem interpolação."""
 import os
+from ..i18n import tr
 from qgis.core import (
     Qgis, QgsProcessingAlgorithm, QgsProcessingException,
     QgsProcessingParameterMultipleLayers, QgsProcessingParameterString,
@@ -22,10 +23,10 @@ class AvaliacaoAlgorithm(QgsProcessingAlgorithm):
         return 'avaliacao'
 
     def displayName(self):
-        return 'Avaliação ambiental — pesos e notas'
+        return tr('Avaliação ambiental — pesos e notas')
 
     def group(self):
-        return 'Análise ambiental'
+        return tr('Análise ambiental')
 
     def groupId(self):
         return 'analise'
@@ -43,13 +44,13 @@ class AvaliacaoAlgorithm(QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
         p = QgsProcessingParameterMultipleLayers(
-            self.RASTERS, 'Rasters de classes (ordem correspondente ao JSON)',
+            self.RASTERS, tr('Rasters de classes (ordem correspondente ao JSON)'),
             layerType=Qgis.ProcessingSourceType.Raster)
         p.setMinimumNumberInputs(1)
         self.addParameter(p)
         self.addParameter(QgsProcessingParameterString(
-            self.REGRAS, 'Pesos e notas por classe (JSON)', multiLine=True, defaultValue=EXAMPLE))
-        self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT, 'Carta de avaliação (.tif)'))
+            self.REGRAS, tr('Pesos e notas por classe (JSON)'), multiLine=True, defaultValue=EXAMPLE))
+        self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT, tr('Carta de avaliação (.tif)')))
 
     def processAlgorithm(self, parameters, context, feedback):
         layers = self.parameterAsLayerList(parameters, self.RASTERS, context)
