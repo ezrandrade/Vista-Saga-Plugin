@@ -3,6 +3,7 @@ from collections import Counter
 import os
 import numpy as np
 from osgeo import gdal
+from ..i18n import tr
 from qgis.core import (
     QgsProcessingAlgorithm, QgsProcessingException, QgsProcessingParameterRasterLayer,
     QgsProcessingParameterRasterDestination, QgsProcessingParameterFileDestination,
@@ -25,10 +26,10 @@ class MonitoriaAlgorithm(QgsProcessingAlgorithm):
         return 'monitoria'
 
     def displayName(self):
-        return 'Monitoria espacial — matriz de transição'
+        return tr('Monitoria espacial — matriz de transição')
 
     def group(self):
-        return 'Análise ambiental'
+        return tr('Análise ambiental')
 
     def groupId(self):
         return 'analise'
@@ -43,10 +44,10 @@ class MonitoriaAlgorithm(QgsProcessingAlgorithm):
         )
 
     def initAlgorithm(self, config=None):
-        self.addParameter(QgsProcessingParameterRasterLayer(self.ANTES, 'Raster no período inicial'))
-        self.addParameter(QgsProcessingParameterRasterLayer(self.DEPOIS, 'Raster no período final'))
-        self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT, 'Mapa de transições (.tif)'))
-        self.addParameter(QgsProcessingParameterFileDestination(self.TABELA, 'Matriz de transições (.csv)', 'CSV (*.csv)'))
+        self.addParameter(QgsProcessingParameterRasterLayer(self.ANTES, tr('Raster no período inicial')))
+        self.addParameter(QgsProcessingParameterRasterLayer(self.DEPOIS, tr('Raster no período final')))
+        self.addParameter(QgsProcessingParameterRasterDestination(self.OUTPUT, tr('Mapa de transições (.tif)')))
+        self.addParameter(QgsProcessingParameterFileDestination(self.TABELA, tr('Matriz de transições (.csv)'), 'CSV (*.csv)'))
 
     def processAlgorithm(self, parameters, context, feedback):
         layer_a = self.parameterAsRasterLayer(parameters, self.ANTES, context)
