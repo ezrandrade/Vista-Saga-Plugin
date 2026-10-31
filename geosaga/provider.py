@@ -1,5 +1,6 @@
 """Provedor de algoritmos de processamento."""
 from qgis.core import QgsProcessingProvider
+from .i18n import tr
 
 from .algorithms.avaliacao import AvaliacaoAlgorithm
 from .algorithms.monitoria import MonitoriaAlgorithm
@@ -14,7 +15,7 @@ class GeoSAGAProvider(QgsProcessingProvider):
         return 'Vista Saga Plugin'
 
     def longName(self):
-        return 'Vista Saga Plugin — análises temáticas'
+        return tr('Vista Saga Plugin — análises temáticas')
 
     def loadAlgorithms(self):
         self.addAlgorithm(AvaliacaoAlgorithm())
