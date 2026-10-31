@@ -1,8 +1,8 @@
-from .i18n import tr
 """Interface compacta da Monitoria vetorial direta para QGIS 4.x / Qt6.
 
 Não altera a janela raster já homologada; aberta por um botão na aba Configuração.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
