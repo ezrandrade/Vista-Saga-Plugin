@@ -1,3 +1,4 @@
+from .i18n import tr
 """Conversor RS2 / GeoTIFF do Vista Saga Plugin (QGIS 4.x + Qt6).
 
 Suporte a arquivos locais, seleção de rasters do projeto, SRC nativo e lotes.
@@ -28,7 +29,7 @@ class RS2ConverterDialog(QDialog):
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
-        self.setWindowTitle('Vista Saga Plugin — Conversão de formatos')
+        self.setWindowTitle(tr('Vista Saga Plugin — Conversão de formatos'))
         self.setMinimumWidth(690)
         self.resize(750, 660)
         self.setModal(False)
@@ -778,7 +779,7 @@ class RS2ConverterDialog(QDialog):
                 QMessageBox.warning(self, 'Entrada TIFF', str(exc))
                 return
         progress = QProgressDialog('Convertendo mapas…', 'Cancelar', 0, 100, self)
-        progress.setWindowTitle('Vista Saga Plugin — conversor')
+        progress.setWindowTitle(tr('Vista Saga Plugin — conversor'))
         progress.setMinimumDuration(0)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.show()
