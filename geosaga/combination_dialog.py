@@ -1,9 +1,9 @@
-from .i18n import tr
 """Combinação de Mapas: interface própria, compacta, QGIS 4.x/Qt6.
 
 As listas permitem empilhar rasteres ou polígonos sem alterar as camadas do QGIS.
 O processamento vetorial permanece no thread gráfico por usar PyQGIS.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
