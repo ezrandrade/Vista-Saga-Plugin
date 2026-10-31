@@ -1,3 +1,4 @@
+from .i18n import tr
 """Interface visual de Avaliação para QGIS 4.x / Qt6.
 
 A classe evita editar JSON: usa tabelas, botões e camadas do projeto QGIS.
@@ -52,7 +53,7 @@ class EvaluationDialog(QDialog):
         self._task = None
         self.project_path = ''
         self._last_scale = 10
-        self.setWindowTitle('Vista Saga Plugin — Avaliação')
+        self.setWindowTitle(tr('Vista Saga Plugin — Avaliação'))
         self.setMinimumSize(900, 610)
         self.resize(1110, 770)
         self.setModal(False)
