@@ -1,3 +1,4 @@
+from .i18n import tr
 """Interface QGIS 4 para Análises Voronoi (quatro modalidades)."""
 from pathlib import Path
 from math import isfinite
@@ -78,7 +79,7 @@ class VoronoiDialog(QDialog):
         self._busy = False
         self._task = None
         self._progress_dialog = None
-        self.setWindowTitle('Vista Saga Plugin — Análises Voronoi')
+        self.setWindowTitle(tr('Vista Saga Plugin — Análises Voronoi'))
         self.setModal(False)
         self.setMinimumSize(630, 450)
         self.resize(760, 605)
@@ -167,7 +168,7 @@ class VoronoiDialog(QDialog):
         # Na 0.8.3 a tabela estava diretamente no formulário, e a janela
         # sem rolagem podia exibir apenas o título "Superfícies integradas".
         self.friction_stack_dialog = QDialog(self)
-        self.friction_stack_dialog.setWindowTitle('Superfícies de atrito — seleção e pesos')
+        self.friction_stack_dialog.setWindowTitle(tr('Superfícies de atrito — seleção e pesos'))
         self.friction_stack_dialog.resize(840, 475)
         stack_dialog_box = QVBoxLayout(self.friction_stack_dialog)
         stack_hint = QLabel('Selecione até 12 rasters. Edite o peso positivo e, se necessário, as notas '
@@ -314,7 +315,7 @@ class VoronoiDialog(QDialog):
             QMessageBox.warning(self, 'Superfícies de atrito', 'Não há camadas raster carregadas no QGIS.')
             return
         chooser = QDialog(self)
-        chooser.setWindowTitle('Adicionar superfícies de atrito')
+        chooser.setWindowTitle(tr('Adicionar superfícies de atrito'))
         chooser.resize(430, 340)
         layout = QVBoxLayout(chooser)
         list_widget = QListWidget()
