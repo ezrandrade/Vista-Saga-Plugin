@@ -1,8 +1,8 @@
-from .i18n import tr
 """Interface visual de Avaliação para QGIS 4.x / Qt6.
 
 A classe evita editar JSON: usa tabelas, botões e camadas do projeto QGIS.
 """
+from .i18n import tr
 import json
 import os
 import math
