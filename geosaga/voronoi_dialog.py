@@ -1,5 +1,5 @@
-from .i18n import tr
 """Interface QGIS 4 para Análises Voronoi (quatro modalidades)."""
+from .i18n import tr
 from pathlib import Path
 from math import isfinite
 
