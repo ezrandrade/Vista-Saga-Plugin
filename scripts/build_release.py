@@ -2,15 +2,24 @@
 
 Executar na raiz: python scripts/build_release.py
 """
+from configparser import ConfigParser
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
 ROOT = Path(__file__).resolve().parents[1]
 PLUGIN = ROOT / "geosaga"
-OUT = ROOT / "dist" / "Vista_Saga_Plugin_QGIS4_v1.0.3.zip"
-OUT.parent.mkdir(parents=True, exist_ok=True)
 if not (PLUGIN / "metadata.txt").is_file() or not (PLUGIN / "__init__.py").is_file():
     raise SystemExit("Diretório instalável geosaga inválido.")
+
+metadata = ConfigParser(interpolation=None)
+metadata.read(PLUGIN / "metadata.txt", encoding="utf-8")
+version = metadata.get("general", "version").strip()
+if not version or "/" in version or "\\" in version:
+    raise SystemExit("Número de versão inválido no metadata.txt.")
+
+OUT = ROOT / "dist" / f"Vista_Saga_Plugin_QGIS4_v{version}.zip"
+OUT.parent.mkdir(parents=True, exist_ok=True)
+release_notes = f"NOTAS_DA_VERSAO_{version.replace('.', '')}.md"
 
 with ZipFile(OUT, "w", ZIP_DEFLATED) as z:
     for path in sorted(PLUGIN.rglob("*")):
@@ -21,7 +30,7 @@ with ZipFile(OUT, "w", ZIP_DEFLATED) as z:
                 path.suffix in {".pyc", ".pyo"}):
             continue
         if path.suffix == ".md" and path.name not in {
-            "README.md", "CHANGELOG.md", "LICENSE.md", "NOTAS_DA_VERSAO_103.md"
+            "README.md", "CHANGELOG.md", "LICENSE.md", release_notes
         }:
             continue
         z.write(path, rel.as_posix())
