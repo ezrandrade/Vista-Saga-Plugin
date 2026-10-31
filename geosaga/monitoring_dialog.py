@@ -1,5 +1,5 @@
-from .i18n import tr
 """Monitoria — interface nativa QGIS 4.x, sem formulários Processing."""
+from .i18n import tr
 from pathlib import Path
 import traceback
 import re
