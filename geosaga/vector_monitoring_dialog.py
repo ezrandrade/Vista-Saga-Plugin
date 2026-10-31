@@ -1,3 +1,4 @@
+from .i18n import tr
 """Interface compacta da Monitoria vetorial direta para QGIS 4.x / Qt6.
 
 Não altera a janela raster já homologada; aberta por um botão na aba Configuração.
@@ -28,7 +29,7 @@ class VectorMonitoringDialog(QWidget):
         self.iface = iface
         self._busy = False
         self._file_layers = {}
-        self.setWindowTitle('Vista Saga Plugin — Monitoria vetorial')
+        self.setWindowTitle(tr('Vista Saga Plugin — Monitoria vetorial'))
         self.resize(820, 490)
         self.setMinimumSize(690, 425)
         self._build_ui()
@@ -226,7 +227,7 @@ class VectorMonitoringDialog(QWidget):
         self.run_button.setEnabled(False)
         self.status.setText('Executando interseção e cálculo das áreas…')
         dialog = QProgressDialog('Monitoria vetorial em execução…', 'Cancelar', 0, 100, self)
-        dialog.setWindowTitle('Vista Saga — Monitoria vetorial')
+        dialog.setWindowTitle(tr('Vista Saga — Monitoria vetorial'))
         dialog.setWindowModality(Qt.WindowModality.WindowModal)
         dialog.setMinimumDuration(0)
         dialog.setValue(0)
