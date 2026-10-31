@@ -2,6 +2,7 @@
 from collections import Counter
 import numpy as np
 from osgeo import gdal, ogr, osr
+from ..i18n import tr
 from qgis.core import (
     Qgis, QgsProcessingAlgorithm, QgsProcessingException,
     QgsProcessingParameterRasterLayer, QgsProcessingParameterFeatureSource,
@@ -22,10 +23,10 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
         return 'assinatura'
 
     def displayName(self):
-        return 'Assinatura espacial — classes em polígonos'
+        return tr('Assinatura espacial — classes em polígonos')
 
     def group(self):
-        return 'Análise ambiental'
+        return tr('Análise ambiental')
 
     def groupId(self):
         return 'analise'
@@ -41,11 +42,11 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
         )
 
     def initAlgorithm(self, config=None):
-        self.addParameter(QgsProcessingParameterRasterLayer(self.RASTER, 'Raster de classes'))
+        self.addParameter(QgsProcessingParameterRasterLayer(self.RASTER, tr('Raster de classes')))
         self.addParameter(QgsProcessingParameterFeatureSource(
-            self.POLIGONOS, 'Área de análise (polígonos)', types=[Qgis.ProcessingSourceType.VectorPolygon]))
+            self.POLIGONOS, tr('Área de análise (polígonos)'), types=[Qgis.ProcessingSourceType.VectorPolygon]))
         self.addParameter(QgsProcessingParameterFileDestination(
-            self.TABELA, 'Assinatura temática (.csv)', 'CSV (*.csv)'))
+            self.TABELA, tr('Assinatura temática (.csv)'), 'CSV (*.csv)'))
 
     def processAlgorithm(self, parameters, context, feedback):
         raster = dataset_for_layer(self.parameterAsRasterLayer(parameters, self.RASTER, context))
