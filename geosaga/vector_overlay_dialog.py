@@ -1,9 +1,9 @@
-from .i18n import tr
 """Interface de Avaliação por sobreposição de VÁRIAS camadas vetoriais.
 
 Aproveita as mesmas tabelas de notas e pesos já homologadas na avaliação de
 atributos; apenas altera a fonte de cada critério e o processamento geométrico.
 """
+from .i18n import tr
 import os
 from collections import Counter
 
