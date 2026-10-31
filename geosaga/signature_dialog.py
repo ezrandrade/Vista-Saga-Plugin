@@ -1,9 +1,9 @@
-from .i18n import tr
 """Interface compacta da Assinatura: composição de classes por área.
 
 QGIS 4.x / Qt6; seleção de camadas do projeto ou arquivos locais. A rotina
 PyQGIS roda no thread da GUI para evitar acesso inseguro a QgsVectorLayer.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
