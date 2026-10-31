@@ -4,6 +4,7 @@ from qgis.PyQt.QtWidgets import QMessageBox, QStyle
 from qgis.core import QgsApplication
 
 from .provider import GeoSAGAProvider
+from .i18n import tr
 
 
 class VistaSagaPlugin:
@@ -27,7 +28,7 @@ class VistaSagaPlugin:
         self.provider = GeoSAGAProvider()
         if not QgsApplication.processingRegistry().addProvider(self.provider):
             self.provider = None
-            raise RuntimeError('Não foi possível registrar os algoritmos Vista Saga.')
+            raise RuntimeError(tr('Não foi possível registrar os algoritmos Vista Saga.'))
 
         self._add_menu_action('Painel de módulos', self.open_home, toolbar=True)
         self._add_menu_action('Assinatura', self.open_signature)
@@ -40,11 +41,11 @@ class VistaSagaPlugin:
         # Os algoritmos geosaga:* mantêm os IDs legados para projetos/modelos antigos.
 
     def _add_menu_action(self, title, callback, toolbar=False):
-        action = QAction(title, self.iface.mainWindow())
+        action = QAction(tr(title), self.iface.mainWindow())
         action.triggered.connect(callback)
         self.iface.addPluginToRasterMenu(self.MENU, action)
         if toolbar:
-            action.setToolTip('Vista Saga Plugin — painel de módulos')
+            action.setToolTip(tr('Vista Saga Plugin — painel de módulos'))
             action.setIcon(self.iface.mainWindow().style().standardIcon(
                 QStyle.StandardPixmap.SP_FileDialogDetailedView))
             self.iface.addToolBarIcon(action)
