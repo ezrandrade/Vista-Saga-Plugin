@@ -1,3 +1,4 @@
+from .i18n import tr
 """Avaliação — modalidade vetorial por atributos, QGIS 4 / Qt6.
 
 Esta janela não altera o formulário raster nem oferece fluxo Processing.
@@ -45,7 +46,7 @@ class VectorEvaluationDialog(QWidget):
         self.active = -1
         self._rendering = False
         self.running = False
-        self.setWindowTitle('Vista Saga Plugin — Avaliação vetorial')
+        self.setWindowTitle(tr('Vista Saga Plugin — Avaliação vetorial'))
         self.setMinimumSize(850, 600)
         self.resize(1070, 740)
         self._build()
