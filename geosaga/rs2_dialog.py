@@ -1,8 +1,8 @@
-from .i18n import tr
 """Conversor RS2 / GeoTIFF do Vista Saga Plugin (QGIS 4.x + Qt6).
 
 Suporte a arquivos locais, seleção de rasters do projeto, SRC nativo e lotes.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import QCoreApplication, Qt
