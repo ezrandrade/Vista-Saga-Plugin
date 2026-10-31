@@ -2,6 +2,7 @@
 
 Não altera a janela raster já homologada; aberta por um botão na aba Configuração.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
@@ -28,7 +29,7 @@ class VectorMonitoringDialog(QWidget):
         self.iface = iface
         self._busy = False
         self._file_layers = {}
-        self.setWindowTitle('Vista Saga Plugin — Monitoria vetorial')
+        self.setWindowTitle(tr('Vista Saga Plugin — Monitoria vetorial'))
         self.resize(820, 490)
         self.setMinimumSize(690, 425)
         self._build_ui()
@@ -41,47 +42,47 @@ class VectorMonitoringDialog(QWidget):
         body.addWidget(tabs)
         settings = QWidget()
         results = QWidget()
-        tabs.addTab(settings, 'Configuração')
-        tabs.addTab(results, 'Resultados')
+        tabs.addTab(settings, tr('Configuração'))
+        tabs.addTab(results, tr('Resultados'))
         root = QVBoxLayout(settings)
         rows = QHBoxLayout()
         self.before_select = self._make_layer_selection(rows, 'Mapa inicial', 'Inicial')
         self.after_select = self._make_layer_selection(rows, 'Mapa final', 'Final')
         root.addLayout(rows)
 
-        out = QGroupBox('Saída')
+        out = QGroupBox(tr('Saída'))
         form = QFormLayout(out)
         self.title = QLineEdit()
-        self.title.setPlaceholderText('Ex.: Mudanças de uso da terra entre 1986 e 2016')
-        form.addRow('Título:', self.title)
+        self.title.setPlaceholderText(tr('Ex.: Mudanças de uso da terra entre 1986 e 2016'))
+        form.addRow(tr('Título:'), self.title)
         pathrow = QHBoxLayout()
         self.dest = QLineEdit()
-        self.dest.setPlaceholderText('Arquivo .gpkg de transições')
+        self.dest.setPlaceholderText(tr('Arquivo .gpkg de transições'))
         pathrow.addWidget(self.dest, 1)
-        browse = QPushButton('Procurar…')
+        browse = QPushButton(tr('Procurar…'))
         browse.clicked.connect(self._output)
         pathrow.addWidget(browse)
-        form.addRow('GeoPackage:', pathrow)
-        note = QLabel('Serão gerados automaticamente os relatórios _transicoes.csv, '
-                      '_matriz.csv (área em ha) e _resumo.txt na mesma pasta.')
+        form.addRow(tr('GeoPackage:'), pathrow)
+        note = QLabel(tr('Serão gerados automaticamente os relatórios _transicoes.csv, '
+                      '_matriz.csv (área em ha) e _resumo.txt na mesma pasta.'))
         note.setWordWrap(True)
         form.addRow('', note)
-        self.add_to_project = QCheckBox('Adicionar resultado ao projeto QGIS')
+        self.add_to_project = QCheckBox(tr('Adicionar resultado ao projeto QGIS'))
         self.add_to_project.setChecked(True)
         form.addRow('', self.add_to_project)
         root.addWidget(out)
-        caution = QLabel('A monitoria compara somente a área comum às duas camadas. '
-                         'Confira a equivalência temática entre os períodos e a topologia dos polígonos.')
+        caution = QLabel(tr('A monitoria compara somente a área comum às duas camadas. '
+                         'Confira a equivalência temática entre os períodos e a topologia dos polígonos.'))
         caution.setWordWrap(True)
         root.addWidget(caution)
         root.addStretch(1)
 
         result_layout = QVBoxLayout(results)
-        self.summary_label = QLabel('Nenhuma monitoria vetorial executada nesta sessão.')
+        self.summary_label = QLabel(tr('Nenhuma monitoria vetorial executada nesta sessão.'))
         self.summary_label.setWordWrap(True)
         result_layout.addWidget(self.summary_label)
         self.table = QTableWidget(0, 4)
-        self.table.setHorizontalHeaderLabels(['Transição', 'Situação', 'Área (ha)', '% da área'])
+        self.table.setHorizontalHeaderLabels([tr('Transição'), tr('Situação'), tr('Área (ha)'), tr('% da área')])
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -89,44 +90,44 @@ class VectorMonitoringDialog(QWidget):
         result_layout.addWidget(self.table, 1)
 
         commands = QHBoxLayout()
-        self.status = QLabel('Selecione os polígonos e campos de classificação.')
+        self.status = QLabel(tr('Selecione os polígonos e campos de classificação.'))
         self.status.setWordWrap(True)
         commands.addWidget(self.status, 1)
-        self.temporary_check = QCheckBox('Resultado temporário no QGIS (pode salvar depois)')
+        self.temporary_check = QCheckBox(tr('Resultado temporário no QGIS (pode salvar depois)'))
         self.temporary_check.setChecked(True)
         self.dest.setEnabled(False)
         self.temporary_check.toggled.connect(lambda active: self.dest.setEnabled(not active))
         form.addRow('', self.temporary_check)
-        self.run_button = QPushButton('Executar monitoria vetorial')
+        self.run_button = QPushButton(tr('Executar monitoria vetorial'))
         self.run_button.clicked.connect(self.run)
         commands.addWidget(self.run_button)
-        close = QPushButton('Fechar')
+        close = QPushButton(tr('Fechar'))
         close.clicked.connect(self.close)
         commands.addWidget(close)
         body.addLayout(commands)
 
     def _make_layer_selection(self, parent, heading, period):
-        group = QGroupBox(heading)
+        group = QGroupBox(tr(heading))
         form = QFormLayout(group)
         selector = QgsMapLayerComboBox()
         selector.setFilters(Qgis.LayerFilter.VectorLayer)
         selector.setAllowEmptyLayer(True)
         selector.setShowCrs(True)
-        form.addRow('Camada QGIS:', selector)
+        form.addRow(tr('Camada QGIS:'), selector)
         file_path = QLineEdit()
-        file_path.setPlaceholderText('Opcional: SHP, GPKG, GeoJSON, FlatGeobuf…')
+        file_path.setPlaceholderText(tr('Opcional: SHP, GPKG, GeoJSON, FlatGeobuf…'))
         pathrow = QHBoxLayout()
         pathrow.addWidget(file_path, 1)
-        pick = QPushButton('Arquivo…')
+        pick = QPushButton(tr('Arquivo…'))
         pick.clicked.connect(lambda checked=False, field=file_path: self._input(field))
         pathrow.addWidget(pick)
-        form.addRow('Ou arquivo:', pathrow)
+        form.addRow(tr('Ou arquivo:'), pathrow)
         field = QComboBox()
-        form.addRow('Campo de classe:', field)
+        form.addRow(tr('Campo de classe:'), field)
         label = QComboBox()
-        form.addRow('Campo de legenda:', label)
-        period_text = QLineEdit(period)
-        form.addRow('Período:', period_text)
+        form.addRow(tr('Campo de legenda:'), label)
+        period_text = QLineEdit(tr(period))
+        form.addRow(tr('Período:'), period_text)
         parent.addWidget(group)
         info = (selector, file_path, field, label, period_text)
         selector.layerChanged.connect(lambda layer, data=info: self._refresh_fields(data))
@@ -135,7 +136,7 @@ class VectorMonitoringDialog(QWidget):
         return info
 
     def _input(self, edit):
-        path, _ = QFileDialog.getOpenFileName(self, 'Selecionar mapa vetorial', '',
+        path, _ = QFileDialog.getOpenFileName(self, tr('Selecionar mapa vetorial'), '',
                                               'Vetores (*.gpkg *.shp *.geojson *.json *.fgb);;Todos (*)')
         if path:
             edit.setText(path)
@@ -143,7 +144,7 @@ class VectorMonitoringDialog(QWidget):
                                  else self.after_select)
 
     def _output(self):
-        path, _ = QFileDialog.getSaveFileName(self, 'Salvar monitoria vetorial',
+        path, _ = QFileDialog.getSaveFileName(self, tr('Salvar monitoria vetorial'),
                                               self.dest.text().strip() or 'monitoria_vetorial.gpkg',
                                               'GeoPackage (*.gpkg)')
         if path:
@@ -171,7 +172,7 @@ class VectorMonitoringDialog(QWidget):
         label.blockSignals(True)
         field.clear()
         label.clear()
-        label.addItem('(usar o próprio campo, quando textual)', '')
+        label.addItem(tr('(usar o próprio campo, quando textual)'), '')
         if layer is not None and layer.isValid():
             names = layer.fields().names()
             field.addItems(names)
@@ -208,14 +209,14 @@ class VectorMonitoringDialog(QWidget):
         try:
             validate_vector_monitoring(a, b, fa, fb, path, na, nb)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, 'Monitoria vetorial — entrada', str(exc))
+            QMessageBox.warning(self, tr('Monitoria vetorial — entrada'), str(exc))
             return
         from pathlib import Path
         stem = str(Path(path).with_suffix(''))
         existing = [p for p in [path, stem+'_transicoes.csv', stem+'_matriz.csv', stem+'_resumo.txt']
                     if Path(p).exists()]
         if existing:
-            answer = QMessageBox.question(self, 'Substituir saídas',
+            answer = QMessageBox.question(self, tr('Substituir saídas'),
                 f'{len(existing)} arquivos já existem. Deseja substituí-los?\n'
                 'Os arquivos anteriores serão restaurados em caso de falha.',
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -224,9 +225,9 @@ class VectorMonitoringDialog(QWidget):
                 return
         self._busy = True
         self.run_button.setEnabled(False)
-        self.status.setText('Executando interseção e cálculo das áreas…')
-        dialog = QProgressDialog('Monitoria vetorial em execução…', 'Cancelar', 0, 100, self)
-        dialog.setWindowTitle('Vista Saga — Monitoria vetorial')
+        self.status.setText(tr('Executando interseção e cálculo das áreas…'))
+        dialog = QProgressDialog(tr('Monitoria vetorial em execução…'), tr('Cancelar'), 0, 100, self)
+        dialog.setWindowTitle(tr('Vista Saga — Monitoria vetorial'))
         dialog.setWindowModality(Qt.WindowModality.WindowModal)
         dialog.setMinimumDuration(0)
         dialog.setValue(0)
@@ -242,7 +243,7 @@ class VectorMonitoringDialog(QWidget):
                 final=self.after_select[4].text().strip() or 'Final',
                 title=self.title.text().strip(), progress=update,
                 cancelled=dialog.wasCanceled)
-            self.status.setText('Monitoria vetorial concluída. GeoPackage, CSVs e TXT disponíveis.')
+            self.status.setText(tr('Monitoria vetorial concluída. GeoPackage, CSVs e TXT disponíveis.'))
             self._show_result(result)
             if self.add_to_project.isChecked() or self.temporary_check.isChecked():
                 layer = QgsVectorLayer(path + '|layername=monitoria_vetorial',
@@ -251,14 +252,14 @@ class VectorMonitoringDialog(QWidget):
                     self._style_layer(layer)
                     QgsProject.instance().addMapLayer(layer)
                 else:
-                    QMessageBox.warning(self, 'Resultado concluído',
-                                        'Os arquivos foram gravados, mas a camada não pôde ser carregada.')
+                    QMessageBox.warning(self, tr('Resultado concluído'),
+                                        tr('Os arquivos foram gravados, mas a camada não pôde ser carregada.'))
         except (ValueError, OSError, RuntimeError, InterruptedError) as exc:
-            self.status.setText('Monitoria vetorial não concluída.')
-            QMessageBox.warning(self, 'Monitoria vetorial', str(exc))
+            self.status.setText(tr('Monitoria vetorial não concluída.'))
+            QMessageBox.warning(self, tr('Monitoria vetorial'), str(exc))
         except Exception as exc:
-            self.status.setText('Erro inesperado na Monitoria vetorial.')
-            QMessageBox.critical(self, 'Monitoria vetorial',
+            self.status.setText(tr('Erro inesperado na Monitoria vetorial.'))
+            QMessageBox.critical(self, tr('Monitoria vetorial'),
                                  f'{type(exc).__name__}: {exc}')
         finally:
             dialog.close()
@@ -302,8 +303,8 @@ class VectorMonitoringDialog(QWidget):
 
     def closeEvent(self, event):
         if self._busy:
-            QMessageBox.information(self, 'Monitoria em execução',
-                                    'Cancele ou aguarde o término da análise.')
+            QMessageBox.information(self, tr('Monitoria em execução'),
+                                    tr('Cancele ou aguarde o término da análise.'))
             event.ignore()
         else:
             super().closeEvent(event)

@@ -5,6 +5,8 @@ carregada no projeto QGIS após o cálculo. Para rasteres e GeoPackages volumoso
 não se utiliza um vetor inteiramente em RAM: isso evita esgotar memória.
 O usuário deve exportar/salvar a camada para persistência.
 """
+from .i18n import tr
+
 from pathlib import Path
 import tempfile
 
@@ -38,10 +40,10 @@ def choose_project_layers(parent, layer_type, title='Selecionar camadas do QGIS'
                      if isinstance(lyr, expected) and lyr.isValid()),
                     key=lambda ly: ly.name().casefold())
     dlg = QDialog(parent)
-    dlg.setWindowTitle(title)
+    dlg.setWindowTitle(tr(title))
     dlg.resize(600, 430)
     body = QVBoxLayout(dlg)
-    body.addWidget(QLabel('Selecione várias camadas com Ctrl/Shift ou use Selecionar todas.'))
+    body.addWidget(QLabel(tr('Selecione várias camadas com Ctrl/Shift ou use Selecionar todas.')))
     items = QListWidget()
     items.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
     for layer in layers:
@@ -50,7 +52,7 @@ def choose_project_layers(parent, layer_type, title='Selecionar camadas do QGIS'
         items.addItem(item)
     body.addWidget(items)
     actions = QHBoxLayout()
-    select_all = QPushButton('Selecionar todas')
+    select_all = QPushButton(tr('Selecionar todas'))
     select_all.clicked.connect(items.selectAll)
     actions.addWidget(select_all)
     actions.addStretch()
@@ -69,11 +71,11 @@ def choose_project_layers(parent, layer_type, title='Selecionar camadas do QGIS'
 def attach_temporary_option(layout, path_input, label='Resultado temporário (carregar no QGIS)'):
     """Insere opção temporária; preservar o controle de saída persistente existente."""
     from qgis.PyQt.QtWidgets import QCheckBox
-    checkbox = QCheckBox(label)
+    checkbox = QCheckBox(tr(label))
     checkbox.setChecked(True)
     checkbox.setToolTip(
-        'O QGIS abrirá o resultado automaticamente. O arquivo e os relatórios ficam '\
-        'no armazenamento temporário da sessão; exporte o resultado antes de fechar o QGIS.')
+        tr('O QGIS abrirá o resultado automaticamente. O arquivo e os relatórios ficam '\
+        'no armazenamento temporário da sessão; exporte o resultado antes de fechar o QGIS.'))
     layout.addWidget(checkbox)
     path_input.setEnabled(False)
     checkbox.toggled.connect(lambda enabled: path_input.setEnabled(not enabled))

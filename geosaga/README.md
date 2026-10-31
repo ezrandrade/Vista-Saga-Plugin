@@ -1,8 +1,8 @@
-# Vista Saga Plugin — versão 1.0.3
+# Vista Saga Plugin — versão 1.0.4
 
 Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O programa moderniza procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, sem incorporar o código deste. Não há vínculo institucional com os desenvolvedores do Vista SAGA/UFRJ original.
 
-> **Versão 1.0.3:** os sete módulos foram homologados funcionalmente no QGIS 4.2.2 (Windows). A publicação no repositório oficial de complementos QGIS ainda não ocorreu; os testes de instalação limpa, Linux/Flatpak e equivalência numérica com o software histórico continuam pendentes.
+> **Versão 1.0.4:** os sete módulos estão homologados funcionalmente em português e inglês na rc4. A compatibilidade com Windows 11 e Linux/Flatpak foi testada e aprovada pelo responsável. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin**, com ícone limitado a 24 px; se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**. No **QRibbonSkin**, utilize **Complementos → Vista Saga Plugin**: o botão visual com ícone e menu é criado a partir da mesma ação nativa do QGIS. Se o QRibbonSkin já estava ativado durante a instalação/atualização, volte à interface clássica e ative a Ribbon novamente para que ela reconstruia a guia de complementos.
 
 ## Sete módulos
 
@@ -18,9 +18,9 @@ Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andr
 
 1. No QGIS 4.x, abra **Complementos → Gerenciar e instalar complementos → Instalar a partir de ZIP**.
 2. Selecione o ZIP de **instalação** (não o pacote de código-fonte), instale e reinicie o QGIS.
-3. Acesse **Raster → Vista Saga Plugin → Painel de módulos**, ou a barra de ferramentas.
+3. Acesse **Raster → Vista Saga Plugin → [módulo]**, ou clique no botão do Vista Saga Plugin na barra de complementos para abrir o menu suspenso de módulos.
 
-O complemento usa PyQGIS/Qt6, GDAL/OGR, NumPy e bibliotecas disponibilizadas pela instalação do QGIS; SciPy pode acelerar um caso específico do Voronoi, mas há alternativa de cálculo sem SciPy. Não são distribuídos executáveis nem bibliotecas compiladas no ZIP. As instalações Linux/Flatpak ainda devem ser testadas em uma instância real. Esta versão exige QGIS 4.x e não foi preparada para QGIS 3.x.
+O complemento usa PyQGIS/Qt6, GDAL/OGR, NumPy e bibliotecas disponibilizadas pela instalação do QGIS; SciPy pode acelerar um caso específico do Voronoi, mas há alternativa de cálculo sem SciPy. Não são distribuídos executáveis nem bibliotecas compiladas no ZIP. A execução em Linux/Flatpak já foi testada e aprovada pelo responsável pelo projeto. Esta versão exige QGIS 4.x e não foi preparada para QGIS 3.x.
 
 O diretório interno `geosaga` e identificadores Processing `geosaga:*` são **intencionalmente mantidos** para preservar a compatibilidade com projetos e scripts anteriores. **Não** renomeie manualmente essa pasta para `vista_saga_plugin`.
 
@@ -32,11 +32,11 @@ O diretório interno `geosaga` e identificadores Processing `geosaga:*` são **i
 - Em operações raster, resultados vetoriais de poligonização são dependentes da resolução das células. Trabalhe em SRC projetado apropriado para medidas métricas.
 - Resultados temporários devem ser salvos permanentemente antes de encerrar o QGIS.
 
-## Testes de homologação restantes
+## Verificações adicionais recomendadas
 
 - Instalar em **perfil QGIS 4.x limpo**, sem outros complementos de terceiros.
 - Abrir cada módulo, carregar e processar amostras pequenas, salvar/reabrir o projeto, desativar e reativar o complemento.
-- Repetir os testes em **Linux/Flatpak**; verificar permissões de gravação e disponibilidade GDAL/NumPy.
+- Reconfirmar a instalação limpa e a iconografia em diferentes distribuições do QGIS; Windows e Linux/Flatpak já foram testados e aprovados pelo responsável.
 - Comparar dados e resultados contra software histórico, quando disponível, para estabelecer o grau de equivalência da metodologia Voronoi com atrito.
 - Verificar os links `homepage`, `repository` e `tracker` no `metadata.txt` antes de submeter ao repositório oficial de complementos QGIS.
 
@@ -45,3 +45,33 @@ O diretório interno `geosaga` e identificadores Processing `geosaga:*` são **i
 O código deste complemento é distribuído sob **GNU GPL-3.0-or-later**; o texto integral está no arquivo [`LICENSE`](LICENSE). Autoria do complemento: **Esdras Andrade**. Documentação e resultados desta implementação não representam certificação pelo Vista SAGA/UFRJ ou pela Universidade Federal do Rio de Janeiro.
 
 Para histórico completo de evolução, ensaios e testes de desenvolvimento, consulte o **pacote de código-fonte**, distribuído separadamente.
+
+
+### Integração QRibbonSkin (rc9)
+
+A guia Raster e o menu nativo de Complementos apresentam **uma única ação**
+com ícone próprio e submenu com os sete módulos. Na interface Ribbon, abra
+**Raster → Vista Saga Plugin** ou **Complementos → Vista Saga Plugin**; não
+há mais sete botões distribuídos em três comandos e “Outras ferramentas”.
+Na interface padrão, a barra exclusiva mantém o mesmo botão com ícone de
+24 pixels. Ao atualizar o ZIP, reinicie o QGIS e reative a Ribbon, pois o
+QRibbonSkin monta os controles a partir dos menus nativos ao ser ativado.
+
+
+### Integração visual com QRibbonSkin (rc10)
+
+A ação principal aparece somente como **Vista Saga Plugin** (português e inglês),
+com o menu suspenso nativo dos sete módulos. O QMenu continua sob o controle
+do QGIS/Qt, e o QRibbonSkin utiliza seus próprios controles para renderizá-lo
+em seu padrão visual. A imagem do ícone tem uma versão otimizada em 19 × 19 px,
+resolução usada pelo QRibbonSkin v1.1.44 nos botões principais. Na interface
+clássica, conserva-se o ícone de 24 × 24 px.
+
+Não há dependência de importação do QRibbonSkin, personalização global de tema
+nem mudança no processamento. Após a instalação, reinicie o QGIS e reative a
+Ribbon para garantir a reconstrução dos menus.
+
+
+## Site oficial
+
+[Vista Saga Plugin — página WordPress](https://vistasagaplugin.wordpress.com/) · [Código-fonte e colaboração no GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin).

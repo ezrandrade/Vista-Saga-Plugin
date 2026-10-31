@@ -2,6 +2,7 @@
 from collections import Counter
 import numpy as np
 from osgeo import gdal, ogr, osr
+from ..i18n import tr
 from qgis.core import (
     Qgis, QgsProcessingAlgorithm, QgsProcessingException,
     QgsProcessingParameterRasterLayer, QgsProcessingParameterFeatureSource,
@@ -22,30 +23,23 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
         return 'assinatura'
 
     def displayName(self):
-        return 'Assinatura espacial — classes em polígonos'
+        return tr('Assinatura espacial — classes em polígonos')
 
     def group(self):
-        return 'Análise ambiental'
+        return tr('Análise ambiental')
 
     def groupId(self):
         return 'analise'
 
     def shortHelpString(self):
-        return (
-            'Calcula a assinatura temática da área definida pela UNIÃO de todos '
-            'os polígonos de entrada: classes de um raster categórico, pixels, '
-            'porcentagem e área (ha em SRC projetado). Polígonos sobrepostos '
-            'não duplicam a contagem. A seleção de pixels é por centro de célula '
-            '(ALL_TOUCHED=FALSE). Não faz relatório individual por feição nesta versão. '
-            'O vetor é reprojetado para o SRC do raster, se necessário.'
-        )
+        return tr('Calcula a assinatura temática da área definida pela UNIÃO de todos os polígonos de entrada: classes de um raster categórico, pixels, porcentagem e área (ha em SRC projetado). Polígonos sobrepostos não duplicam a contagem. A seleção de pixels é por centro de célula (ALL_TOUCHED=FALSE). Não faz relatório individual por feição nesta versão. O vetor é reprojetado para o SRC do raster, se necessário.')
 
     def initAlgorithm(self, config=None):
-        self.addParameter(QgsProcessingParameterRasterLayer(self.RASTER, 'Raster de classes'))
+        self.addParameter(QgsProcessingParameterRasterLayer(self.RASTER, tr('Raster de classes')))
         self.addParameter(QgsProcessingParameterFeatureSource(
-            self.POLIGONOS, 'Área de análise (polígonos)', types=[Qgis.ProcessingSourceType.VectorPolygon]))
+            self.POLIGONOS, tr('Área de análise (polígonos)'), types=[Qgis.ProcessingSourceType.VectorPolygon]))
         self.addParameter(QgsProcessingParameterFileDestination(
-            self.TABELA, 'Assinatura temática (.csv)', 'CSV (*.csv)'))
+            self.TABELA, tr('Assinatura temática (.csv)'), 'CSV (*.csv)'))
 
     def processAlgorithm(self, parameters, context, feedback):
         raster = dataset_for_layer(self.parameterAsRasterLayer(parameters, self.RASTER, context))

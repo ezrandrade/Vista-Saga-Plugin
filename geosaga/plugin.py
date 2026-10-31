@@ -1,9 +1,13 @@
 """Integração Vista Saga Plugin no QGIS 4.x, com módulos incrementais."""
-from qgis.PyQt.QtGui import QAction
-from qgis.PyQt.QtWidgets import QMessageBox, QStyle
+from pathlib import Path
+
+from qgis.PyQt.QtGui import QAction, QIcon
+from qgis.PyQt.QtCore import QSize
+from qgis.PyQt.QtWidgets import QMessageBox, QMenu, QToolButton
 from qgis.core import QgsApplication
 
 from .provider import GeoSAGAProvider
+from .i18n import tr
 
 
 class VistaSagaPlugin:
@@ -14,54 +18,94 @@ class VistaSagaPlugin:
         self.provider = None
         self.actions = []
         self.dialog = None  # preserva estado da Avaliação, projetos v0.2+
-        self.home_dialog = None
         self.rs2_dialog = None
         self.monitoring_dialog = None
         self.signature_dialog = None
         self.combination_dialog = None
         self.voronoi_dialog = None
         self.sequence_dialog = None
-        self.toolbar_action = None
+        self.toolbar = None
+        self.toolbar_button = None
+        self.toolbar_widget_action = None
+        self.modules_action = None
+        self.toolbar_menu = None
 
     def initGui(self):
         self.provider = GeoSAGAProvider()
         if not QgsApplication.processingRegistry().addProvider(self.provider):
             self.provider = None
-            raise RuntimeError('Não foi possível registrar os algoritmos Vista Saga.')
+            raise RuntimeError(tr('Não foi possível registrar os algoritmos Vista Saga.'))
 
-        self._add_menu_action('Painel de módulos', self.open_home, toolbar=True)
-        self._add_menu_action('Assinatura', self.open_signature)
-        self._add_menu_action('Monitoria', self.open_monitoring)
-        self._add_menu_action('Avaliação', self.open_interactive)
-        self._add_menu_action('Análises Voronoi', self.open_voronoi)
-        self._add_menu_action('Combinação de Mapas', self.open_combination)
-        self._add_menu_action('Conversão de Formatos', self.open_rs2_converter)
-        self._add_menu_action('Sequenciador de Mapas', self.open_sequence)
-        # Os algoritmos geosaga:* mantêm os IDs legados para projetos/modelos antigos.
+        # Uma única ação nativa com ícone e menu, reutilizada pela barra
+        # clássica do QGIS e pelo menu de Complementos do próprio QGIS.
+        # QRibbonSkin oculta as barras QGIS, mas importa os QMenus nativos
+        # para sua guia Complementos. Não acessar classes internas do Ribbon.
+        icon_path = Path(__file__).resolve().parent / 'icon.png'
+        if not icon_path.is_file():
+            raise RuntimeError('Vista Saga Plugin: icon.png não encontrado no pacote.')
+        plugin_icon = QIcon(str(icon_path))
+        for size in (16, 19, 24, 32, 48, 50, 64, 128, 512):
+            candidate = icon_path.parent / 'icons' / f'icon_{size}.png'
+            if candidate.is_file():
+                plugin_icon.addFile(str(candidate), QSize(size, size))
+        if plugin_icon.isNull() or plugin_icon.pixmap(QSize(24, 24)).isNull():
+            raise RuntimeError('Vista Saga Plugin: falha ao decodificar o ícone PNG.')
 
-    def _add_menu_action(self, title, callback, toolbar=False):
-        action = QAction(title, self.iface.mainWindow())
+        self.toolbar_menu = QMenu(self.iface.mainWindow())
+        modules = (
+            ('Assinatura', self.open_signature),
+            ('Monitoria', self.open_monitoring),
+            ('Avaliação', self.open_interactive),
+            ('Análises Voronoi', self.open_voronoi),
+            ('Combinação de Mapas', self.open_combination),
+            ('Conversão de Formatos', self.open_rs2_converter),
+            ('Sequenciador de Mapas', self.open_sequence),
+        )
+        for title, callback in modules:
+            self._add_menu_action(title, callback)
+
+        self.modules_action = QAction(plugin_icon, 'Vista Saga Plugin',
+                                      self.iface.mainWindow())
+        self.modules_action.setObjectName('vistaSagaModulesAction')
+        self.modules_action.setToolTip(tr('Vista Saga Plugin — selecionar módulo'))
+        self.modules_action.setMenu(self.toolbar_menu)
+        # Set also on QMenu: QRibbonSkin can read the icon from the native
+        # menuAction() when it builds its Ribbon groups from QGIS menus.
+        self.toolbar_menu.setTitle('Vista Saga Plugin')
+        self.toolbar_menu.setIcon(plugin_icon)
+        self.toolbar_menu.setObjectName('vistaSagaModulesMenu')
+
+        # Um único comando em Raster > Vista Saga Plugin, não sete ações
+        # separadas. A Ribbon deve apresentar o ícone e um único menu de
+        # sete módulos, sem subdividi-los em botões/overflow.
+        self.iface.addPluginToRasterMenu(self.MENU, self.modules_action)
+
+        # Registro nativo: aparece em Complementos > Vista Saga Plugin e é
+        # aproveitado pelo QRibbonSkin quando ele constrói a guia Complementos.
+        # O ícone não fica condicionado à visibilidade de barras QToolBar.
+        self.iface.addPluginToMenu(self.MENU, self.modules_action)
+
+        # QToolBar.addAction cria um botão nativo que herda o tamanho de ícones
+        # do QGIS. Limitamos a 24 px para não ampliar a barra clássica.
+        self.toolbar = self.iface.addToolBar('Vista Saga Plugin')
+        if self.toolbar is None:
+            raise RuntimeError('Vista Saga Plugin: não foi possível criar a barra de ferramentas.')
+        self.toolbar.setObjectName('VistaSagaPluginToolbar')
+        self.toolbar.setWindowTitle('Vista Saga Plugin')
+        self.toolbar.setIconSize(QSize(24, 24))
+        self.toolbar_widget_action = self.toolbar.addAction(self.modules_action)
+        self.toolbar_button = self.toolbar.widgetForAction(self.modules_action)
+        if isinstance(self.toolbar_button, QToolButton):
+            self.toolbar_button.setObjectName('vistaSagaModulesButton')
+            self.toolbar_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            self.toolbar_button.setAutoRaise(True)
+        self.toolbar.setVisible(True)
+
+    def _add_menu_action(self, title, callback):
+        action = QAction(tr(title), self.iface.mainWindow())
         action.triggered.connect(callback)
-        self.iface.addPluginToRasterMenu(self.MENU, action)
-        if toolbar:
-            action.setToolTip('Vista Saga Plugin — painel de módulos')
-            action.setIcon(self.iface.mainWindow().style().standardIcon(
-                QStyle.StandardPixmap.SP_FileDialogDetailedView))
-            self.iface.addToolBarIcon(action)
-            self.toolbar_action = action
+        self.toolbar_menu.addAction(action)
         self.actions.append(action)
-
-    def open_home(self, checked=False):
-        try:
-            from .home_dialog import HomeDialog
-            if self.home_dialog is None:
-                self.home_dialog = HomeDialog(self, self.iface.mainWindow())
-            self.home_dialog.show()
-            self.home_dialog.raise_()
-            self.home_dialog.activateWindow()
-        except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Interface',
-                                 f'Não foi possível abrir o painel:\n{exc}')
 
     def open_rs2_converter(self, checked=False):
         try:
@@ -72,7 +116,7 @@ class VistaSagaPlugin:
             self.rs2_dialog.raise_()
             self.rs2_dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — RS2',
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — RS2'),
                                  f'Não foi possível abrir o conversor:\n{exc}')
 
     def open_monitoring(self, checked=False):
@@ -84,7 +128,7 @@ class VistaSagaPlugin:
             self.monitoring_dialog.raise_()
             self.monitoring_dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Monitoria',
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — Monitoria'),
                                  f'Não foi possível abrir a monitoria:\n{exc}')
 
     def open_signature(self, checked=False):
@@ -96,7 +140,7 @@ class VistaSagaPlugin:
             self.signature_dialog.raise_()
             self.signature_dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Assinatura',
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — Assinatura'),
                                  f'Não foi possível abrir a assinatura:\n{exc}')
 
     def open_combination(self, checked=False):
@@ -108,7 +152,7 @@ class VistaSagaPlugin:
             self.combination_dialog.raise_()
             self.combination_dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Combinação de Mapas',
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — Combinação de Mapas'),
                                  f'Não foi possível abrir a combinação de mapas:\n{exc}')
 
     def open_voronoi(self, checked=False):
@@ -120,7 +164,7 @@ class VistaSagaPlugin:
             self.voronoi_dialog.raise_()
             self.voronoi_dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Análises Voronoi',
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — Análises Voronoi'),
                                  f'Não foi possível abrir o Voronoi:\n{exc}')
 
     def open_sequence(self, checked=False):
@@ -132,7 +176,7 @@ class VistaSagaPlugin:
             self.sequence_dialog.raise_()
             self.sequence_dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Sequenciador de Mapas',
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — Sequenciador de Mapas'),
                                  f'Não foi possível abrir o Sequenciador:\n{exc}')
 
     def open_interactive(self, checked=False):
@@ -145,7 +189,7 @@ class VistaSagaPlugin:
             self.dialog.raise_()
             self.dialog.activateWindow()
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Avaliação',
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — Avaliação'),
                                  f'Não foi possível abrir a avaliação:\n{exc}')
 
     def open_algorithm(self, algorithm):
@@ -158,7 +202,7 @@ class VistaSagaPlugin:
             import processing
             processing.execAlgorithmDialog(algorithm_id, {})
         except Exception as exc:
-            QMessageBox.critical(self.iface.mainWindow(), 'Vista Saga — Processing',
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — Processing'),
                                  'Não foi possível abrir o módulo. Confira se o Processing '
                                  f'do QGIS está ativado.\n\n{exc}')
 
@@ -200,17 +244,27 @@ class VistaSagaPlugin:
             self.dialog.hide()
             self.dialog.deleteLater()
             self.dialog = None
-        if self.home_dialog is not None:
-            self.home_dialog.hide()
-            self.home_dialog.deleteLater()
-            self.home_dialog = None
-        if self.toolbar_action is not None:
-            self.iface.removeToolBarIcon(self.toolbar_action)
-            self.toolbar_action = None
+        # Primeiro retirar a ação do menu de Complementos: evita pendências
+        # visuais na Ribbon quando o Vista Saga for desativado ou atualizado.
+        if self.modules_action is not None:
+            self.iface.removePluginMenu(self.MENU, self.modules_action)
+            self.iface.removePluginRasterMenu(self.MENU, self.modules_action)
+        # O QToolBar e os botões nativos pertencem à janela do QGIS.
+        if self.toolbar is not None:
+            self.iface.mainWindow().removeToolBar(self.toolbar)
+            self.toolbar.deleteLater()
+            self.toolbar = None
+        self.toolbar_button = None
+        self.toolbar_widget_action = None
+        if self.modules_action is not None:
+            self.modules_action.deleteLater()
+            self.modules_action = None
         for action in self.actions:
-            self.iface.removePluginRasterMenu(self.MENU, action)
             action.deleteLater()
         self.actions.clear()
+        if self.toolbar_menu is not None:
+            self.toolbar_menu.deleteLater()
+            self.toolbar_menu = None
         if self.provider is not None:
             QgsApplication.processingRegistry().removeProvider(self.provider)
             self.provider = None

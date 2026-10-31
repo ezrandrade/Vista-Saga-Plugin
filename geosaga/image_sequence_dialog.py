@@ -5,6 +5,7 @@ uma camada com campo temporal, usa QgsVectorLayer.materialize() e cópias das
 configurações de simbologia/rotulagem, sem modificar a camada do projeto.
 O GIF continua sendo gerado pelo codificador interno em Python puro.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt, QSize, QRect
@@ -40,7 +41,7 @@ class ImageSequenceDialog(QDialog):
         self.imported_layers = []
         self._busy = False
         self._movie = None
-        self.setWindowTitle('Vista Saga Plugin — Sequenciador de Mapas')
+        self.setWindowTitle(tr('Vista Saga Plugin — Sequenciador de Mapas'))
         self.setModal(False)
         self.resize(850, 725)
         self.setMinimumWidth(700)
@@ -56,19 +57,19 @@ class ImageSequenceDialog(QDialog):
         scroll.setWidget(panel)
         root = QVBoxLayout(panel)
         root.setContentsMargins(10, 10, 10, 10)
-        intro = QLabel('Organize mapas cronologicamente e exporte quadros de mesma extensão e SRC. '
-                       'As abas possuem sequências independentes. O GIF não é georreferenciado.')
+        intro = QLabel(tr('Organize mapas cronologicamente e exporte quadros de mesma extensão e SRC. '
+                       'As abas possuem sequências independentes. O GIF não é georreferenciado.'))
         intro.setWordWrap(True)
         root.addWidget(intro)
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._raster_tab(), 'Raster')
-        self.tabs.addTab(self._vector_tab(), 'Vetorial')
-        self.tabs.addTab(self._mixed_tab(), 'Misto')
+        self.tabs.addTab(self._raster_tab(), tr('Raster'))
+        self.tabs.addTab(self._vector_tab(), tr('Vetorial'))
+        self.tabs.addTab(self._mixed_tab(), tr('Misto'))
         self.tabs.currentChanged.connect(self._switch_mode)
         root.addWidget(self.tabs)
 
-        sequence = QGroupBox('1. Sequência de quadros da aba selecionada')
+        sequence = QGroupBox(tr('1. Sequência de quadros da aba selecionada'))
         sf = QVBoxLayout(sequence)
         self.listbox = QListWidget()
         self.listbox.setAlternatingRowColors(True)
@@ -81,13 +82,13 @@ class ImageSequenceDialog(QDialog):
             ('Descer', lambda: self._move(1)), ('Editar data…', self._edit_date),
             ('Ordenar por data', self._sort),
         ):
-            button = QPushButton(label)
+            button = QPushButton(tr(label))
             button.clicked.connect(callback)
             controls.addWidget(button)
         sf.addLayout(controls)
         root.addWidget(sequence)
 
-        options = QGroupBox('2. Dimensões e composição')
+        options = QGroupBox(tr('2. Dimensões e composição'))
         of = QFormLayout(options)
         self.width_spin = QSpinBox()
         self.width_spin.setRange(200, 1600)
@@ -96,63 +97,63 @@ class ImageSequenceDialog(QDialog):
         self.height_spin.setRange(150, 1200)
         self.height_spin.setValue(450)
         row = QHBoxLayout()
-        for widget in (QLabel('Largura:'), self.width_spin, QLabel('Altura:'), self.height_spin):
+        for widget in (QLabel(tr('Largura:')), self.width_spin, QLabel(tr('Altura:')), self.height_spin):
             row.addWidget(widget)
         row.addStretch(1)
-        of.addRow('Pixels por quadro:', row)
+        of.addRow(tr('Pixels por quadro:'), row)
         self.delay = QSpinBox()
         self.delay.setRange(20, 10000)
         self.delay.setSingleStep(100)
         self.delay.setValue(1000)
-        self.delay.setSuffix(' ms / quadro')
-        of.addRow('Duração:', self.delay)
-        self.label_date = QCheckBox('Exibir data/período sobre o mapa')
+        self.delay.setSuffix(tr(' ms / quadro'))
+        of.addRow(tr('Duração:'), self.delay)
+        self.label_date = QCheckBox(tr('Exibir data/período sobre o mapa'))
         self.label_date.setChecked(True)
-        self.label_name = QCheckBox('Exibir nome das camadas')
-        self.label_legend = QCheckBox('Exibir legenda temática (até 10 categorias)')
+        self.label_name = QCheckBox(tr('Exibir nome das camadas'))
+        self.label_legend = QCheckBox(tr('Exibir legenda temática (até 10 categorias)'))
         for box in (self.label_date, self.label_name, self.label_legend):
             of.addRow('', box)
-        note = QLabel('Simbologia e rótulos são renderizados pelo QGIS. A paleta GIF preserva '
-                      'até 256 cores; cenas mais complexas são quantizadas. PNGs mantêm as cores.')
+        note = QLabel(tr('Simbologia e rótulos são renderizados pelo QGIS. A paleta GIF preserva '
+                      'até 256 cores; cenas mais complexas são quantizadas. PNGs mantêm as cores.'))
         note.setWordWrap(True)
         of.addRow('', note)
         root.addWidget(options)
 
-        output = QGroupBox('3. Saídas e prévia')
+        output = QGroupBox(tr('3. Saídas e prévia'))
         fo = QFormLayout(output)
         path_row = QHBoxLayout()
         self.output = QLineEdit()
-        self.output.setPlaceholderText('Sequencia_Temporal.gif')
+        self.output.setPlaceholderText(tr('Sequencia_Temporal.gif'))
         path_row.addWidget(self.output, 1)
-        browse = QPushButton('Salvar como…')
+        browse = QPushButton(tr('Salvar como…'))
         browse.clicked.connect(self._save_as)
         path_row.addWidget(browse)
-        fo.addRow('GIF animado:', path_row)
-        self.export_png = QCheckBox('Exportar também os quadros individuais em PNG')
+        fo.addRow(tr('GIF animado:'), path_row)
+        self.export_png = QCheckBox(tr('Exportar também os quadros individuais em PNG'))
         fo.addRow('', self.export_png)
         png_row = QHBoxLayout()
         self.png_directory = QLineEdit()
-        self.png_directory.setPlaceholderText('Automático: pasta ao lado do GIF')
+        self.png_directory.setPlaceholderText(tr('Automático: pasta ao lado do GIF'))
         png_row.addWidget(self.png_directory, 1)
-        png_browse = QPushButton('Pasta…')
+        png_browse = QPushButton(tr('Pasta…'))
         png_browse.clicked.connect(self._choose_png_folder)
         png_row.addWidget(png_browse)
-        fo.addRow('Pasta dos PNGs:', png_row)
-        self.preview = QLabel('A prévia será exibida após a exportação.')
+        fo.addRow(tr('Pasta dos PNGs:'), png_row)
+        self.preview = QLabel(tr('A prévia será exibida após a exportação.'))
         self.preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview.setMinimumHeight(115)
         self.preview.setStyleSheet('border: 1px solid palette(mid);')
-        fo.addRow('Prévia:', self.preview)
+        fo.addRow(tr('Prévia:'), self.preview)
         root.addWidget(output)
 
         bottom = QHBoxLayout()
-        self.status = QLabel('Adicione pelo menos dois quadros.')
+        self.status = QLabel(tr('Adicione pelo menos dois quadros.'))
         self.status.setWordWrap(True)
         bottom.addWidget(self.status, 1)
-        self.run_button = QPushButton('Gerar GIF')
+        self.run_button = QPushButton(tr('Gerar GIF'))
         self.run_button.clicked.connect(self._run)
         bottom.addWidget(self.run_button)
-        self.close_button = QPushButton('Fechar')
+        self.close_button = QPushButton(tr('Fechar'))
         self.close_button.clicked.connect(self.close)
         bottom.addWidget(self.close_button)
         outer.addLayout(bottom)
@@ -168,14 +169,14 @@ class ImageSequenceDialog(QDialog):
         page = QWidget()
         layout = QFormLayout(page)
         self.selected = self._selector(Qgis.LayerFilter.RasterLayer)
-        layout.addRow('Camada raster:', self.selected)
+        layout.addRow(tr('Camada raster:'), self.selected)
         row = QHBoxLayout()
         for label, callback in (
             ('Adicionar', self._add_selected),
             ('Adicionar várias do QGIS…', self._add_multiple),
             ('Adicionar arquivos…', self._add_files),
         ):
-            button = QPushButton(label)
+            button = QPushButton(tr(label))
             button.clicked.connect(callback)
             row.addWidget(button)
         layout.addRow('', row)
@@ -185,29 +186,29 @@ class ImageSequenceDialog(QDialog):
         page = QWidget()
         layout = QFormLayout(page)
         self.vector_selected = self._selector(Qgis.LayerFilter.VectorLayer)
-        layout.addRow('Camada vetorial:', self.vector_selected)
+        layout.addRow(tr('Camada vetorial:'), self.vector_selected)
         row = QHBoxLayout()
         for label, callback in (
             ('Adicionar', self._add_vector_selected),
             ('Adicionar várias do QGIS…', self._add_vector_multiple),
             ('Adicionar arquivos…', self._add_vector_files),
         ):
-            button = QPushButton(label)
+            button = QPushButton(tr(label))
             button.clicked.connect(callback)
             row.addWidget(button)
         layout.addRow('', row)
         self.vector_field = QComboBox()
-        layout.addRow('Campo temporal:', self.vector_field)
+        layout.addRow(tr('Campo temporal:'), self.vector_field)
         self.vector_selected.layerChanged.connect(
             lambda *_: self._update_fields(self.vector_selected, self.vector_field))
         self._update_fields(self.vector_selected, self.vector_field)
-        self.vector_cumulative = QCheckBox('Mostrar feições de todos os períodos anteriores (acumulativo)')
+        self.vector_cumulative = QCheckBox(tr('Mostrar feições de todos os períodos anteriores (acumulativo)'))
         layout.addRow('', self.vector_cumulative)
-        temporal_button = QPushButton('Gerar quadros por valores do campo temporal')
+        temporal_button = QPushButton(tr('Gerar quadros por valores do campo temporal'))
         temporal_button.clicked.connect(self._add_vector_temporal)
         layout.addRow('', temporal_button)
-        explanation = QLabel('A opção temporal cria quadros a partir de uma única camada vetorial, '
-                             'sem alterar a camada original ou seus filtros no projeto.')
+        explanation = QLabel(tr('A opção temporal cria quadros a partir de uma única camada vetorial, '
+                             'sem alterar a camada original ou seus filtros no projeto.'))
         explanation.setWordWrap(True)
         layout.addRow('', explanation)
         return page
@@ -217,24 +218,24 @@ class ImageSequenceDialog(QDialog):
         layout = QFormLayout(page)
         self.mixed_raster = self._selector(Qgis.LayerFilter.RasterLayer)
         self.mixed_vector = self._selector(Qgis.LayerFilter.VectorLayer)
-        layout.addRow('Raster de fundo:', self.mixed_raster)
-        layout.addRow('Vetor sobreposto:', self.mixed_vector)
-        add_frame = QPushButton('Adicionar quadro misto (raster + vetor)')
+        layout.addRow(tr('Raster de fundo:'), self.mixed_raster)
+        layout.addRow(tr('Vetor sobreposto:'), self.mixed_vector)
+        add_frame = QPushButton(tr('Adicionar quadro misto (raster + vetor)'))
         add_frame.clicked.connect(self._add_mixed)
         layout.addRow('', add_frame)
         self.mixed_field = QComboBox()
-        layout.addRow('Campo temporal do vetor:', self.mixed_field)
+        layout.addRow(tr('Campo temporal do vetor:'), self.mixed_field)
         self.mixed_vector.layerChanged.connect(
             lambda *_: self._update_fields(self.mixed_vector, self.mixed_field))
         self._update_fields(self.mixed_vector, self.mixed_field)
-        self.mixed_cumulative = QCheckBox('Manter vetores dos períodos anteriores (acumulativo)')
+        self.mixed_cumulative = QCheckBox(tr('Manter vetores dos períodos anteriores (acumulativo)'))
         layout.addRow('', self.mixed_cumulative)
-        temporal_button = QPushButton('Gerar quadros pelo campo temporal + fundo raster fixo')
+        temporal_button = QPushButton(tr('Gerar quadros pelo campo temporal + fundo raster fixo'))
         temporal_button.clicked.connect(self._add_mixed_temporal)
         layout.addRow('', temporal_button)
-        explanation = QLabel('Quadros mistos sobrepõem o vetor ao raster. É possível construir '
+        explanation = QLabel(tr('Quadros mistos sobrepõem o vetor ao raster. É possível construir '
                              'uma série manual com diferentes pares ou usar um raster constante '
-                             'e um vetor filtrado por data.')
+                             'e um vetor filtrado por data.'))
         explanation.setWordWrap(True)
         layout.addRow('', explanation)
         return page
@@ -248,10 +249,10 @@ class ImageSequenceDialog(QDialog):
 
     def _add_entry(self, layers, date='', temporal=None):
         if not layers or any(not layer or not layer.isValid() for layer in layers):
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione camadas válidas.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione camadas válidas.'))
             return
         if len(self.entries) >= 120:
-            QMessageBox.warning(self, 'Sequenciador', 'Limite de 120 quadros por sequência.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Limite de 120 quadros por sequência.'))
             return
         entry = {'layer': layers[0], 'layers': list(layers), 'date': date}
         if temporal is not None:
@@ -262,7 +263,7 @@ class ImageSequenceDialog(QDialog):
     def _add(self, layer):
         """Compatibilidade com o sequenciador raster anterior."""
         if not isinstance(layer, QgsRasterLayer) or not layer.isValid():
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione um mapa raster válido.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione um mapa raster válido.'))
             return
         self._add_entry([layer], extract_year(layer.name()))
 
@@ -271,7 +272,7 @@ class ImageSequenceDialog(QDialog):
         if layer is not None:
             self._add(layer)
         else:
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione uma camada raster.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione uma camada raster.'))
 
     def _add_multiple(self):
         for layer in choose_project_layers(self, 'raster', 'Adicionar rasters à sequência'):
@@ -279,7 +280,7 @@ class ImageSequenceDialog(QDialog):
 
     def _add_files(self):
         paths, _ = QFileDialog.getOpenFileNames(
-            self, 'Selecionar mapas raster', '',
+            self, tr('Selecionar mapas raster'), '',
             'Rasters (*.tif *.tiff *.vrt *.png *.jpg *.jpeg);;Todos (*.*)')
         for path in paths:
             layer = QgsRasterLayer(path, Path(path).stem, 'gdal')
@@ -287,18 +288,18 @@ class ImageSequenceDialog(QDialog):
                 self.imported_layers.append(layer)
                 self._add(layer)
             else:
-                QMessageBox.warning(self, 'Arquivo raster inválido', path)
+                QMessageBox.warning(self, tr('Arquivo raster inválido'), path)
 
     def _add_vector(self, layer):
         if not isinstance(layer, QgsVectorLayer) or not layer.isValid():
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione um vetor válido.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione um vetor válido.'))
             return
         self._add_entry([layer], extract_year(layer.name()))
 
     def _add_vector_selected(self):
         layer = self.vector_selected.currentLayer()
         if layer is None:
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione um vetor.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione um vetor.'))
         else:
             self._add_vector(layer)
 
@@ -308,7 +309,7 @@ class ImageSequenceDialog(QDialog):
 
     def _add_vector_files(self):
         paths, _ = QFileDialog.getOpenFileNames(
-            self, 'Selecionar dados vetoriais', '',
+            self, tr('Selecionar dados vetoriais'), '',
             'Vetores (*.gpkg *.geojson *.json *.shp *.kml);;Todos (*.*)')
         for path in paths:
             layer = QgsVectorLayer(path, Path(path).stem, 'ogr')
@@ -316,7 +317,7 @@ class ImageSequenceDialog(QDialog):
                 self.imported_layers.append(layer)
                 self._add_vector(layer)
             else:
-                QMessageBox.warning(self, 'Arquivo vetorial inválido', path)
+                QMessageBox.warning(self, tr('Arquivo vetorial inválido'), path)
 
     @staticmethod
     def _update_fields(layer_combo, field_combo):
@@ -333,20 +334,20 @@ class ImageSequenceDialog(QDialog):
     def _add_mixed(self):
         raster, vector = self.mixed_raster.currentLayer(), self.mixed_vector.currentLayer()
         if not isinstance(raster, QgsRasterLayer) or not raster.isValid():
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione um raster de fundo válido.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione um raster de fundo válido.'))
             return
         if not isinstance(vector, QgsVectorLayer) or not vector.isValid():
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione um vetor válido.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione um vetor válido.'))
             return
         self._add_entry([vector, raster], extract_year(vector.name()) or extract_year(raster.name()))
 
     def _add_temporal(self, source, field_combo, cumulative, background=()):
         if not isinstance(source, QgsVectorLayer) or not source.isValid():
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione uma camada vetorial válida.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione uma camada vetorial válida.'))
             return
         field = field_combo.currentText()
         if not field or source.fields().indexFromName(field) < 0:
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione um campo temporal válido.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione um campo temporal válido.'))
             return
         try:
             # Limite para evitar leitura ilimitada de fontes gigantes em uma ação da GUI.
@@ -363,7 +364,7 @@ class ImageSequenceDialog(QDialog):
             self.entries.extend(frames)
             self._refresh()
         except Exception as exc:
-            QMessageBox.warning(self, 'Sequenciador — campo temporal', str(exc))
+            QMessageBox.warning(self, tr('Sequenciador — campo temporal'), str(exc))
 
     def _add_vector_temporal(self):
         self._add_temporal(self.vector_selected.currentLayer(), self.vector_field,
@@ -372,7 +373,7 @@ class ImageSequenceDialog(QDialog):
     def _add_mixed_temporal(self):
         raster = self.mixed_raster.currentLayer()
         if not isinstance(raster, QgsRasterLayer) or not raster.isValid():
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione um raster de fundo válido.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione um raster de fundo válido.'))
             return
         self._add_temporal(self.mixed_vector.currentLayer(), self.mixed_field,
                            self.mixed_cumulative.isChecked(), background=(raster,))
@@ -384,7 +385,7 @@ class ImageSequenceDialog(QDialog):
             period = entry['date'] or 'Sem data'
             suffix = ' [campo temporal]' if entry.get('temporal') else ''
             self.listbox.addItem(f'{index:02d}.  {period} — {names}{suffix}')
-        self.status.setText(f'{len(self.entries)} quadros na aba {self.tabs.tabText(self.tabs.currentIndex())}.')
+        self.status.setText(tr('{count} quadros na aba {tab}.').format(count=len(self.entries), tab=self.tabs.tabText(self.tabs.currentIndex())))
 
     def _remove(self):
         for index in sorted((self.listbox.row(item) for item in self.listbox.selectedItems()), reverse=True):
@@ -404,7 +405,7 @@ class ImageSequenceDialog(QDialog):
         row = self.listbox.currentRow()
         if row < 0:
             return
-        text, ok = QInputDialog.getText(self, 'Período do quadro', 'Ano ou data:',
+        text, ok = QInputDialog.getText(self, tr('Período do quadro'), tr('Ano ou data:'),
                                         text=self.entries[row]['date'])
         if ok:
             self.entries[row]['date'] = text.strip()[:40]
@@ -417,13 +418,13 @@ class ImageSequenceDialog(QDialog):
 
     def _save_as(self):
         path, _ = QFileDialog.getSaveFileName(
-            self, 'Salvar animação GIF', self.output.text() or 'Sequencia_Temporal.gif',
+            self, tr('Salvar animação GIF'), self.output.text() or 'Sequencia_Temporal.gif',
             'GIF animado (*.gif)')
         if path:
             self.output.setText(path if path.lower().endswith('.gif') else path + '.gif')
 
     def _choose_png_folder(self):
-        path = QFileDialog.getExistingDirectory(self, 'Pasta para quadros PNG',
+        path = QFileDialog.getExistingDirectory(self, tr('Pasta para quadros PNG'),
                                                 self.png_directory.text() or '')
         if path:
             self.png_directory.setText(path)
@@ -590,33 +591,33 @@ class ImageSequenceDialog(QDialog):
         if self._busy:
             return
         if len(self.entries) < 2:
-            QMessageBox.warning(self, 'Sequenciador', 'Adicione pelo menos dois quadros.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Adicione pelo menos dois quadros.'))
             return
         path = self.output.text().strip()
         if not path or not path.lower().endswith('.gif'):
-            QMessageBox.warning(self, 'Sequenciador', 'Selecione um destino .gif.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Selecione um destino .gif.'))
             return
         if any(not layer.isValid() for entry in self.entries
                for layer in entry.get('layers', [entry['layer']])):
-            QMessageBox.warning(self, 'Sequenciador', 'Há uma camada inválida na sequência.')
+            QMessageBox.warning(self, tr('Sequenciador'), tr('Há uma camada inválida na sequência.'))
             return
         width, height = self.width_spin.value(), self.height_spin.value()
         if width*height*len(self.entries) > 30_000_000:
-            QMessageBox.warning(self, 'Sequenciador',
-                'A sequência excede 30 milhões de pixels cumulativos. '
-                'Reduza as dimensões ou divida a sequência.')
+            QMessageBox.warning(self, tr('Sequenciador'),
+                tr('A sequência excede 30 milhões de pixels cumulativos. '
+                'Reduza as dimensões ou divida a sequência.'))
             return
         png_folder = None
         if self.export_png.isChecked():
             png_folder = Path(self.png_directory.text().strip() or
                               str(Path(path).with_suffix('')) + '_quadros_png')
             if png_folder.is_file():
-                QMessageBox.warning(self, 'Sequenciador', 'O destino dos PNGs não é uma pasta.')
+                QMessageBox.warning(self, tr('Sequenciador'), tr('O destino dos PNGs não é uma pasta.'))
                 return
         self._busy = True
         self.run_button.setEnabled(False)
         self.close_button.setEnabled(False)
-        progress = QProgressDialog('Renderizando quadros…', 'Cancelar', 0, len(self.entries), self)
+        progress = QProgressDialog(tr('Renderizando quadros…'), tr('Cancelar'), 0, len(self.entries), self)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.setMinimumDuration(0)
         frames = []
@@ -659,7 +660,7 @@ class ImageSequenceDialog(QDialog):
             note = 'com quantização GIF' if result['palette_quantized'] else 'com cores preservadas'
             self.status.setText(f'GIF criado com {len(frames)} quadros ({note}); '
                                 f'{len(png_paths)} PNGs individuais.')
-            QMessageBox.information(self, 'Sequenciador de Mapas',
+            QMessageBox.information(self, tr('Sequenciador de Mapas'),
                 'GIF salvo em:\n'+str(result['path'])+'\n'+
                 (f'Quadros PNG: {png_folder}\n' if png_folder is not None else '')+
                 ('GIF quantizado para 256 cores.' if result['palette_quantized']
@@ -668,8 +669,8 @@ class ImageSequenceDialog(QDialog):
             self.status.setText(f'Exportação cancelada. {len(png_paths)} PNGs podem permanecer '
                                 'na pasta de destino; dados do projeto preservados.')
         except Exception as exc:
-            self.status.setText('Falha na exportação; dados do projeto preservados.')
-            QMessageBox.critical(self, 'Sequenciador de Mapas — erro', str(exc))
+            self.status.setText(tr('Falha na exportação; dados do projeto preservados.'))
+            QMessageBox.critical(self, tr('Sequenciador de Mapas — erro'), str(exc))
         finally:
             progress.close()
             self._busy = False

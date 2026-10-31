@@ -2,6 +2,7 @@
 
 Esta janela não altera o formulário raster nem oferece fluxo Processing.
 """
+from .i18n import tr
 import os
 from collections import Counter
 
@@ -21,7 +22,7 @@ from .vector_evaluation_writer import evaluate_vector_layer
 
 
 def button(text, callback):
-    widget = QPushButton(text)
+    widget = QPushButton(tr(text))
     widget.clicked.connect(callback)
     return widget
 
@@ -45,7 +46,7 @@ class VectorEvaluationDialog(QWidget):
         self.active = -1
         self._rendering = False
         self.running = False
-        self.setWindowTitle('Vista Saga Plugin — Avaliação vetorial')
+        self.setWindowTitle(tr('Vista Saga Plugin — Avaliação vetorial'))
         self.setMinimumSize(850, 600)
         self.resize(1070, 740)
         self._build()
@@ -53,33 +54,33 @@ class VectorEvaluationDialog(QWidget):
 
     def _build(self):
         root = QVBoxLayout(self)
-        heading = QLabel('<b>AVALIAÇÃO ESPACIAL — VETOR POR ATRIBUTOS</b>')
+        heading = QLabel(tr('<b>AVALIAÇÃO ESPACIAL — VETOR POR ATRIBUTOS</b>'))
         root.addWidget(heading)
         intro = QLabel(
-            'Selecione uma camada de polígonos. Cada campo temático constitui um critério: '
+            tr('Selecione uma camada de polígonos. Cada campo temático constitui um critério: '
             'atribua pesos e notas às categorias. A geometria das feições será preservada. '
-            'Não há sobreposição entre camadas nesta modalidade.')
+            'Não há sobreposição entre camadas nesta modalidade.'))
         intro.setWordWrap(True)
         root.addWidget(intro)
         root.addWidget(button('Empilhar camadas vetoriais independentes…', self.open_overlay_dialog))
-        input_group = QGroupBox('1. Base territorial')
+        input_group = QGroupBox(tr('1. Base territorial'))
         in_layout = QHBoxLayout(input_group)
-        in_layout.addWidget(QLabel('Camada de polígonos:'))
+        in_layout.addWidget(QLabel(tr('Camada de polígonos:')))
         self.layer_combo = QgsMapLayerComboBox()
         self.layer_combo.setFilters(Qgis.LayerFilter.PolygonLayer)
-        self.layer_combo.setAllowEmptyLayer(True, "— selecione um polígono —")
+        self.layer_combo.setAllowEmptyLayer(True, tr("— selecione um polígono —"))
         self.layer_combo.layerChanged.connect(self._layer_changed)
         in_layout.addWidget(self.layer_combo, stretch=1)
         in_layout.addWidget(button('Atualizar', self._populate_fields))
-        in_layout.addWidget(QLabel('Notas:'))
+        in_layout.addWidget(QLabel(tr('Notas:')))
         self.scale_combo = QComboBox()
-        self.scale_combo.addItem('0–10', 10)
-        self.scale_combo.addItem('0–100', 100)
+        self.scale_combo.addItem(tr('0–10'), 10)
+        self.scale_combo.addItem(tr('0–100'), 100)
         in_layout.addWidget(self.scale_combo)
         root.addWidget(input_group)
         split = QSplitter(Qt.Orientation.Horizontal)
         root.addWidget(split, stretch=1)
-        left = QGroupBox('2. Campos de avaliação e pesos')
+        left = QGroupBox(tr('2. Campos de avaliação e pesos'))
         ll = QVBoxLayout(left)
         addrow = QHBoxLayout()
         self.field_combo = QComboBox()
@@ -88,7 +89,7 @@ class VectorEvaluationDialog(QWidget):
         ll.addLayout(addrow)
         ll.addWidget(button('Remover campo selecionado', self.remove_field))
         self.criteria_table = QTableWidget(0, 3)
-        self.criteria_table.setHorizontalHeaderLabels(['Campo', 'Peso (%)', 'Categorias'])
+        self.criteria_table.setHorizontalHeaderLabels([tr('Campo'), tr('Peso (%)'), tr('Categorias')])
         self.criteria_table.verticalHeader().setVisible(False)
         self.criteria_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.criteria_table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -99,17 +100,17 @@ class VectorEvaluationDialog(QWidget):
         self.criteria_table.itemSelectionChanged.connect(self._criterion_selected)
         ll.addWidget(self.criteria_table, stretch=1)
         ll.addWidget(button('Distribuir pesos igualmente', self.distribute_weights))
-        self.weights_label = QLabel('Nenhum critério selecionado.')
+        self.weights_label = QLabel(tr('Nenhum critério selecionado.'))
         self.weights_label.setWordWrap(True)
         ll.addWidget(self.weights_label)
         split.addWidget(left)
-        right = QGroupBox('3. Notas e classes excluídas')
+        right = QGroupBox(tr('3. Notas e classes excluídas'))
         rl = QVBoxLayout(right)
-        self.class_label = QLabel('Selecione um campo à esquerda.')
+        self.class_label = QLabel(tr('Selecione um campo à esquerda.'))
         self.class_label.setWordWrap(True)
         rl.addWidget(self.class_label)
         self.classes_table = QTableWidget(0, 4)
-        self.classes_table.setHorizontalHeaderLabels(['Categoria', 'Feições', 'Nota', 'Excluir'])
+        self.classes_table.setHorizontalHeaderLabels([tr('Categoria'), tr('Feições'), tr('Nota'), tr('Excluir')])
         self.classes_table.verticalHeader().setVisible(False)
         self.classes_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.classes_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
@@ -117,48 +118,48 @@ class VectorEvaluationDialog(QWidget):
         self.classes_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         rl.addWidget(self.classes_table, stretch=1)
         batch = QHBoxLayout()
-        batch.addWidget(QLabel('Nota:'))
+        batch.addWidget(QLabel(tr('Nota:')))
         self.batch_note = QDoubleSpinBox()
         self.batch_note.setRange(0, 100)
         self.batch_note.setDecimals(2)
         batch.addWidget(self.batch_note)
         batch.addWidget(button('Aplicar às selecionadas', self.apply_note))
         rl.addLayout(batch)
-        tip = QLabel('Nota em branco = não configurada. Excluir invalida a feição, '
+        tip = QLabel(tr('Nota em branco = não configurada. Excluir invalida a feição, '
                      'mas ela permanece no GeoPackage com AVALIACAO nulo. '
-                     'Valores nulos também invalidam a feição.')
+                     'Valores nulos também invalidam a feição.'))
         tip.setWordWrap(True)
         rl.addWidget(tip)
         split.addWidget(right)
         split.setSizes([435, 635])
-        output_group = QGroupBox('4. Resultado')
+        output_group = QGroupBox(tr('4. Resultado'))
         ol = QVBoxLayout(output_group)
         row = QHBoxLayout()
-        row.addWidget(QLabel('GeoPackage:'))
+        row.addWidget(QLabel(tr('GeoPackage:')))
         self.output_edit = QLineEdit()
-        self.output_edit.setPlaceholderText('Escolha onde salvar o resultado (.gpkg)')
+        self.output_edit.setPlaceholderText(tr('Escolha onde salvar o resultado (.gpkg)'))
         row.addWidget(self.output_edit, stretch=1)
         row.addWidget(button('Procurar…', self.select_output))
         ol.addLayout(row)
-        self.temporary_check = QCheckBox('Resultado temporário no QGIS (pode salvar depois)')
+        self.temporary_check = QCheckBox(tr('Resultado temporário no QGIS (pode salvar depois)'))
         self.temporary_check.setChecked(True)
         ol.addWidget(self.temporary_check)
         self.output_edit.setEnabled(False)
         self.temporary_check.toggled.connect(lambda active: self.output_edit.setEnabled(not active))
-        self.load_check = QCheckBox('Adicionar resultado ao QGIS')
+        self.load_check = QCheckBox(tr('Adicionar resultado ao QGIS'))
         self.load_check.setChecked(True)
         ol.addWidget(self.load_check)
         report_row = QHBoxLayout()
-        self.csv_check = QCheckBox('Relatório CSV: combinações, pesos e áreas')
+        self.csv_check = QCheckBox(tr('Relatório CSV: combinações, pesos e áreas'))
         self.csv_check.setChecked(True)
-        self.txt_check = QCheckBox('Relatório TXT: padrão Vista SAGA')
+        self.txt_check = QCheckBox(tr('Relatório TXT: padrão Vista SAGA'))
         self.txt_check.setChecked(True)
         report_row.addWidget(self.csv_check)
         report_row.addWidget(self.txt_check)
         ol.addLayout(report_row)
         root.addWidget(output_group)
         foot = QHBoxLayout()
-        self.status = QLabel('Selecione um campo temático para iniciar.')
+        self.status = QLabel(tr('Selecione um campo temático para iniciar.'))
         self.status.setWordWrap(True)
         foot.addWidget(self.status, stretch=1)
         foot.addWidget(button('Validar', self.validate_configuration))
@@ -218,10 +219,10 @@ class VectorEvaluationDialog(QWidget):
         layer = self._layer()
         field = self.field_combo.currentText()
         if not layer or not field:
-            QMessageBox.warning(self, 'Avaliação vetorial', 'Selecione uma camada e um campo.')
+            QMessageBox.warning(self, tr('Avaliação vetorial'), tr('Selecione uma camada e um campo.'))
             return
         if any(x['field'] == field for x in self.criteria):
-            QMessageBox.warning(self, 'Avaliação vetorial', 'Este campo já está incluído.')
+            QMessageBox.warning(self, tr('Avaliação vetorial'), tr('Este campo já está incluído.'))
             return
         counts = Counter()
         missing = 0
@@ -232,21 +233,21 @@ class VectorEvaluationDialog(QWidget):
             else:
                 counts[key] += 1
                 if len(counts) > 256:
-                    QMessageBox.warning(self, 'Campo com muitas categorias',
+                    QMessageBox.warning(self, tr('Campo com muitas categorias'),
                         f'O campo {field} apresenta mais de 256 valores distintos. '
                         'Reclassifique-o por intervalos antes da avaliação; '
                         'esta modalidade aplica notas a categorias discretas.')
                     return
         if not counts:
-            QMessageBox.warning(self, 'Avaliação vetorial',
-                                'O campo selecionado não contém categorias válidas.')
+            QMessageBox.warning(self, tr('Avaliação vetorial'),
+                                tr('O campo selecionado não contém categorias válidas.'))
             return
         self._save_classes()
         self.criteria.append({'field': field, 'counts': dict(counts), 'missing': missing,
                               'weight': 0., 'notes': {}, 'excluded': set()})
         self._distribute()
         self._render_criteria(select=len(self.criteria)-1)
-        self.status.setText(f'Campo {field}: {len(counts)} categorias; {missing} feições sem dados.')
+        self.status.setText(tr('Campo {field}: {count} categorias; {missing} feições sem dados.').format(field=field,count=len(counts),missing=missing))
 
     def remove_field(self):
         indices = sorted({item.row() for item in self.criteria_table.selectedItems()}, reverse=True)
@@ -301,7 +302,7 @@ class VectorEvaluationDialog(QWidget):
 
     def _update_weight_status(self):
         total = sum(c['weight'] for c in self.criteria)
-        self.weights_label.setText(f'Pesos: {total:.2f}% (necessário: 100%).')
+        self.weights_label.setText(tr('Pesos: {weight:.2f}% (necessário: 100%).').format(weight=total))
 
     def _save_classes(self):
         if self._rendering or not 0 <= self.active < len(self.criteria):
@@ -347,14 +348,14 @@ class VectorEvaluationDialog(QWidget):
             check.setChecked(key in criterion['excluded'])
             self.classes_table.setCellWidget(row, 3, check)
         self._rendering = False
-        self.class_label.setText(f'{criterion["field"]}: {len(categories)} categorias válidas.')
+        self.class_label.setText(tr('{field}: {count} categorias válidas.').format(field=criterion['field'],count=len(categories)))
 
     def apply_note(self):
         if self.active < 0:
             return
         scale = int(self.scale_combo.currentData())
         if self.batch_note.value() > scale:
-            QMessageBox.warning(self, 'Nota fora da escala', f'O limite é {scale}.')
+            QMessageBox.warning(self, tr('Nota fora da escala'), f'O limite é {scale}.')
             return
         selected = {item.row() for item in self.classes_table.selectedItems()}
         for row in selected:
@@ -377,15 +378,15 @@ class VectorEvaluationDialog(QWidget):
                 raise ValueError('Selecione uma camada de polígonos válida.')
             if layer.isEditable():
                 raise ValueError('Salve as alterações da camada antes de avaliar.')
-            QMessageBox.information(self, 'Avaliação vetorial',
+            QMessageBox.information(self, tr('Avaliação vetorial'),
                 f'Configuração válida: {len(rules)} critérios; {layer.featureCount()} feições. '
                 'As feições excluídas ou sem dado terão avaliação nula.')
         except (ValueError, TypeError) as exc:
-            QMessageBox.warning(self, 'Regras incompletas', str(exc))
+            QMessageBox.warning(self, tr('Regras incompletas'), str(exc))
 
     def select_output(self):
         suggestion = self.output_edit.text() or os.path.join(os.path.expanduser('~'), 'avaliacao_vetorial.gpkg')
-        dest, _ = QFileDialog.getSaveFileName(self, 'Salvar avaliação vetorial', suggestion,
+        dest, _ = QFileDialog.getSaveFileName(self, tr('Salvar avaliação vetorial'), suggestion,
                                               'GeoPackage (*.gpkg)')
         if dest:
             self.output_edit.setText(dest if dest.lower().endswith('.gpkg') else dest + '.gpkg')
@@ -404,14 +405,14 @@ class VectorEvaluationDialog(QWidget):
                 raise ValueError('Informe o GeoPackage de saída.')
             dest = os.path.abspath(dest)
             if os.path.exists(dest):
-                if QMessageBox.question(self, 'Substituir resultado?',
-                    'O GeoPackage já existe. Deseja substituí-lo?\n'
-                    'Se estiver aberto no QGIS, remova a camada de saída antes de continuar.') != QMessageBox.StandardButton.Yes:
+                if QMessageBox.question(self, tr('Substituir resultado?'),
+                    tr('O GeoPackage já existe. Deseja substituí-lo?\n'
+                    'Se estiver aberto no QGIS, remova a camada de saída antes de continuar.')) != QMessageBox.StandardButton.Yes:
                     return
             self.running = True
             self.run_button.setEnabled(False)
             self.close_button.setEnabled(False)
-            progress = QProgressDialog('Calculando notas das feições…', 'Cancelar', 0, 100, self)
+            progress = QProgressDialog(tr('Calculando notas das feições…'), tr('Cancelar'), 0, 100, self)
             progress.setMinimumDuration(0)
             progress.setWindowModality(Qt.WindowModality.WindowModal)
             def update(pct):
@@ -431,9 +432,9 @@ class VectorEvaluationDialog(QWidget):
             if self.load_check.isChecked() or self.temporary_check.isChecked():
                 added = self.iface.addVectorLayer(dest, 'Vista Saga — Avaliação vetorial', 'ogr')
                 if not added or not added.isValid():
-                    self.status.setText('Arquivo criado, mas não foi possível adicioná-lo ao QGIS.')
-            self.status.setText('Avaliação vetorial concluída: ' + dest)
-            QMessageBox.information(self, 'Avaliação concluída',
+                    self.status.setText(tr('Arquivo criado, mas não foi possível adicioná-lo ao QGIS.'))
+            self.status.setText(tr('Avaliação vetorial concluída: ') + dest)
+            QMessageBox.information(self, tr('Avaliação concluída'),
                 f'Feições: {result["total"]}\nAvaliadas: {result["validos"]}\n'
                 f'Sem avaliação: {result["excluidos_ou_sem_dado"]}\n'
                 f'Área total: {result["area_total_ha"]:.4f} ha\n'
@@ -441,7 +442,7 @@ class VectorEvaluationDialog(QWidget):
                 + (f'\nCSV: {result["relatorio_csv"]}' if result.get('relatorio_csv') else '')
                 + (f'\nTXT: {result["relatorio_txt"]}' if result.get('relatorio_txt') else ''))
         except (OSError, ValueError, InterruptedError, RuntimeError) as exc:
-            QMessageBox.warning(self, 'Avaliação vetorial não concluída', str(exc))
+            QMessageBox.warning(self, tr('Avaliação vetorial não concluída'), str(exc))
         finally:
             self.running = False
             self.run_button.setEnabled(True)

@@ -1,3 +1,72 @@
+## 1.0.4 — versão estável para publicação (2026-10-31)
+
+- Reconhecimento do idioma da interface do QGIS, com português brasileiro e inglês homologados.
+- Botão principal com ícone de mão e globo, menu único com os sete módulos, sem painel intermediário.
+- Compatibilidade visual com a interface clássica e a guia Complementos do QRibbonSkin; mantido o indicador de submenu no canto inferior para esta versão.
+- Atualização do endereço oficial do projeto para https://vistasagaplugin.wordpress.com/.
+- Validação funcional relatada pelo responsável em Windows 11 e Linux/Flatpak.
+- Preservação dos algoritmos e identificadores geosaga:*; espanhol permanece parcial.
+
+## 1.0.4-rc10 (teste — menu padronizado no QRibbonSkin)
+
+- Encurta o rótulo da ação e o título do submenu para **Vista Saga Plugin**.
+- Mantém a descrição longa apenas na dica de ferramenta (tooltip).
+- Inclui uma variante do ícone com 19 × 19 px, dimensão padrão dos botões
+  principais do QRibbonSkin v1.1.44, sem alterar a identidade visual.
+- Mantém QMenu/QAction nativos para menu suspenso de sete módulos com popup
+  gerenciado pelo QRibbonSkin, sem personalizar o widget Ribbon.
+- Preserva o botão clássico em 24 px e o ciclo de criação/remoção das ações.
+- Não altera os algoritmos nem os identificadores de processamento.
+- Exige validação visual em QGIS real antes de homologação.
+
+## 1.0.4-rc9 (teste — ícone Vista Saga na Ribbon)
+
+- Corrige a apresentação do Vista Saga Plugin na interface QRibbonSkin,
+  passando a registrar somente a ação principal com ícone e submenu em
+  Raster > Vista Saga Plugin, além de Complementos.
+- Impede que a Ribbon use a ação Assinatura como botão principal, com
+  Monitoria/Avaliação e demais comandos em “Outras ferramentas”.
+- O submenu continua contendo exatamente sete módulos, em ordem homologada.
+- Preserva o botão compacto de 24 px na interface padrão QGIS.
+- Mantém inalterados os algoritmos de processamento e os catálogos PT/EN.
+- Testes de integração visual no QGIS com QRibbonSkin ainda são necessários.
+
+## 1.0.4-rc8 (teste — ação nativa para QGIS e QRibbonSkin)
+
+- Reduz o botão próprio para 24 px na interface padrão QGIS.
+- Usa uma QAction nativa com o ícone oficial e menu suspenso dos sete módulos.
+- Registra essa mesma ação também em Complementos > Vista Saga Plugin,
+  permitindo que o QRibbonSkin apresente um botão com ícone na guia Complementos.
+- Não modifica o QRibbonSkin e não requer dependências externas adicionais.
+- Preserva as ações no menu Raster e todos os mecanismos de geoprocessamento.
+- Compatibilidade visual com QRibbonSkin exige teste real e reconstrução da
+  Ribbon após instalar/atualizar o Vista Saga Plugin.
+
+## 1.0.4-rc7 (teste — barra própria do Vista Saga Plugin)
+
+- Cria uma barra exclusiva, visível no QGIS, com um único botão de menu suspenso.
+- Utiliza um QToolButton real, com o ícone multicolorido aprovado e validação de pixmap.
+- Não depende de a barra padrão Complementos estar visível.
+- Os sete módulos permanecem disponíveis também no menu Raster.
+- Sem alterações nos algoritmos, saídas, traduções validadas e identificadores.
+- Esta versão exige homologação visual no QGIS 4.x antes de publicação.
+
+## 1.0.4-rc6 (candidata — correção de iconografia)
+
+- Correção do ícone ausente na barra do QGIS: botão baseado em QAction com QMenu.
+- Aplicação do símbolo colorido previamente criado de mão e globo geográfico; versões PNG em múltiplas resoluções.
+- Remoção limpa da ação e do menu ao desativar o plugin.
+- Sem alterações nos algoritmos, identificadores de processamento, relatórios ou traduções homologadas.
+- Manutenção do registro de testes funcionais em Windows 11 e Linux/Flatpak.
+
+## 1.0.4-rc5 (candidata de testes)
+
+- Substituição do painel de módulos por botão de menu suspenso no QGIS.
+- Aplicação do símbolo visual mão/globo em ícone de plugin e botão principal.
+- Registro atualizado: validação funcional em Linux/Flatpak informada pelo responsável.
+- A internacionalização de português e inglês aprovada na rc4 foi preservada.
+- Motores geoespaciais, identificadores Processing e formatos de dados preservados.
+
 ## 1.0.3 — Correções de estilo e qualidade de código
 
 - F402: removida importação local redundante de `QCheckBox` em `combination_dialog.py`.

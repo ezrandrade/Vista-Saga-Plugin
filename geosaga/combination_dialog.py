@@ -3,6 +3,7 @@
 As listas permitem empilhar rasteres ou polígonos sem alterar as camadas do QGIS.
 O processamento vetorial permanece no thread gráfico por usar PyQGIS.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
@@ -28,7 +29,7 @@ class CombinationDialog(QDialog):
         self._busy = False
         self._sources = [[], []]
         self._file_layers = []
-        self.setWindowTitle('Vista Saga Plugin — Combinação de Mapas')
+        self.setWindowTitle(tr('Vista Saga Plugin — Combinação de Mapas'))
         self.setModal(False)
         self.setMinimumSize(650, 450)
         self.resize(790, 565)
@@ -43,27 +44,27 @@ class CombinationDialog(QDialog):
         for idx, title in enumerate(('Combinação raster', 'Combinação vetorial')):
             page = QWidget()
             self.pages.append(page)
-            self.tabs.addTab(page, title)
+            self.tabs.addTab(page, tr(title))
             body = QVBoxLayout(page)
-            hint = QLabel('Selecione dois ou mais mapas categóricos. '
-                          'Cada associação observada recebe um código, sem pesos ou notas.')
+            hint = QLabel(tr('Selecione dois ou mais mapas categóricos. '
+                          'Cada associação observada recebe um código, sem pesos ou notas.'))
             hint.setWordWrap(True)
             body.addWidget(hint)
-            source_group = QGroupBox('Mapas de entrada — em ordem de combinação')
+            source_group = QGroupBox(tr('Mapas de entrada — em ordem de combinação'))
             sf = QFormLayout(source_group)
             choose = QgsMapLayerComboBox()
             choose.setAllowEmptyLayer(True)
             choose.setShowCrs(True)
             choose.setFilters(Qgis.LayerFilter.RasterLayer if idx == 0 else Qgis.LayerFilter.VectorLayer)
-            sf.addRow('Camada no QGIS:', choose)
+            sf.addRow(tr('Camada no QGIS:'), choose)
             setattr(self, f'select_{idx}', choose)
             input_buttons = QHBoxLayout()
-            append = QPushButton('Adicionar camada')
+            append = QPushButton(tr('Adicionar camada'))
             append.clicked.connect(lambda checked=False, i=idx: self._add_project(i))
-            load = QPushButton('Adicionar arquivos…')
+            load = QPushButton(tr('Adicionar arquivos…'))
             load.clicked.connect(lambda checked=False, i=idx: self._add_files(i))
             input_buttons.addWidget(append)
-            bulk = QPushButton('Adicionar várias do QGIS…')
+            bulk = QPushButton(tr('Adicionar várias do QGIS…'))
             bulk.clicked.connect(lambda checked=False, i=idx: self._add_project_many(i))
             input_buttons.addWidget(bulk)
             input_buttons.addWidget(load)
@@ -74,13 +75,13 @@ class CombinationDialog(QDialog):
             stack.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
             stack.setMinimumHeight(110)
             setattr(self, f'list_{idx}', stack)
-            sf.addRow('Camadas adicionadas:', stack)
+            sf.addRow(tr('Camadas adicionadas:'), stack)
             controls = QHBoxLayout()
-            rem = QPushButton('Remover selecionadas')
+            rem = QPushButton(tr('Remover selecionadas'))
             rem.clicked.connect(lambda checked=False, i=idx: self._remove(i))
-            up = QPushButton('Subir')
+            up = QPushButton(tr('Subir'))
             up.clicked.connect(lambda checked=False, i=idx: self._move(i,-1))
-            down = QPushButton('Descer')
+            down = QPushButton(tr('Descer'))
             down.clicked.connect(lambda checked=False, i=idx: self._move(i,1))
             controls.addWidget(rem)
             controls.addWidget(up)
@@ -90,37 +91,37 @@ class CombinationDialog(QDialog):
             body.addWidget(source_group)
 
             if idx == 1:
-                fields = QGroupBox('Classificação da próxima camada vetorial')
+                fields = QGroupBox(tr('Classificação da próxima camada vetorial'))
                 ff = QFormLayout(fields)
                 field = QComboBox()
                 legend = QComboBox()
                 setattr(self, 'class_field', field)
                 setattr(self, 'legend_field', legend)
-                ff.addRow('Campo de classe:', field)
-                ff.addRow('Campo da legenda (opcional):', legend)
+                ff.addRow(tr('Campo de classe:'), field)
+                ff.addRow(tr('Campo da legenda (opcional):'), legend)
                 choose.layerChanged.connect(self._update_fields)
                 body.insertWidget(2, fields)
                 self._update_fields()
-            output_group = QGroupBox('Resultado')
+            output_group = QGroupBox(tr('Resultado'))
             out = QFormLayout(output_group)
             path = QLineEdit()
-            path.setPlaceholderText('GeoTIFF com IDs de combinação' if idx == 0 else 'GeoPackage de polígonos combinados')
+            path.setPlaceholderText(tr('GeoTIFF com IDs de combinação' if idx == 0 else 'GeoPackage de polígonos combinados'))
             setattr(self, f'output_{idx}', path)
             row = QHBoxLayout()
             row.addWidget(path,1)
-            browse = QPushButton('Salvar como…')
+            browse = QPushButton(tr('Salvar como…'))
             browse.clicked.connect(lambda checked=False,i=idx: self._save_as(i))
             row.addWidget(browse)
-            out.addRow('Arquivo:',row)
-            note = QLabel('Além do mapa, serão gerados _combinacoes.csv e _resumo.txt. '
+            out.addRow(tr('Arquivo:'),row)
+            note = QLabel(tr('Além do mapa, serão gerados _combinacoes.csv e _resumo.txt. '
                           'No modo vetorial, somente a cobertura comum será combinada. '
-                          'Os dados de entrada permanecerão inalterados.')
+                          'Os dados de entrada permanecerão inalterados.'))
             note.setWordWrap(True)
             out.addRow('', note)
             body.addWidget(output_group)
-            temporary = QCheckBox('Saída temporária no QGIS (salvar depois se desejar)')
+            temporary = QCheckBox(tr('Saída temporária no QGIS (salvar depois se desejar)'))
             temporary.setChecked(True)
-            temporary.setToolTip('Raster e GeoPackage ficam no diretório temporário da sessão, não apenas na RAM.')
+            temporary.setToolTip(tr('Raster e GeoPackage ficam no diretório temporário da sessão, não apenas na RAM.'))
             setattr(self, f'temporary_{idx}', temporary)
             body.addWidget(temporary)
             path.setEnabled(False)
@@ -128,17 +129,17 @@ class CombinationDialog(QDialog):
             temporary.toggled.connect(lambda active, p=path, b=browse:
                                      (p.setEnabled(not active), b.setEnabled(not active)))
             body.addStretch(1)
-        self.add_project = QCheckBox('Carregar resultado no projeto QGIS')
+        self.add_project = QCheckBox(tr('Carregar resultado no projeto QGIS'))
         self.add_project.setChecked(True)
         layout.addWidget(self.add_project)
         control = QHBoxLayout()
-        self.status = QLabel('Adicione pelo menos dois mapas para combinar.')
+        self.status = QLabel(tr('Adicione pelo menos dois mapas para combinar.'))
         self.status.setWordWrap(True)
         control.addWidget(self.status,1)
-        self.start = QPushButton('Combinar mapas')
+        self.start = QPushButton(tr('Combinar mapas'))
         self.start.clicked.connect(self.run)
         control.addWidget(self.start)
-        self.close_button = QPushButton('Fechar')
+        self.close_button = QPushButton(tr('Fechar'))
         self.close_button.clicked.connect(self.close)
         control.addWidget(self.close_button)
         layout.addLayout(control)
@@ -148,7 +149,7 @@ class CombinationDialog(QDialog):
             return
         self.class_field.clear()
         self.legend_field.clear()
-        self.legend_field.addItem('(usar classe como legenda)', '')
+        self.legend_field.addItem(tr('(usar classe como legenda)'), '')
         layer = self.select_1.currentLayer()
         if isinstance(layer, QgsVectorLayer) and layer.isValid():
             names = layer.fields().names()
@@ -167,7 +168,7 @@ class CombinationDialog(QDialog):
     def _add_project(self, mode):
         layer = getattr(self, f'select_{mode}').currentLayer()
         if layer is None:
-            QMessageBox.warning(self,'Combinação','Selecione uma camada carregada no QGIS.')
+            QMessageBox.warning(self,tr('Combinação'),tr('Selecione uma camada carregada no QGIS.'))
             return
         field = self.class_field.currentText() if mode else ''
         legend = self.legend_field.currentData() if mode else ''
@@ -184,8 +185,8 @@ class CombinationDialog(QDialog):
                 preferred = next((n for n in ('CODIGO', 'CLASSE', 'USO', 'TIPO_USO', 'TIPOS_USO')
                                   if n in fields), fields[0])
                 from qgis.PyQt.QtWidgets import QInputDialog
-                field, ok = QInputDialog.getItem(self, 'Campo de classe — ' + layer.name(),
-                    'Campo:', fields, fields.index(preferred), False)
+                field, ok = QInputDialog.getItem(self, tr('Campo de classe — ') + layer.name(),
+                    tr('Campo:'), fields, fields.index(preferred), False)
                 if not ok:
                     continue
                 preferred_label = next((n for n in ('LEGENDA','NOME','DESCRICAO')
@@ -198,18 +199,18 @@ class CombinationDialog(QDialog):
     def _add_files(self, mode):
         masks = ('Mapas raster (*.tif *.tiff);;Todos (*.*)' if mode == 0 else
                  'Vetores (*.gpkg *.shp *.geojson *.fgb);;Todos (*.*)')
-        paths, _ = QFileDialog.getOpenFileNames(self,'Adicionar mapas', '', masks)
+        paths, _ = QFileDialog.getOpenFileNames(self,tr('Adicionar mapas'), '', masks)
         for path in paths:
             layer = (QgsRasterLayer(path,Path(path).stem,'gdal') if mode == 0 else
                      QgsVectorLayer(path,Path(path).stem,'ogr'))
             if not layer.isValid():
-                QMessageBox.warning(self,'Arquivo inválido',f'Não foi possível abrir: {path}')
+                QMessageBox.warning(self,tr('Arquivo inválido'),f'Não foi possível abrir: {path}')
                 continue
             if mode == 1:
                 # Para arquivos escolhidos no disco, oferecer escolha de campos.
                 names = layer.fields().names()
                 if not names:
-                    QMessageBox.warning(self,'Arquivo inválido',f'Camada sem campos: {path}')
+                    QMessageBox.warning(self,tr('Arquivo inválido'),f'Camada sem campos: {path}')
                     continue
                 field, ok = self._choose_field(names, f'Classe temática — {Path(path).name}')
                 if not ok:
@@ -227,23 +228,23 @@ class CombinationDialog(QDialog):
 
     def _choose_field(self, fields, title):
         from qgis.PyQt.QtWidgets import QInputDialog
-        return QInputDialog.getItem(self,title,'Campo:',fields,0,False)
+        return QInputDialog.getItem(self,title,tr('Campo:'),fields,0,False)
 
     def _append(self, mode, layer, field, legend):
         if not layer.isValid():
-            QMessageBox.warning(self,'Combinação','Camada inválida.')
+            QMessageBox.warning(self,tr('Combinação'),tr('Camada inválida.'))
             return
         if mode == 1 and not isinstance(layer,QgsVectorLayer):
-            QMessageBox.warning(self,'Combinação','É necessária uma camada vetorial.')
+            QMessageBox.warning(self,tr('Combinação'),tr('É necessária uma camada vetorial.'))
             return
         if mode == 0 and not isinstance(layer,QgsRasterLayer):
-            QMessageBox.warning(self,'Combinação','É necessária uma camada raster.')
+            QMessageBox.warning(self,tr('Combinação'),tr('É necessária uma camada raster.'))
             return
         if mode == 1 and not field:
-            QMessageBox.warning(self,'Combinação','Escolha um campo de classe antes de adicionar.')
+            QMessageBox.warning(self,tr('Combinação'),tr('Escolha um campo de classe antes de adicionar.'))
             return
         if any(record[0].source() == layer.source() for record in self._sources[mode]):
-            QMessageBox.warning(self,'Combinação','Esta camada já está na lista.')
+            QMessageBox.warning(self,tr('Combinação'),tr('Esta camada já está na lista.'))
             return
         self._sources[mode].append((layer,field,legend or ''))
         self._refresh(mode)
@@ -256,7 +257,7 @@ class CombinationDialog(QDialog):
             if mode:
                 label += f'  •  {field}' + (f'  •  {legend}' if legend else '')
             widget.addItem(QListWidgetItem(label))
-        self.status.setText(f'{len(self._sources[mode])} mapas na modalidade selecionada.')
+        self.status.setText(tr('{count} mapas na modalidade selecionada.').format(count=len(self._sources[mode])))
 
     def _remove(self,mode):
         rows = sorted({getattr(self,f'list_{mode}').row(item)
@@ -280,7 +281,7 @@ class CombinationDialog(QDialog):
         path = getattr(self,f'output_{mode}')
         ext = '.tif' if mode == 0 else '.gpkg'
         filter_ = 'GeoTIFF (*.tif)' if mode == 0 else 'GeoPackage (*.gpkg)'
-        answer, _ = QFileDialog.getSaveFileName(self,'Resultado da combinação',
+        answer, _ = QFileDialog.getSaveFileName(self,tr('Resultado da combinação'),
                                                  path.text().strip() or f'combinacao{ext}',filter_)
         if answer:
             if not answer.lower().endswith((('.tif','.tiff') if mode == 0 else ('.gpkg',))):
@@ -296,13 +297,13 @@ class CombinationDialog(QDialog):
         dest = (temporary_destination('combinacao', '.tif' if mode == 0 else '.gpkg')
                 if temporary else getattr(self,f'output_{mode}').text().strip())
         if len(selected)<2 or not dest:
-            QMessageBox.warning(self,'Combinação','Adicione dois ou mais mapas e informe a saída.')
+            QMessageBox.warning(self,tr('Combinação'),tr('Adicione dois ou mais mapas e informe a saída.'))
             return
         stem = str(Path(dest).with_suffix(''))
         targets = (dest,stem+'_combinacoes.csv',stem+'_resumo.txt')
         if any(Path(file).exists() for file in targets):
-            confirm = QMessageBox.question(self,'Substituir arquivos?',
-                           'Há resultados existentes. Substituir mapa e relatórios associados?',
+            confirm = QMessageBox.question(self,tr('Substituir arquivos?'),
+                           tr('Há resultados existentes. Substituir mapa e relatórios associados?'),
                            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                            QMessageBox.StandardButton.No)
             if confirm != QMessageBox.StandardButton.Yes:
@@ -310,7 +311,7 @@ class CombinationDialog(QDialog):
         self._busy = True
         self.start.setEnabled(False)
         self.close_button.setEnabled(False)
-        pg = QProgressDialog('Combinando mapas…','Cancelar',0,100,self)
+        pg = QProgressDialog(tr('Combinando mapas…'),tr('Cancelar'),0,100,self)
         pg.setWindowModality(Qt.WindowModality.WindowModal)
         pg.setMinimumDuration(0)
         pg.setAutoClose(False)
@@ -358,14 +359,14 @@ class CombinationDialog(QDialog):
                     QgsProject.instance().addMapLayer(layer)
             self.status.setText(f"Concluído: {result['combinations']} combinações. "
                                 + ('Resultado temporário no QGIS.' if temporary else f'Arquivo: {dest}'))
-            QMessageBox.information(self,'Combinação concluída',
+            QMessageBox.information(self,tr('Combinação concluída'),
                 f"Combinações observadas: {result['combinations']}\n"
                 f"Relatórios: {result['csv']} e {result['txt']}")
         except InterruptedError:
-            self.status.setText('Processamento cancelado, sem alterar as entradas.')
+            self.status.setText(tr('Processamento cancelado, sem alterar as entradas.'))
         except Exception as exc:
-            QMessageBox.critical(self,'Falha na combinação',str(exc))
-            self.status.setText('Falha na combinação; revise os parâmetros.')
+            QMessageBox.critical(self,tr('Falha na combinação'),str(exc))
+            self.status.setText(tr('Falha na combinação; revise os parâmetros.'))
         finally:
             pg.close()
             self._busy = False

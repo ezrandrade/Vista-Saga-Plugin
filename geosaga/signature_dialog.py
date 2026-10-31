@@ -3,6 +3,7 @@
 QGIS 4.x / Qt6; seleção de camadas do projeto ou arquivos locais. A rotina
 PyQGIS roda no thread da GUI para evitar acesso inseguro a QgsVectorLayer.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
@@ -28,7 +29,7 @@ class SignatureDialog(QDialog):
         self._area_stack = []
         self._merged_areas = None
         self.setModal(False)
-        self.setWindowTitle('Vista Saga Plugin — Assinatura')
+        self.setWindowTitle(tr('Vista Saga Plugin — Assinatura'))
         self.resize(800, 530)
         self.setMinimumSize(690, 440)
         self._build_ui()
@@ -38,8 +39,8 @@ class SignatureDialog(QDialog):
         root.setContentsMargins(10, 10, 10, 10)
         root.setSpacing(7)
         self.type_tabs = QTabBar()
-        self.type_tabs.addTab('Raster')
-        self.type_tabs.addTab('Vetorial')
+        self.type_tabs.addTab(tr('Raster'))
+        self.type_tabs.addTab(tr('Vetorial'))
         # Igualar o comportamento compacto das abas dos demais módulos.
         # O padrão de QTabBar expande as abas pela largura disponível.
         self.type_tabs.setExpanding(False)
@@ -52,59 +53,59 @@ class SignatureDialog(QDialog):
         config_scroll.setFrameShape(QFrame.Shape.NoFrame)
         config_scroll.setWidget(cfg)
         result_tab = QWidget()
-        self.tabs.addTab(config_scroll, 'Configuração')
-        self.tabs.addTab(result_tab, 'Resultados')
+        self.tabs.addTab(config_scroll, tr('Configuração'))
+        self.tabs.addTab(result_tab, tr('Resultados'))
         layout = QVBoxLayout(cfg)
         layout.setSpacing(9)
-        mode_group = QGroupBox('Mapa temático')
+        mode_group = QGroupBox(tr('Mapa temático'))
         mf = QFormLayout(mode_group)
         self.mode = QComboBox()
-        self.mode.addItem('Raster categórico (GeoTIFF)', 'raster')
-        self.mode.addItem('Polígonos temáticos (vetor)', 'vector')
+        self.mode.addItem(tr('Raster categórico (GeoTIFF)'), 'raster')
+        self.mode.addItem(tr('Polígonos temáticos (vetor)'), 'vector')
         self.mode.currentIndexChanged.connect(self._mode_changed)
         self.type_tabs.currentChanged.connect(self.mode.setCurrentIndex)
         self.theme_select = QgsMapLayerComboBox()
         self.theme_select.setAllowEmptyLayer(True)
         self.theme_select.setShowCrs(True)
-        mf.addRow('Camada QGIS:', self.theme_select)
+        mf.addRow(tr('Camada QGIS:'), self.theme_select)
         row = QHBoxLayout()
         self.theme_file = QLineEdit()
-        self.theme_file.setPlaceholderText('Ou selecionar arquivo local…')
+        self.theme_file.setPlaceholderText(tr('Ou selecionar arquivo local…'))
         self.theme_file.editingFinished.connect(self._refresh_fields)
         row.addWidget(self.theme_file, 1)
-        btn = QPushButton('Arquivo…')
+        btn = QPushButton(tr('Arquivo…'))
         btn.clicked.connect(self._choose_theme)
         row.addWidget(btn)
-        mf.addRow('Ou arquivo:', row)
+        mf.addRow(tr('Ou arquivo:'), row)
         self.class_field = QComboBox()
         self.class_label = QComboBox()
-        mf.addRow('Campo de classe:', self.class_field)
-        mf.addRow('Campo com nome da classe:', self.class_label)
+        mf.addRow(tr('Campo de classe:'), self.class_field)
+        mf.addRow(tr('Campo com nome da classe:'), self.class_label)
         self.theme_select.layerChanged.connect(lambda layer: self._refresh_fields())
         layout.addWidget(mode_group)
 
-        region = QGroupBox('Áreas de análise')
+        region = QGroupBox(tr('Áreas de análise'))
         rf = QFormLayout(region)
         self.areas_select = QgsMapLayerComboBox()
         self.areas_select.setFilters(Qgis.LayerFilter.VectorLayer)
         self.areas_select.setAllowEmptyLayer(True)
         self.areas_select.setShowCrs(True)
-        rf.addRow('Camada de polígonos:', self.areas_select)
+        rf.addRow(tr('Camada de polígonos:'), self.areas_select)
         row2 = QHBoxLayout()
         self.areas_file = QLineEdit()
-        self.areas_file.setPlaceholderText('Ou arquivo GPKG, SHP, GeoJSON, FGB…')
+        self.areas_file.setPlaceholderText(tr('Ou arquivo GPKG, SHP, GeoJSON, FGB…'))
         self.areas_file.editingFinished.connect(self._refresh_area_fields)
         row2.addWidget(self.areas_file, 1)
-        btn2 = QPushButton('Arquivo…')
+        btn2 = QPushButton(tr('Arquivo…'))
         btn2.clicked.connect(self._choose_areas)
         row2.addWidget(btn2)
-        rf.addRow('Ou arquivo:', row2)
+        rf.addRow(tr('Ou arquivo:'), row2)
         self.area_name_field = QComboBox()
-        rf.addRow('Identificação dos polígonos:', self.area_name_field)
+        rf.addRow(tr('Identificação dos polígonos:'), self.area_name_field)
         stack_buttons = QHBoxLayout()
-        add_areas = QPushButton('Adicionar várias áreas do QGIS…')
+        add_areas = QPushButton(tr('Adicionar várias áreas do QGIS…'))
         add_areas.clicked.connect(self._add_area_layers)
-        remove_areas = QPushButton('Remover selecionadas')
+        remove_areas = QPushButton(tr('Remover selecionadas'))
         remove_areas.clicked.connect(self._remove_area_layers)
         stack_buttons.addWidget(add_areas)
         stack_buttons.addWidget(remove_areas)
@@ -112,67 +113,67 @@ class SignatureDialog(QDialog):
         self.areas_stack_list = QListWidget()
         self.areas_stack_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.areas_stack_list.setMaximumHeight(95)
-        rf.addRow('Áreas adicionadas:', self.areas_stack_list)
-        areas_stack_help = QLabel('Quando há camadas na lista, todas as feições poligonais dessas camadas '
+        rf.addRow(tr('Áreas adicionadas:'), self.areas_stack_list)
+        areas_stack_help = QLabel(tr('Quando há camadas na lista, todas as feições poligonais dessas camadas '
              'serão avaliadas, com identificação da camada de origem. '
-             'A seleção individual acima continua disponível quando a lista estiver vazia.')
+             'A seleção individual acima continua disponível quando a lista estiver vazia.'))
         areas_stack_help.setWordWrap(True)
         rf.addRow('', areas_stack_help)
-        explain = QLabel('Cada polígono recebe uma assinatura individual. Regiões sobrepostas '
-                         'são analisadas separadamente e não devem ter suas áreas somadas.')
+        explain = QLabel(tr('Cada polígono recebe uma assinatura individual. Regiões sobrepostas '
+                         'são analisadas separadamente e não devem ter suas áreas somadas.'))
         explain.setWordWrap(True)
         rf.addRow('', explain)
         self.areas_select.layerChanged.connect(lambda layer: self._refresh_area_fields())
         layout.addWidget(region)
 
-        self.overlap_group = QGroupBox('Sobreposição entre classes (somente vetor)')
+        self.overlap_group = QGroupBox(tr('Sobreposição entre classes (somente vetor)'))
         overlap_form = QFormLayout(self.overlap_group)
         self.overlap_policy = QComboBox()
-        self.overlap_policy.addItem('Unir classes iguais e excluir áreas ambíguas (recomendado)', 'exclude')
-        self.overlap_policy.addItem('Interromper se classes diferentes se sobrepuserem', 'strict')
-        overlap_form.addRow('Tratamento:', self.overlap_policy)
-        help_overlap = QLabel('Polígonos sobrepostos da mesma categoria contam apenas uma vez. '
+        self.overlap_policy.addItem(tr('Unir classes iguais e excluir áreas ambíguas (recomendado)'), 'exclude')
+        self.overlap_policy.addItem(tr('Interromper se classes diferentes se sobrepuserem'), 'strict')
+        overlap_form.addRow(tr('Tratamento:'), self.overlap_policy)
+        help_overlap = QLabel(tr('Polígonos sobrepostos da mesma categoria contam apenas uma vez. '
             'Quando classes distintas ocupam o mesmo local, a área conflitante não é '
-            'atribuída a nenhuma delas e aparece no relatório TXT/CSV e no GeoPackage.')
+            'atribuída a nenhuma delas e aparece no relatório TXT/CSV e no GeoPackage.'))
         help_overlap.setWordWrap(True)
         overlap_form.addRow('', help_overlap)
         layout.addWidget(self.overlap_group)
 
-        dest_box = QGroupBox('Saída e relatórios')
+        dest_box = QGroupBox(tr('Saída e relatórios'))
         df = QFormLayout(dest_box)
         self.title = QLineEdit()
-        self.title.setPlaceholderText('Ex.: Composição temática de áreas de preservação')
-        df.addRow('Título:', self.title)
+        self.title.setPlaceholderText(tr('Ex.: Composição temática de áreas de preservação'))
+        df.addRow(tr('Título:'), self.title)
         outrow = QHBoxLayout()
         self.path = QLineEdit()
-        self.path.setPlaceholderText('Caminho do CSV principal (.csv)')
+        self.path.setPlaceholderText(tr('Caminho do CSV principal (.csv)'))
         outrow.addWidget(self.path, 1)
-        btn3 = QPushButton('Salvar como…')
+        btn3 = QPushButton(tr('Salvar como…'))
         btn3.clicked.connect(self._choose_output)
         outrow.addWidget(btn3)
-        df.addRow('Relatório CSV:', outrow)
-        self.temporary_check = QCheckBox('Resultado temporário no QGIS (pode salvar depois)')
+        df.addRow(tr('Relatório CSV:'), outrow)
+        self.temporary_check = QCheckBox(tr('Resultado temporário no QGIS (pode salvar depois)'))
         self.temporary_check.setChecked(True)
         df.addRow('', self.temporary_check)
         self.path.setEnabled(False)
         self.temporary_check.toggled.connect(lambda active: self.path.setEnabled(not active))
-        hint = QLabel('Além do CSV serão produzidos _resumo.txt e _areas.gpkg. '
+        hint = QLabel(tr('Além do CSV serão produzidos _resumo.txt e _areas.gpkg. '
                       'Este último contém polígonos, classe predominante e áreas. '
-                      'Arquivos existentes serão substituídos apenas com sua confirmação.')
+                      'Arquivos existentes serão substituídos apenas com sua confirmação.'))
         hint.setWordWrap(True)
         df.addRow('', hint)
-        self.add_project = QCheckBox('Carregar GeoPackage das áreas no QGIS')
+        self.add_project = QCheckBox(tr('Carregar GeoPackage das áreas no QGIS'))
         self.add_project.setChecked(True)
         df.addRow('', self.add_project)
         layout.addWidget(dest_box)
         layout.addStretch(1)
 
         rlayout = QVBoxLayout(result_tab)
-        self.summary = QLabel('Nenhuma assinatura executada nesta sessão.')
+        self.summary = QLabel(tr('Nenhuma assinatura executada nesta sessão.'))
         self.summary.setWordWrap(True)
         rlayout.addWidget(self.summary)
         self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(['Área', 'Classe', 'Pixels', 'Área (ha)', '% da classe'])
+        self.table.setHorizontalHeaderLabels([tr('Área'), tr('Classe'), tr('Pixels'), tr('Área (ha)'), tr('% da classe')])
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
@@ -180,13 +181,13 @@ class SignatureDialog(QDialog):
         rlayout.addWidget(self.table, 1)
 
         controls = QHBoxLayout()
-        self.status = QLabel('Selecione um mapa temático e uma camada de polígonos.')
+        self.status = QLabel(tr('Selecione um mapa temático e uma camada de polígonos.'))
         self.status.setWordWrap(True)
         controls.addWidget(self.status, 1)
-        self.run_button = QPushButton('Calcular assinatura')
+        self.run_button = QPushButton(tr('Calcular assinatura'))
         self.run_button.clicked.connect(self.run)
         controls.addWidget(self.run_button)
-        close = QPushButton('Fechar')
+        close = QPushButton(tr('Fechar'))
         close.clicked.connect(self.close)
         controls.addWidget(close)
         root.addLayout(controls)
@@ -226,7 +227,7 @@ class SignatureDialog(QDialog):
             if layer.id() in existing:
                 continue
             if layer.geometryType() != Qgis.GeometryType.Polygon:
-                QMessageBox.warning(self, 'Área não poligonal',
+                QMessageBox.warning(self, tr('Área não poligonal'),
                                     'Ignorando camada que não contém polígonos: ' + layer.name())
                 continue
             self._area_stack.append(layer)
@@ -304,7 +305,7 @@ class SignatureDialog(QDialog):
         label = self.class_label.currentData()
         self.class_field.clear()
         self.class_label.clear()
-        self.class_label.addItem('(usar classe como legenda)', '')
+        self.class_label.addItem(tr('(usar classe como legenda)'), '')
         if self.mode.currentData() == 'raster':
             return
         layer = self._thematic()
@@ -328,7 +329,7 @@ class SignatureDialog(QDialog):
     def _refresh_area_fields(self):
         old = self.area_name_field.currentData()
         self.area_name_field.clear()
-        self.area_name_field.addItem('(usar ID de cada feição)', '')
+        self.area_name_field.addItem(tr('(usar ID de cada feição)'), '')
         layer = self._areas()
         if layer and layer.isValid() and isinstance(layer, QgsVectorLayer):
             names = layer.fields().names()
@@ -345,20 +346,20 @@ class SignatureDialog(QDialog):
     def _choose_theme(self):
         filterstr = ('GeoTIFF (*.tif *.tiff);;Todos os arquivos (*)' if self.mode.currentData() == 'raster'
                      else 'Vetor (*.gpkg *.shp *.geojson *.fgb);;Todos os arquivos (*)')
-        path, _ = QFileDialog.getOpenFileName(self, 'Mapa temático', '', filterstr)
+        path, _ = QFileDialog.getOpenFileName(self, tr('Mapa temático'), '', filterstr)
         if path:
             self.theme_file.setText(path)
             self._refresh_fields()
 
     def _choose_areas(self):
-        path, _ = QFileDialog.getOpenFileName(self, 'Áreas de análise', '',
+        path, _ = QFileDialog.getOpenFileName(self, tr('Áreas de análise'), '',
             'Vetores (*.gpkg *.shp *.geojson *.fgb);;Todos os arquivos (*)')
         if path:
             self.areas_file.setText(path)
             self._refresh_area_fields()
 
     def _choose_output(self):
-        path, _ = QFileDialog.getSaveFileName(self, 'Relatório de Assinatura',
+        path, _ = QFileDialog.getSaveFileName(self, tr('Relatório de Assinatura'),
             self.path.text().strip() or 'assinatura.csv', 'CSV (*.csv)')
         if path:
             self.path.setText(path if path.lower().endswith('.csv') else path + '.csv')
@@ -369,7 +370,7 @@ class SignatureDialog(QDialog):
         try:
             thematic, areas = self._thematic(), self._areas()
         except ValueError as exc:
-            QMessageBox.warning(self, 'Áreas de análise', str(exc))
+            QMessageBox.warning(self, tr('Áreas de análise'), str(exc))
             return
         mode = self.mode.currentData()
         field = self.class_field.currentText() if mode == 'vector' else ''
@@ -380,12 +381,12 @@ class SignatureDialog(QDialog):
         try:
             validate_signature(thematic, areas, mode, field, path, label_field, area_name)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, 'Assinatura — Verificar entrada', str(exc))
+            QMessageBox.warning(self, tr('Assinatura — Verificar entrada'), str(exc))
             return
         existing = [p for p in _outpaths(path) if Path(p).exists()]
         if existing:
             answer = QMessageBox.question(
-                self, 'Substituir saídas',
+                self, tr('Substituir saídas'),
                 'Os seguintes resultados já existem:\n' + '\n'.join(existing) +
                 '\n\nDeseja substituí-los? Os anteriores serão restaurados em caso de falha.',
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -394,8 +395,8 @@ class SignatureDialog(QDialog):
                 return
         self._busy = True
         self.run_button.setEnabled(False)
-        popup = QProgressDialog('Calculando as assinaturas…', 'Cancelar', 0, 100, self)
-        popup.setWindowTitle('Vista Saga — Assinatura')
+        popup = QProgressDialog(tr('Calculando as assinaturas…'), tr('Cancelar'), 0, 100, self)
+        popup.setWindowTitle(tr('Vista Saga — Assinatura'))
         popup.setWindowModality(Qt.WindowModality.WindowModal)
         popup.setMinimumDuration(0)
         popup.setValue(0)
@@ -424,8 +425,8 @@ class SignatureDialog(QDialog):
                     self.table.setItem(i, j, QTableWidgetItem(str(value)))
             self.tabs.setCurrentIndex(1)
             if result['note'].startswith('ATENÇÃO:'):
-                QMessageBox.warning(self, 'Assinatura — Áreas conflitantes', result['note'])
-            self.status.setText('Assinatura calculada. Relatórios disponíveis na pasta escolhida.')
+                QMessageBox.warning(self, tr('Assinatura — Áreas conflitantes'), result['note'])
+            self.status.setText(tr('Assinatura calculada. Relatórios disponíveis na pasta escolhida.'))
             if self.add_project.isChecked() or self.temporary_check.isChecked():
                 from qgis.core import QgsVectorLayer
                 new_layer = QgsVectorLayer(result['gpkg'] + '|layername=assinatura_areas',
@@ -433,13 +434,13 @@ class SignatureDialog(QDialog):
                 if new_layer.isValid():
                     QgsProject.instance().addMapLayer(new_layer)
                 else:
-                    QMessageBox.warning(self, 'Assinatura',
-                                        'Relatórios gravados, mas não foi possível carregar o GeoPackage.')
+                    QMessageBox.warning(self, tr('Assinatura'),
+                                        tr('Relatórios gravados, mas não foi possível carregar o GeoPackage.'))
         except InterruptedError:
-            self.status.setText('Operação cancelada; arquivos anteriores preservados.')
+            self.status.setText(tr('Operação cancelada; arquivos anteriores preservados.'))
         except Exception as exc:
-            self.status.setText('A assinatura não foi concluída.')
-            QMessageBox.critical(self, 'Assinatura — Falha', str(exc))
+            self.status.setText(tr('A assinatura não foi concluída.'))
+            QMessageBox.critical(self, tr('Assinatura — Falha'), str(exc))
         finally:
             popup.close()
             self._busy = False

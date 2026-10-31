@@ -1,4 +1,5 @@
 """Interface QGIS 4 para Análises Voronoi (quatro modalidades)."""
+from .i18n import tr
 from pathlib import Path
 from math import isfinite
 
@@ -78,7 +79,7 @@ class VoronoiDialog(QDialog):
         self._busy = False
         self._task = None
         self._progress_dialog = None
-        self.setWindowTitle('Vista Saga Plugin — Análises Voronoi')
+        self.setWindowTitle(tr('Vista Saga Plugin — Análises Voronoi'))
         self.setModal(False)
         self.setMinimumSize(630, 450)
         self.resize(760, 605)
@@ -88,8 +89,8 @@ class VoronoiDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(9)
-        intro = QLabel('Delimite áreas de influência: Simples, com Massa, com Atrito e com Massa e Atrito. '
-                       'Os modelos que utilizam atrito ainda exigem validação com o Vista SAGA original.')
+        intro = QLabel(tr('Delimite áreas de influência: Simples, com Massa, com Atrito e com Massa e Atrito. '
+                       'Os modelos que utilizam atrito ainda exigem validação com o Vista SAGA original.'))
         intro.setWordWrap(True)
         layout.addWidget(intro)
 
@@ -107,58 +108,58 @@ class VoronoiDialog(QDialog):
         scroll.setWidget(scroll_contents)
         layout.addWidget(scroll, 1)
 
-        options = QGroupBox('1. Modelo de influência')
+        options = QGroupBox(tr('1. Modelo de influência'))
         model_form = QFormLayout(options)
         self.mode = QComboBox()
-        self.mode.addItems(['Simples', 'Com Massa',
-                            'Com Atrito (experimental)',
-                            'Com Massa e Atrito (experimental)'])
+        self.mode.addItems([tr('Simples'), tr('Com Massa'),
+                            tr('Com Atrito (experimental)'),
+                            tr('Com Massa e Atrito (experimental)')])
         self.mode.currentIndexChanged.connect(self._update_mode)
-        model_form.addRow('Modalidade:',self.mode)
-        self.method_note = QLabel('Simples: o ponto mais próximo assume cada célula da grade.')
+        model_form.addRow(tr('Modalidade:'),self.mode)
+        self.method_note = QLabel(tr('Simples: o ponto mais próximo assume cada célula da grade.'))
         self.method_note.setWordWrap(True)
-        model_form.addRow('Método:',self.method_note)
+        model_form.addRow(tr('Método:'),self.method_note)
         content_layout.addWidget(options)
 
-        inputs = QGroupBox('2. Dados de entrada')
+        inputs = QGroupBox(tr('2. Dados de entrada'))
         form = QFormLayout(inputs)
         self.point_layer = QgsMapLayerComboBox()
         self.point_layer.setAllowEmptyLayer(True)
         self.point_layer.setShowCrs(True)
         self.point_layer.setFilters(Qgis.LayerFilter.VectorLayer)
         self.point_layer.layerChanged.connect(self._refresh_fields)
-        form.addRow('Pontos geradores:',self.point_layer)
+        form.addRow(tr('Pontos geradores:'),self.point_layer)
         self.label_field = QComboBox()
-        self.label_field.addItem('(usar ID da feição)',None)
-        form.addRow('Identificação do ponto:',self.label_field)
+        self.label_field.addItem(tr('(usar ID da feição)'),None)
+        form.addRow(tr('Identificação do ponto:'),self.label_field)
         self.mass_field = QComboBox()
         self.mass_field.setEnabled(False)
-        self.mass_label=QLabel('Campo de massa:')
+        self.mass_label=QLabel(tr('Campo de massa:'))
         form.addRow(self.mass_label,self.mass_field)
         self.grid_layer = QgsMapLayerComboBox()
         self.grid_layer.setAllowEmptyLayer(True)
         self.grid_layer.setFilters(Qgis.LayerFilter.RasterLayer)
         self.grid_layer.setShowCrs(True)
         self.grid_layer.layerChanged.connect(self._update_grid)
-        self.grid_layer.setToolTip('Opcional: utilize a extensão, resolução e SRC de um raster de referência.')
-        self.grid_label=QLabel('Raster de referência:')
+        self.grid_layer.setToolTip(tr('Opcional: utilize a extensão, resolução e SRC de um raster de referência.'))
+        self.grid_label=QLabel(tr('Raster de referência:'))
         form.addRow(self.grid_label,self.grid_layer)
         self.friction_layer = QgsMapLayerComboBox()
         self.friction_layer.setAllowEmptyLayer(True)
         self.friction_layer.setFilters(Qgis.LayerFilter.RasterLayer)
         self.friction_layer.setShowCrs(True)
-        self.friction_label = QLabel('Superfície de atrito:')
-        self.friction_layer.setToolTip('GeoTIFF monobanda com valores >= 0; zero tem custo basal 1; NoData é barreira.')
+        self.friction_label = QLabel(tr('Superfície de atrito:'))
+        self.friction_layer.setToolTip(tr('GeoTIFF monobanda com valores >= 0; zero tem custo basal 1; NoData é barreira.'))
         form.addRow(self.friction_label,self.friction_layer)
-        self.multi_friction = QCheckBox('Combinar múltiplas superfícies de atrito (pesos e notas)')
+        self.multi_friction = QCheckBox(tr('Combinar múltiplas superfícies de atrito (pesos e notas)'))
         self.multi_friction.toggled.connect(self._on_multi_friction_toggled)
         form.addRow('', self.multi_friction)
-        self.friction_stack_group = QGroupBox('Superfícies integradas')
+        self.friction_stack_group = QGroupBox(tr('Superfícies integradas'))
         stack_box = QVBoxLayout(self.friction_stack_group)
-        self.friction_stack_summary = QLabel('Nenhuma superfície selecionada.')
+        self.friction_stack_summary = QLabel(tr('Nenhuma superfície selecionada.'))
         self.friction_stack_summary.setWordWrap(True)
         stack_box.addWidget(self.friction_stack_summary)
-        self.stack_manage = QPushButton('Selecionar e configurar superfícies…')
+        self.stack_manage = QPushButton(tr('Selecionar e configurar superfícies…'))
         self.stack_manage.clicked.connect(self._manage_friction_layers)
         stack_box.addWidget(self.stack_manage)
         form.addRow('', self.friction_stack_group)
@@ -167,17 +168,17 @@ class VoronoiDialog(QDialog):
         # Na 0.8.3 a tabela estava diretamente no formulário, e a janela
         # sem rolagem podia exibir apenas o título "Superfícies integradas".
         self.friction_stack_dialog = QDialog(self)
-        self.friction_stack_dialog.setWindowTitle('Superfícies de atrito — seleção e pesos')
+        self.friction_stack_dialog.setWindowTitle(tr('Superfícies de atrito — seleção e pesos'))
         self.friction_stack_dialog.resize(840, 475)
         stack_dialog_box = QVBoxLayout(self.friction_stack_dialog)
-        stack_hint = QLabel('Selecione até 12 rasters. Edite o peso positivo e, se necessário, as notas '
+        stack_hint = QLabel(tr('Selecione até 12 rasters. Edite o peso positivo e, se necessário, as notas '
                             'por classe (ex.: 1=2;2=8) dando dois cliques nas células. '
                             'Sem notas, serão usados os valores originais. '
-                            'NoData em qualquer mapa será barreira.')
+                            'NoData em qualquer mapa será barreira.'))
         stack_hint.setWordWrap(True)
         stack_dialog_box.addWidget(stack_hint)
         self.friction_stack_table = QTableWidget(0, 3)
-        self.friction_stack_table.setHorizontalHeaderLabels(['Camada raster', 'Peso', 'Notas por classe (opcional)'])
+        self.friction_stack_table.setHorizontalHeaderLabels([tr('Camada raster'), tr('Peso'), tr('Notas por classe (opcional)')])
         self.friction_stack_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.friction_stack_table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.friction_stack_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
@@ -186,13 +187,13 @@ class VoronoiDialog(QDialog):
         self.friction_stack_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         stack_dialog_box.addWidget(self.friction_stack_table, 1)
         stack_buttons = QHBoxLayout()
-        self.stack_add = QPushButton('Adicionar camadas do QGIS…')
+        self.stack_add = QPushButton(tr('Adicionar camadas do QGIS…'))
         self.stack_add.clicked.connect(self._add_friction_layers)
         stack_buttons.addWidget(self.stack_add)
-        self.stack_add_files = QPushButton('Adicionar arquivos GeoTIFF…')
+        self.stack_add_files = QPushButton(tr('Adicionar arquivos GeoTIFF…'))
         self.stack_add_files.clicked.connect(self._add_friction_files)
         stack_buttons.addWidget(self.stack_add_files)
-        self.stack_remove = QPushButton('Remover selecionadas')
+        self.stack_remove = QPushButton(tr('Remover selecionadas'))
         self.stack_remove.clicked.connect(self._remove_friction_layers)
         stack_buttons.addWidget(self.stack_remove)
         stack_buttons.addStretch(1)
@@ -201,18 +202,18 @@ class VoronoiDialog(QDialog):
         stack_close.rejected.connect(self.friction_stack_dialog.accept)
         stack_dialog_box.addWidget(stack_close)
         self.extent_mode=QComboBox()
-        self.extent_mode.addItem('Extensão visível no QGIS','canvas')
-        self.extent_mode.addItem('Extensão de camada poligonal','polygon')
-        self.extent_mode.addItem('Extensão manual (coordenadas do SRC)','manual')
-        self.extent_mode.addItem('Extensão dos pontos + margem','points')
-        self.extent_mode.addItem('Grade de raster de referência','reference')
+        self.extent_mode.addItem(tr('Extensão visível no QGIS'),'canvas')
+        self.extent_mode.addItem(tr('Extensão de camada poligonal'),'polygon')
+        self.extent_mode.addItem(tr('Extensão manual (coordenadas do SRC)'),'manual')
+        self.extent_mode.addItem(tr('Extensão dos pontos + margem'),'points')
+        self.extent_mode.addItem(tr('Grade de raster de referência'),'reference')
         self.extent_mode.currentIndexChanged.connect(self._update_extent)
-        form.addRow('Extensão da análise:',self.extent_mode)
+        form.addRow(tr('Extensão da análise:'),self.extent_mode)
         self.extent_label = form.labelForField(self.extent_mode)
         self.area_layer=QgsMapLayerComboBox()
         self.area_layer.setAllowEmptyLayer(True)
         self.area_layer.setFilters(Qgis.LayerFilter.VectorLayer)
-        self.area_label=QLabel('Área poligonal:')
+        self.area_label=QLabel(tr('Área poligonal:'))
         form.addRow(self.area_label,self.area_layer)
         self.manual_bounds=[]
         for label in ('X mínimo:','Y mínimo:','X máximo:','Y máximo:'):
@@ -228,56 +229,56 @@ class VoronoiDialog(QDialog):
         self.resolution.setDecimals(4)
         self.resolution.setRange(.0001, 100_000_000.)
         self.resolution.setValue(100.)
-        self.resolution.setSuffix(' unidades do SRC')
-        self.resolution_label=QLabel('Resolução raster:')
+        self.resolution.setSuffix(tr(' unidades do SRC'))
+        self.resolution_label=QLabel(tr('Resolução raster:'))
         form.addRow(self.resolution_label,self.resolution)
-        self.grid_note = QLabel('O Voronoi vetorial direto é limitado pela extensão escolhida; '
-                                'não exige massa, raster de referência nem resolução.')
+        self.grid_note = QLabel(tr('O Voronoi vetorial direto é limitado pela extensão escolhida; '
+                                'não exige massa, raster de referência nem resolução.'))
         self.grid_note.setWordWrap(True)
         form.addRow('',self.grid_note)
         content_layout.addWidget(inputs)
 
-        output = QGroupBox('3. Resultado')
+        output = QGroupBox(tr('3. Resultado'))
         outform = QFormLayout(output)
         self.output_type=QComboBox()
-        self.output_type.addItem('GeoTIFF (raster)', 'raster')
-        self.output_type.addItem('GeoPackage (vetor direto — Simples)', 'direct')
-        self.output_type.addItem('GeoTIFF + GeoPackage (poligonização)', 'both')
+        self.output_type.addItem(tr('GeoTIFF (raster)'), 'raster')
+        self.output_type.addItem(tr('GeoPackage (vetor direto — Simples)'), 'direct')
+        self.output_type.addItem(tr('GeoTIFF + GeoPackage (poligonização)'), 'both')
         self.output_type.currentIndexChanged.connect(self._update_output)
-        outform.addRow('Formato de saída:',self.output_type)
-        self.temp_output = QCheckBox('Resultado temporário (adicionar ao QGIS)')
+        outform.addRow(tr('Formato de saída:'),self.output_type)
+        self.temp_output = QCheckBox(tr('Resultado temporário (adicionar ao QGIS)'))
         self.temp_output.setChecked(True)
         self.temp_output.toggled.connect(self._update_output)
         outform.addRow('',self.temp_output)
         path_box = QHBoxLayout()
         self.path_output = QLineEdit()
-        self.path_output.setPlaceholderText('Voronoi_Espacial.tif')
+        self.path_output.setPlaceholderText(tr('Voronoi_Espacial.tif'))
         self.path_output.setEnabled(False)
         path_box.addWidget(self.path_output,1)
-        self.path_button = QPushButton('…')
+        self.path_button = QPushButton(tr('…'))
         self.path_button.setEnabled(False)
         self.path_button.clicked.connect(self._choose_output)
         path_box.addWidget(self.path_button)
-        self.path_label=QLabel('Arquivo de saída:')
+        self.path_label=QLabel(tr('Arquivo de saída:'))
         outform.addRow(self.path_label,path_box)
-        self.load_project = QCheckBox('Adicionar resultados ao projeto QGIS')
+        self.load_project = QCheckBox(tr('Adicionar resultados ao projeto QGIS'))
         self.load_project.setChecked(True)
         outform.addRow('',self.load_project)
-        hint = QLabel('CSV e TXT são produzidos automaticamente. '
-                      'Resultados temporários precisam ser salvos antes de fechar o QGIS.')
+        hint = QLabel(tr('CSV e TXT são produzidos automaticamente. '
+                      'Resultados temporários precisam ser salvos antes de fechar o QGIS.'))
         hint.setWordWrap(True)
         outform.addRow('',hint)
         content_layout.addWidget(output)
         content_layout.addStretch(1)
-        self.status = QLabel('Selecione a camada de pontos geradores.')
+        self.status = QLabel(tr('Selecione a camada de pontos geradores.'))
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
         buttons = QHBoxLayout()
         buttons.addStretch(1)
-        self.run_button = QPushButton('Gerar Voronoi')
+        self.run_button = QPushButton(tr('Gerar Voronoi'))
         self.run_button.clicked.connect(self._run)
         buttons.addWidget(self.run_button)
-        self.close_button = QPushButton('Fechar')
+        self.close_button = QPushButton(tr('Fechar'))
         self.close_button.clicked.connect(self.close)
         buttons.addWidget(self.close_button)
         layout.addLayout(buttons)
@@ -311,10 +312,10 @@ class VoronoiDialog(QDialog):
         layers = [layer for layer in QgsProject.instance().mapLayers().values()
                   if isinstance(layer, QgsRasterLayer) and layer.isValid()]
         if not layers:
-            QMessageBox.warning(self, 'Superfícies de atrito', 'Não há camadas raster carregadas no QGIS.')
+            QMessageBox.warning(self, tr('Superfícies de atrito'), tr('Não há camadas raster carregadas no QGIS.'))
             return
         chooser = QDialog(self)
-        chooser.setWindowTitle('Adicionar superfícies de atrito')
+        chooser.setWindowTitle(tr('Adicionar superfícies de atrito'))
         chooser.resize(430, 340)
         layout = QVBoxLayout(chooser)
         list_widget = QListWidget()
@@ -342,7 +343,7 @@ class VoronoiDialog(QDialog):
 
     def _add_friction_files(self):
         files, _ = QFileDialog.getOpenFileNames(
-            self.friction_stack_dialog, 'Selecionar GeoTIFFs de atrito', '',
+            self.friction_stack_dialog, tr('Selecionar GeoTIFFs de atrito'), '',
             'GeoTIFF (*.tif *.tiff);;Todos os arquivos (*.*)')
         if not files:
             return
@@ -361,7 +362,7 @@ class VoronoiDialog(QDialog):
             if new_layer:
                 layer = QgsRasterLayer(path, Path(path).stem, 'gdal')
                 if not layer.isValid():
-                    QMessageBox.warning(self, 'Superfícies de atrito',
+                    QMessageBox.warning(self, tr('Superfícies de atrito'),
                                         f'O raster não pôde ser aberto: {path}')
                     continue
             if not self._append_friction_layer(layer):
@@ -377,7 +378,7 @@ class VoronoiDialog(QDialog):
         if layer.id() in ids:
             return True  # Já presente: não duplicar.
         if self.friction_stack_table.rowCount() >= 12:
-            QMessageBox.warning(self, 'Superfícies de atrito', 'Limite de 12 superfícies por análise.')
+            QMessageBox.warning(self, tr('Superfícies de atrito'), tr('Limite de 12 superfícies por análise.'))
             return False
         row = self.friction_stack_table.rowCount()
         self.friction_stack_table.insertRow(row)
@@ -426,7 +427,7 @@ class VoronoiDialog(QDialog):
     def _refresh_fields(self, *_):
         layer = self.point_layer.currentLayer()
         self.label_field.clear()
-        self.label_field.addItem('(usar ID da feição)',None)
+        self.label_field.addItem(tr('(usar ID da feição)'),None)
         self.mass_field.clear()
         if layer is None: return
         names = layer.fields().names()
@@ -464,9 +465,9 @@ class VoronoiDialog(QDialog):
             self.method_note.setText(title + ' (experimental): minimizar ' + formula +
                                      ' em segmento reto; NoData é barreira. Grade do raster de atrito.')
         elif weighted:
-            self.method_note.setText('Com Massa: maximiza M/d; selecione campo numérico positivo.')
+            self.method_note.setText(tr('Com Massa: maximiza M/d; selecione campo numérico positivo.'))
         else:
-            self.method_note.setText('Simples: menor distância euclidiana; sem massa nem atrito.')
+            self.method_note.setText(tr('Simples: menor distância euclidiana; sem massa nem atrito.'))
         self.output_type.model().item(1).setEnabled(not (weighted or friction))
         if (weighted or friction) and self.output_type.currentData() == 'direct':
             self.output_type.setCurrentIndex(0)
@@ -504,15 +505,15 @@ class VoronoiDialog(QDialog):
             self.extent_mode.setCurrentIndex(0)
         if self.path_output.text() and (self.path_output.text().lower().endswith('.gpkg') != direct):
             self.path_output.clear()
-        self.grid_note.setText('Com Atrito: extensão, resolução e SRC herdados do raster de resistência; '
+        self.grid_note.setText(tr('Com Atrito: extensão, resolução e SRC herdados do raster de resistência; '
                                'a grade não será reprojetada.' if friction else
                                ('Vetor direto: polígonos exatos recortados à extensão e à área poligonal.'
-                                if direct else 'Raster: resolução necessária. A extensão poligonal define o retângulo envolvente.'))
+                                if direct else 'Raster: resolução necessária. A extensão poligonal define o retângulo envolvente.')))
 
     def _choose_output(self):
         direct=self.output_type.currentData()=='direct'
         suffix='.gpkg' if direct else '.tif'
-        path,_=QFileDialog.getSaveFileName(self,'Salvar Voronoi',
+        path,_=QFileDialog.getSaveFileName(self,tr('Salvar Voronoi'),
                    self.path_output.text().strip() or 'Analises_Voronoi'+suffix,
                    'GeoPackage (*.gpkg)' if direct else 'GeoTIFF (*.tif)')
         if path:
@@ -651,12 +652,12 @@ class VoronoiDialog(QDialog):
         if self._busy: return
         layer=self.point_layer.currentLayer()
         if layer is None:
-            QMessageBox.warning(self,'Análises Voronoi','Selecione uma camada de pontos.')
+            QMessageBox.warning(self,tr('Análises Voronoi'),tr('Selecione uma camada de pontos.'))
             return
         self._busy=True
         self.run_button.setEnabled(False)
         self.close_button.setEnabled(False)
-        dialog=QProgressDialog('Calculando áreas de influência…','Cancelar',0,100,self)
+        dialog=QProgressDialog(tr('Calculando áreas de influência…'),tr('Cancelar'),0,100,self)
         dialog.setWindowModality(Qt.WindowModality.NonModal)
         dialog.setMinimumDuration(0)
         dialog.setAutoClose(False)
@@ -768,20 +769,20 @@ class VoronoiDialog(QDialog):
             if self.load_project.isChecked() or self.temp_output.isChecked():
                 self._load_output(result)
             if direct:
-                self.status.setText(f'Voronoi vetorial concluído: {len(result["rows"])} regiões.')
+                self.status.setText(tr('Voronoi vetorial concluído: {count} regiões.').format(count=len(result["rows"])))
             else:
                 self.status.setText(f'Voronoi concluído: {len(points)} centros; '
                                     f'{result["pixels_valid"]:,} pixels classificados.')
-            QMessageBox.information(self,'Voronoi concluído',
+            QMessageBox.information(self,tr('Voronoi concluído'),
                  ('GeoPackage vetorial direto, CSV e TXT produzidos.' if direct else
                   'GeoTIFF, CSV e TXT produzidos. '+('GeoPackage gerado.' if result['gpkg'] else ''))+
                  ('\nSaída temporária: salve antes de fechar o QGIS.' if self.temp_output.isChecked()
                   else '\nResultado: '+destination))
         except InterruptedError:
-            self.status.setText('Processamento cancelado; os dados de entrada foram preservados.')
+            self.status.setText(tr('Processamento cancelado; os dados de entrada foram preservados.'))
         except Exception as exc:
-            self.status.setText('Falha na execução; revise os parâmetros.')
-            QMessageBox.critical(self,'Voronoi não concluído',str(exc))
+            self.status.setText(tr('Falha na execução; revise os parâmetros.'))
+            QMessageBox.critical(self,tr('Voronoi não concluído'),str(exc))
         finally:
             if not asynchronous:
                 dialog.close()
@@ -809,19 +810,19 @@ class VoronoiDialog(QDialog):
                 self.status.setText(
                     f'Voronoi concluído: {len(task.points)} centros; '
                     f'{task.result["pixels_valid"]:,} pixels classificados.')
-                QMessageBox.information(self,'Voronoi concluído',
+                QMessageBox.information(self,tr('Voronoi concluído'),
                     'GeoTIFF, CSV e TXT produzidos. '
                     + ('GeoPackage gerado.' if task.result.get('gpkg') else '')
                     + ('\nSaída temporária: salve antes de fechar o QGIS.'
                        if self.temp_output.isChecked() else '\nResultado: '+task.destination))
             except Exception as exc:
-                self.status.setText('Resultado criado, mas não foi possível carregar no QGIS.')
-                QMessageBox.warning(self, 'Voronoi — carregar resultado', str(exc))
+                self.status.setText(tr('Resultado criado, mas não foi possível carregar no QGIS.'))
+                QMessageBox.warning(self, tr('Voronoi — carregar resultado'), str(exc))
         elif task.error:
-            self.status.setText('Falha na execução; revise os parâmetros.')
-            QMessageBox.critical(self, 'Voronoi não concluído', task.error)
+            self.status.setText(tr('Falha na execução; revise os parâmetros.'))
+            QMessageBox.critical(self, tr('Voronoi não concluído'), task.error)
         else:
-            self.status.setText('Processamento cancelado; dados de entrada preservados.')
+            self.status.setText(tr('Processamento cancelado; dados de entrada preservados.'))
 
     def shutdown(self):
         """Impede callback em janelas descartadas ao descarregar o plugin."""

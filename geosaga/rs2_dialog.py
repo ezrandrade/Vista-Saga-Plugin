@@ -2,6 +2,7 @@
 
 Suporte a arquivos locais, seleção de rasters do projeto, SRC nativo e lotes.
 """
+from .i18n import tr
 from pathlib import Path
 
 from qgis.PyQt.QtCore import QCoreApplication, Qt
@@ -28,7 +29,7 @@ class RS2ConverterDialog(QDialog):
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
-        self.setWindowTitle('Vista Saga Plugin — Conversão de formatos')
+        self.setWindowTitle(tr('Vista Saga Plugin — Conversão de formatos'))
         self.setMinimumWidth(690)
         self.resize(750, 660)
         self.setModal(False)
@@ -45,85 +46,85 @@ class RS2ConverterDialog(QDialog):
         root.setContentsMargins(9, 6, 9, 8)
         root.setSpacing(9)
 
-        title = QLabel('Conversão de formatos')
+        title = QLabel(tr('Conversão de formatos'))
         title.setStyleSheet('font-size: 16px; font-weight: 600;')
         root.addWidget(title)
         self.description = QLabel()
         self.description.setWordWrap(True)
         root.addWidget(self.description)
 
-        operation_box = QGroupBox('Operação')
+        operation_box = QGroupBox(tr('Operação'))
         operation_form = QFormLayout(operation_box)
         self.mode = QComboBox()
-        self.mode.addItems(['RS2 → GeoTIFF (raster categórico)',
-                            'GeoTIFF → RS2 (formato Vista SAGA)',
-                            'RS2 → Vetor (polígonos)',
-                            'GeoTIFF → Vetor (polígonos)',
-                            'Vetor → GeoTIFF (rasterização)'])
+        self.mode.addItems([tr('RS2 → GeoTIFF (raster categórico)'),
+                            tr('GeoTIFF → RS2 (formato Vista SAGA)'),
+                            tr('RS2 → Vetor (polígonos)'),
+                            tr('GeoTIFF → Vetor (polígonos)'),
+                            tr('Vetor → GeoTIFF (rasterização)')])
         self.mode.currentIndexChanged.connect(self._mode_changed)
-        operation_form.addRow('Converter:', self.mode)
-        self.batch = QCheckBox('Processar vários arquivos (lote)')
+        operation_form.addRow(tr('Converter:'), self.mode)
+        self.batch = QCheckBox(tr('Processar vários arquivos (lote)'))
         self.batch.toggled.connect(self._batch_changed)
         operation_form.addRow('', self.batch)
         root.addWidget(operation_box)
 
-        self.single_group = QGroupBox('Entrada')
+        self.single_group = QGroupBox(tr('Entrada'))
         single_form = QFormLayout(self.single_group)
         self.source = QLineEdit()
-        self.source.setPlaceholderText('Arquivo .rs2, .tif ou .tiff')
+        self.source.setPlaceholderText(tr('Arquivo .rs2, .tif ou .tiff'))
         self.source.editingFinished.connect(self._sync_mode_with_source)
-        self.source_button = QPushButton('…')
-        self.source_button.setToolTip('Selecionar arquivo no computador')
+        self.source_button = QPushButton(tr('…'))
+        self.source_button.setToolTip(tr('Selecionar arquivo no computador'))
         self.source_button.clicked.connect(self._browse_source)
         source_row = QHBoxLayout()
         source_row.addWidget(self.source, 1)
         source_row.addWidget(self.source_button)
-        self.source_label = QLabel('Arquivo de entrada:')
+        self.source_label = QLabel(tr('Arquivo de entrada:'))
         single_form.addRow(self.source_label, source_row)
 
         self.loaded_layers = QgsMapLayerComboBox()
         self.loaded_layers.setFilters(Qgis.LayerFilter.RasterLayer)
         self.loaded_layers.setAllowEmptyLayer(True)
         self.loaded_layers.setShowCrs(True)
-        self.use_loaded = QPushButton('Selecionar')
+        self.use_loaded = QPushButton(tr('Selecionar'))
         self.use_loaded.clicked.connect(self._use_layer)
         layer_row = QHBoxLayout()
         layer_row.addWidget(self.loaded_layers, 1)
         layer_row.addWidget(self.use_loaded)
-        self.layer_label = QLabel('Camada do projeto:')
+        self.layer_label = QLabel(tr('Camada do projeto:'))
         single_form.addRow(self.layer_label, layer_row)
         self.vector_field = QComboBox()
-        self.vector_field.setToolTip('Atributo cujos valores serão gravados nas células do GeoTIFF.')
-        self.vector_field_label = QLabel('Campo para rasterizar:')
+        self.vector_field.setToolTip(tr('Atributo cujos valores serão gravados nas células do GeoTIFF.'))
+        self.vector_field_label = QLabel(tr('Campo para rasterizar:'))
         single_form.addRow(self.vector_field_label, self.vector_field)
         self.pixel_size = QDoubleSpinBox()
         self.pixel_size.setDecimals(8)
         self.pixel_size.setRange(0.00000001, 100000000.0)
         self.pixel_size.setValue(10.0)
-        self.pixel_size.setSuffix(' unidades do SRC')
-        self.pixel_size.setToolTip('Tamanho do pixel nas unidades do SRC do vetor; para SRC métrico, em metros.')
-        self.pixel_size_label = QLabel('Tamanho do pixel:')
+        self.pixel_size.setSuffix(tr(' unidades do SRC'))
+        self.pixel_size.setToolTip(tr('Tamanho do pixel nas unidades do SRC do vetor; para SRC métrico, em metros.'))
+        self.pixel_size_label = QLabel(tr('Tamanho do pixel:'))
         single_form.addRow(self.pixel_size_label, self.pixel_size)
         root.addWidget(self.single_group)
 
-        self.batch_group = QGroupBox('Arquivos do lote')
+        self.batch_group = QGroupBox(tr('Arquivos do lote'))
         batch_layout = QVBoxLayout(self.batch_group)
         self.batch_list = QListWidget()
         self.batch_list.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.batch_list.setMinimumHeight(105)
-        self.batch_list.setToolTip('Um arquivo por linha. Selecione para remover.')
+        self.batch_list.setToolTip(tr('Um arquivo por linha. Selecione para remover.'))
         batch_layout.addWidget(self.batch_list)
         line = QHBoxLayout()
-        self.add_files = QPushButton('Adicionar arquivos…')
+        self.add_files = QPushButton(tr('Adicionar arquivos…'))
         self.add_files.clicked.connect(self._browse_batch)
-        self.add_layer = QPushButton('Adicionar camada')
+        self.add_layer = QPushButton(tr('Adicionar camada'))
         self.add_layer.clicked.connect(self._add_loaded_layer)
-        self.add_many_loaded = QPushButton('Adicionar várias do QGIS…')
+        self.add_many_loaded = QPushButton(tr('Adicionar várias do QGIS…'))
         self.add_many_loaded.clicked.connect(self._add_many_loaded_layers)
         self.batch_loaded_layers = QgsMapLayerComboBox()
         self.batch_loaded_layers.setFilters(Qgis.LayerFilter.RasterLayer)
         self.batch_loaded_layers.setAllowEmptyLayer(True)
-        self.remove_files = QPushButton('Remover selecionados')
+        self.remove_files = QPushButton(tr('Remover selecionados'))
         self.remove_files.clicked.connect(self._remove_batch)
         line.addWidget(self.add_files)
         line.addWidget(self.remove_files)
@@ -136,31 +137,31 @@ class RS2ConverterDialog(QDialog):
         self.batch_layer_widget.setLayout(batch_layer_row)
         batch_layout.addWidget(self.batch_layer_widget)
         root.addWidget(self.batch_group)
-        self.batch_label = QLabel('Arquivos do lote:')  # compatibilidade com teste antigo
+        self.batch_label = QLabel(tr('Arquivos do lote:'))  # compatibilidade com teste antigo
 
-        self.output_group = QGroupBox('Saída')
+        self.output_group = QGroupBox(tr('Saída'))
         output_form = QFormLayout(self.output_group)
         self.destination = QLineEdit()
-        self.destination.setPlaceholderText('Informe o arquivo de saída')
-        self.dest_button = QPushButton('…')
-        self.dest_button.setToolTip('Selecionar destino')
+        self.destination.setPlaceholderText(tr('Informe o arquivo de saída'))
+        self.dest_button = QPushButton(tr('…'))
+        self.dest_button.setToolTip(tr('Selecionar destino'))
         self.dest_button.clicked.connect(self._browse_destination)
         dest_row = QHBoxLayout()
         dest_row.addWidget(self.destination, 1)
         dest_row.addWidget(self.dest_button)
-        self.dest_label = QLabel('Arquivo de saída:')
+        self.dest_label = QLabel(tr('Arquivo de saída:'))
         self.destination_row = QWidget()
         self.destination_row.setLayout(dest_row)
         output_form.addRow(self.dest_label, self.destination_row)
 
         self.batch_folder = QLineEdit()
-        self.batch_folder.setPlaceholderText('Pasta de saída dos arquivos convertidos')
-        self.batch_folder_button = QPushButton('…')
+        self.batch_folder.setPlaceholderText(tr('Pasta de saída dos arquivos convertidos'))
+        self.batch_folder_button = QPushButton(tr('…'))
         self.batch_folder_button.clicked.connect(self._browse_folder)
         folder_row = QHBoxLayout()
         folder_row.addWidget(self.batch_folder, 1)
         folder_row.addWidget(self.batch_folder_button)
-        self.folder_label = QLabel('Pasta de saída:')
+        self.folder_label = QLabel(tr('Pasta de saída:'))
         self.folder_row = QWidget()
         self.folder_row.setLayout(folder_row)
         output_form.addRow(self.folder_label, self.folder_row)
@@ -169,74 +170,74 @@ class RS2ConverterDialog(QDialog):
         for extension, (_, label) in VECTOR_FORMATS.items():
             self.vector_format.addItem(f'{label} (*{extension})', extension)
         self.vector_format.currentIndexChanged.connect(self._vector_format_changed)
-        self.vector_label = QLabel('Formato vetorial:')
+        self.vector_label = QLabel(tr('Formato vetorial:'))
         output_form.addRow(self.vector_label, self.vector_format)
-        self.temporary_check = QCheckBox('Resultado temporário no QGIS (pode ser salvo posteriormente)')
+        self.temporary_check = QCheckBox(tr('Resultado temporário no QGIS (pode ser salvo posteriormente)'))
         self.temporary_check.setChecked(True)
         self.temporary_check.toggled.connect(self._temp_changed)
         output_form.addRow('', self.temporary_check)
         root.addWidget(self.output_group)
 
-        self.options_box = QGroupBox('Sistema de referência e carregamento')
+        self.options_box = QGroupBox(tr('Sistema de referência e carregamento'))
         options_form = QFormLayout(self.options_box)
         self.crs_widget = QgsProjectionSelectionWidget()
         self.crs_widget.setOptionVisible(QgsProjectionSelectionWidget.CrsOption.CrsNotSet, True)
-        self.crs_widget.setNotSetText('Não definido — atribuir posteriormente')
+        self.crs_widget.setNotSetText(tr('Não definido — atribuir posteriormente'))
         self.crs_widget.setCrs(QgsCoordinateReferenceSystem())
-        self.crs_widget.setDialogTitle('Selecione o SRC confirmado do RS2')
-        self.crs_label = QLabel('SRC do RS2:')
+        self.crs_widget.setDialogTitle(tr('Selecione o SRC confirmado do RS2'))
+        self.crs_label = QLabel(tr('SRC do RS2:'))
         options_form.addRow(self.crs_label, self.crs_widget)
-        self.add_to_project = QCheckBox('Adicionar resultado ao projeto QGIS')
+        self.add_to_project = QCheckBox(tr('Adicionar resultado ao projeto QGIS'))
         self.add_to_project.setChecked(True)
         options_form.addRow('', self.add_to_project)
         root.addWidget(self.options_box)
 
         self.advanced_toggle = QToolButton()
-        self.advanced_toggle.setText('Mostrar opções avançadas')
+        self.advanced_toggle.setText(tr('Mostrar opções avançadas'))
         self.advanced_toggle.setCheckable(True)
         self.advanced_toggle.setChecked(False)
         self.advanced_toggle.setArrowType(Qt.ArrowType.RightArrow)
         self.advanced_toggle.toggled.connect(self._toggle_advanced)
         root.addWidget(self.advanced_toggle)
-        self.advanced_panel = QGroupBox('Opções avançadas')
+        self.advanced_panel = QGroupBox(tr('Opções avançadas'))
         advanced = QFormLayout(self.advanced_panel)
         self.reference = QLineEdit()
-        self.reference.setPlaceholderText('Opcional: recupera classes de TIFF RGB legado')
-        self.reference_button = QPushButton('…')
+        self.reference.setPlaceholderText(tr('Opcional: recupera classes de TIFF RGB legado'))
+        self.reference_button = QPushButton(tr('…'))
         self.reference_button.clicked.connect(self._browse_reference)
         ref_row = QHBoxLayout()
         ref_row.addWidget(self.reference, 1)
         ref_row.addWidget(self.reference_button)
-        self.reference_label = QLabel('RS2 de referência (RGB):')
+        self.reference_label = QLabel(tr('RS2 de referência (RGB):'))
         self.reference_row = QWidget()
         self.reference_row.setLayout(ref_row)
         advanced.addRow(self.reference_label, self.reference_row)
         self.manual_bounds = QLineEdit()
-        self.manual_bounds.setPlaceholderText('xmin, ymin, xmax, ymax')
-        self.manual_bounds.setToolTip('Somente quando o TIFF não tem georreferenciamento.')
-        self.bounds_label = QLabel('Extensão manual:')
+        self.manual_bounds.setPlaceholderText(tr('xmin, ymin, xmax, ymax'))
+        self.manual_bounds.setToolTip(tr('Somente quando o TIFF não tem georreferenciamento.'))
+        self.bounds_label = QLabel(tr('Extensão manual:'))
         advanced.addRow(self.bounds_label, self.manual_bounds)
-        self.background_nodata = QCheckBox('Tratar a classe 0 como NoData')
+        self.background_nodata = QCheckBox(tr('Tratar a classe 0 como NoData'))
         self.background_nodata.setChecked(True)
         advanced.addRow('', self.background_nodata)
-        self.vector_skip_background = QCheckBox('Não criar polígonos da classe 0 (FUNDO)')
-        self.vector_skip_background.setToolTip('Em rasters Float contínuos, 0 válido é preservado; apenas NoData é excluído.')
+        self.vector_skip_background = QCheckBox(tr('Não criar polígonos da classe 0 (FUNDO)'))
+        self.vector_skip_background.setToolTip(tr('Em rasters Float contínuos, 0 válido é preservado; apenas NoData é excluído.'))
         self.vector_skip_background.setChecked(True)
         advanced.addRow('', self.vector_skip_background)
-        self.vector_all_touched = QCheckBox('Rasterizar todas as células tocadas pelas feições (ALL_TOUCHED)')
+        self.vector_all_touched = QCheckBox(tr('Rasterizar todas as células tocadas pelas feições (ALL_TOUCHED)'))
         self.vector_all_touched.setChecked(False)
         advanced.addRow('', self.vector_all_touched)
-        self.float_classes_label = QLabel('Classes para TIFF contínuo:')
+        self.float_classes_label = QLabel(tr('Classes para TIFF contínuo:'))
         self.float_classes = QSpinBox()
         self.float_classes.setRange(2, 20)
         self.float_classes.setValue(5)
         self.float_classes.setToolTip(
-            'Apenas para GeoTIFF Float32/Float64: intervalos de igual amplitude. '
-            'Células sem dados são excluídas. O TIFF original não é alterado.')
+            tr('Apenas para GeoTIFF Float32/Float64: intervalos de igual amplitude. '
+            'Células sem dados são excluídas. O TIFF original não é alterado.'))
         advanced.addRow(self.float_classes_label, self.float_classes)
         self.vector_connectivity = QComboBox()
-        self.vector_connectivity.addItems(['4 vizinhos (lados)', '8 vizinhos (lados e diagonais)'])
-        self.connectivity_label = QLabel('Contiguidade:')
+        self.vector_connectivity.addItems([tr('4 vizinhos (lados)'), tr('8 vizinhos (lados e diagonais)')])
+        self.connectivity_label = QLabel(tr('Contiguidade:'))
         advanced.addRow(self.connectivity_label, self.vector_connectivity)
         self.advanced_panel.hide()
         root.addWidget(self.advanced_panel)
@@ -250,15 +251,15 @@ class RS2ConverterDialog(QDialog):
         outer.addWidget(scroll, 1)
 
         actions = QHBoxLayout()
-        self.inspect_button = QPushButton('Propriedades RS2…')
+        self.inspect_button = QPushButton(tr('Propriedades RS2…'))
         self.inspect_button.clicked.connect(self._inspect)
         actions.addWidget(self.inspect_button)
         actions.addStretch(1)
-        self.convert_button = QPushButton('Executar')
+        self.convert_button = QPushButton(tr('Executar'))
         self.convert_button.setDefault(True)
         self.convert_button.clicked.connect(self._convert)
         actions.addWidget(self.convert_button)
-        close = QPushButton('Fechar')
+        close = QPushButton(tr('Fechar'))
         close.clicked.connect(self.close)
         actions.addWidget(close)
         outer.addLayout(actions)
@@ -269,7 +270,7 @@ class RS2ConverterDialog(QDialog):
         self.advanced_toggle.setArrowType(
             Qt.ArrowType.DownArrow if opened else Qt.ArrowType.RightArrow)
         self.advanced_toggle.setText(
-            'Ocultar opções avançadas' if opened else 'Mostrar opções avançadas')
+            tr('Ocultar opções avançadas' if opened else 'Mostrar opções avançadas'))
 
     def _temp_changed(self, *_):
         persistent = not self.temporary_check.isChecked()
@@ -291,9 +292,9 @@ class RS2ConverterDialog(QDialog):
             self.batch.setChecked(False)
         self.batch.setEnabled(not from_vector)
         self.source.setPlaceholderText(
-            'Vetor local (.gpkg, .shp, .geojson, .fgb)' if from_vector else
-            'Arquivo .rs2, .tif ou .tiff')
-        self.layer_label.setText('Camada vetorial do projeto:' if from_vector else 'Camada do projeto:')
+            tr('Vetor local (.gpkg, .shp, .geojson, .fgb)' if from_vector else
+            'Arquivo .rs2, .tif ou .tiff'))
+        self.layer_label.setText(tr('Camada vetorial do projeto:' if from_vector else 'Camada do projeto:'))
         many = self.batch.isChecked()
         self.loaded_layers.setFilters(Qgis.LayerFilter.VectorLayer if from_vector else Qgis.LayerFilter.RasterLayer)
         self.batch_loaded_layers.setFilters(Qgis.LayerFilter.RasterLayer)
@@ -303,9 +304,9 @@ class RS2ConverterDialog(QDialog):
         for widget in (self.vector_field, self.vector_field_label, self.pixel_size, self.pixel_size_label):
             widget.setVisible(from_vector)
         self.vector_all_touched.setVisible(from_vector)
-        self.crs_label.setText('SRC da saída (opcional):' if operation == 3 else 'SRC do RS2:')
-        self.crs_widget.setDialogTitle('SRC de saída (atribuição, sem reprojeção)'
-                                       if operation == 3 else 'Selecione o SRC confirmado do RS2')
+        self.crs_label.setText(tr('SRC da saída (opcional):' if operation == 3 else 'SRC do RS2:'))
+        self.crs_widget.setDialogTitle(tr('SRC de saída (atribuição, sem reprojeção)'
+                                       if operation == 3 else 'Selecione o SRC confirmado do RS2'))
         self.options_box.setVisible(not to_rs2)
         self.inspect_button.setEnabled(operation in (0, 2) and not many)
         for widget in (self.layer_label, self.loaded_layers, self.use_loaded):
@@ -324,13 +325,13 @@ class RS2ConverterDialog(QDialog):
         self.vector_format.setVisible(to_vector)
         self.vector_label.setVisible(to_vector)
         self.description.setText((
-            'Converte os códigos e legendas RS2 para um raster categórico de uma banda.' if to_tif else
+            tr('Converte os códigos e legendas RS2 para um raster categórico de uma banda.' if to_tif else
             'Cria um RS2 a partir dos valores de um TIFF categórico ou das cores de um TIFF RGB.' if to_rs2 else
             'Rasteriza uma camada vetorial por atributo, mantendo o SRC e os nomes das categorias.' if from_vector else
-            'Gera polígonos contíguos por classe, com atributos CODIGO, CLASSE e COR_HEX.'
+            'Gera polígonos contíguos por classe, com atributos CODIGO, CLASSE e COR_HEX.')
         ))
         self.footer_hint.setText((
-            'O SRC não é identificado inequivocamente pelo RS2: selecione apenas se confirmado. '
+            tr('O SRC não é identificado inequivocamente pelo RS2: selecione apenas se confirmado. '
             'Os códigos das classes são preservados.' if to_tif else
             'TIFFs RGB sem referência RS2 recebem códigos novos por cor; a referência é opcional. '
             'O TIFF precisa ter coordenadas ou uma extensão informada.' if to_rs2 else
@@ -344,7 +345,7 @@ class RS2ConverterDialog(QDialog):
             'O SRC vem do TIFF, salvo escolha explícita.' if operation == 3 else
             'Informe o campo e a resolução nas unidades do SRC de origem (metros se projetado em metros). '
             'SRC geográfico: resolução em graus. Área pela extensão do vetor; fundo = 0. '
-            'SRC original preservado, sem reprojeção.'
+            'SRC original preservado, sem reprojeção.')
         ))
         for widget in (self.reference, self.reference_button):
             widget.setEnabled(to_rs2 and not many)
@@ -457,7 +458,7 @@ class RS2ConverterDialog(QDialog):
             else:
                 self._set_source(self._layer_path(self.loaded_layers.currentLayer()))
         except ValueError as exc:
-            QMessageBox.warning(self, 'Camada raster', str(exc))
+            QMessageBox.warning(self, tr('Camada raster'), str(exc))
 
     def _add_many_loaded_layers(self):
         layers = choose_project_layers(self, 'raster', 'Adicionar vários rasters do projeto')
@@ -466,7 +467,7 @@ class RS2ConverterDialog(QDialog):
             try:
                 paths.append(self._layer_path(layer))
             except ValueError as exc:
-                QMessageBox.warning(self, 'Camada ignorada', str(exc))
+                QMessageBox.warning(self, tr('Camada ignorada'), str(exc))
         if paths:
             self._add_to_batch(paths)
 
@@ -474,18 +475,18 @@ class RS2ConverterDialog(QDialog):
         try:
             self._add_to_batch([self._layer_path(self.batch_loaded_layers.currentLayer())])
         except ValueError as exc:
-            QMessageBox.warning(self, 'Camada raster', str(exc))
+            QMessageBox.warning(self, tr('Camada raster'), str(exc))
 
     def _browse_source(self):
         pattern = ('Vetores (*.gpkg *.shp *.geojson *.json *.fgb)' if self.mode.currentIndex() == 4 else
                    'GeoTIFF (*.tif *.tiff)' if self.mode.currentIndex() in (1, 3) else
                    'Vista SAGA (*.rs2)')
-        filename, _ = QFileDialog.getOpenFileName(self, 'Selecionar arquivo de entrada', '', pattern)
+        filename, _ = QFileDialog.getOpenFileName(self, tr('Selecionar arquivo de entrada'), '', pattern)
         if filename:
             self._set_source(filename)
 
     def _browse_batch(self):
-        names, _ = QFileDialog.getOpenFileNames(self, 'Adicionar rasters ao lote', '',
+        names, _ = QFileDialog.getOpenFileNames(self, tr('Adicionar rasters ao lote'), '',
                                                 ('GeoTIFF (*.tif *.tiff)' if self.mode.currentIndex() in (1, 3) else 'Vista SAGA (*.rs2)'))
         if names:
             self._add_to_batch(names)
@@ -494,9 +495,9 @@ class RS2ConverterDialog(QDialog):
         current = self.mode.currentIndex()
         expected = 1 if current in (1, 3) else 0
         if any(source_mode(filename) != expected for filename in names):
-            QMessageBox.warning(self, 'Entrada do lote',
-                'Os arquivos selecionados não correspondem à operação atual. '
-                'Use TIFF para operações de origem GeoTIFF e RS2 para operações de origem RS2.')
+            QMessageBox.warning(self, tr('Entrada do lote'),
+                tr('Os arquivos selecionados não correspondem à operação atual. '
+                'Use TIFF para operações de origem GeoTIFF e RS2 para operações de origem RS2.'))
             return
         present = {self.batch_list.item(i).text() for i in range(self.batch_list.count())}
         for filename in names:
@@ -509,7 +510,7 @@ class RS2ConverterDialog(QDialog):
             self.batch_list.takeItem(self.batch_list.row(item))
 
     def _browse_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, 'Escolha a pasta de saída',
+        folder = QFileDialog.getExistingDirectory(self, tr('Escolha a pasta de saída'),
                                                   self.batch_folder.text())
         if folder:
             self.batch_folder.setText(folder)
@@ -523,7 +524,7 @@ class RS2ConverterDialog(QDialog):
             filt = 'Vista SAGA (*.rs2)'
         else:
             filt = f'{self.vector_format.currentText()}'
-        filename, _ = QFileDialog.getSaveFileName(self, 'Arquivo de saída',
+        filename, _ = QFileDialog.getSaveFileName(self, tr('Arquivo de saída'),
                                                    self.destination.text(), filt)
         if filename:
             path = Path(filename)
@@ -532,7 +533,7 @@ class RS2ConverterDialog(QDialog):
             self.destination.setText(filename)
 
     def _browse_reference(self):
-        filename, _ = QFileDialog.getOpenFileName(self, 'RS2 original de referência', '',
+        filename, _ = QFileDialog.getOpenFileName(self, tr('RS2 original de referência'), '',
                                                 'Vista SAGA (*.rs2)')
         if filename:
             self.reference.setText(filename)
@@ -543,14 +544,14 @@ class RS2ConverterDialog(QDialog):
             classes = '\n'.join(f'  {i}: {label}' for i, label in enumerate(h.labels[:16]))
             if len(h.labels) > 16:
                 classes += '\n  ...'
-            QMessageBox.information(self, 'Propriedades do RS2',
+            QMessageBox.information(self, tr('Propriedades do RS2'),
                 f'Dimensões: {h.width} × {h.height}\n'
                 f'Resolução: {h.pixel_x:g} × {h.pixel_y:g}\n'
                 f'X: {h.xmin} — {h.xmax}\nY: {h.ymin} — {h.ymax}\n'
                 f'Categorias: {h.num_classes}\n\n{classes}\n\n'
                 'SRC não identificado no cabeçalho RS2.')
         except Exception as exc:
-            QMessageBox.critical(self, 'Falha na leitura do RS2', str(exc))
+            QMessageBox.critical(self, tr('Falha na leitura do RS2'), str(exc))
 
     def _epsg(self):
         if self.mode.currentIndex() in (1, 4):
@@ -695,7 +696,7 @@ class RS2ConverterDialog(QDialog):
             operation, plans = self._plans()
             epsg = self._epsg()
         except Exception as exc:
-            QMessageBox.warning(self, 'Conferir parâmetros', str(exc))
+            QMessageBox.warning(self, tr('Conferir parâmetros'), str(exc))
             return
         total = len(plans)
         if self.batch.isChecked() and total > 1:
@@ -707,7 +708,7 @@ class RS2ConverterDialog(QDialog):
                 if len(warnings) > 8:
                     lines += f'\n… e mais {len(warnings)-8} arquivos.'
                 answer = QMessageBox.question(
-                    self, 'Atenção: grades deslocadas',
+                    self, tr('Atenção: grades deslocadas'),
                     'Os mapas possuem mesmas dimensões e resolução, mas nem '
                     'todos apresentam a mesma localização espacial:\n\n' + lines +
                     '\n\nA conversão de cada arquivo será feita sem alteração '
@@ -725,7 +726,7 @@ class RS2ConverterDialog(QDialog):
                        if dest.exists() and str(dest.resolve()) in loaded]
             if blocked:
                 QMessageBox.warning(
-                    self, 'Arquivo de saída aberto no QGIS',
+                    self, tr('Arquivo de saída aberto no QGIS'),
                     'Um ou mais arquivos de saída já estão carregados no projeto. '
                     'No Windows, o QGIS/GDAL pode manter esses arquivos bloqueados. '
                     'Remova temporariamente as camadas de saída do projeto, '
@@ -747,7 +748,7 @@ class RS2ConverterDialog(QDialog):
             if len(conflicts) > 9:
                 preview += f'\n… e outros {len(conflicts) - 9} arquivos.'
             answer = QMessageBox.question(
-                self, 'Sobrescrever saídas e arquivos auxiliares',
+                self, tr('Sobrescrever saídas e arquivos auxiliares'),
                 f'{len(conflicts)} arquivo(s) existente(s) serão substituídos ou '
                 f'removidos para evitar metadados obsoletos:\n\n{preview}\n\n'
                 'Deseja continuar?',
@@ -766,19 +767,19 @@ class RS2ConverterDialog(QDialog):
                 ds = None
                 if n in (3, 4):
                     answer = QMessageBox.question(
-                        self, 'TIFF RGB: códigos novos',
-                        'Sem o RS2 de referência, cada cor HEX receberá código novo '
+                        self, tr('TIFF RGB: códigos novos'),
+                        tr('Sem o RS2 de referência, cada cor HEX receberá código novo '
                         'e nome genérico. Os códigos históricos não serão recuperados. '
-                        'Deseja continuar?',
+                        'Deseja continuar?'),
                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                         QMessageBox.StandardButton.No)
                     if answer != QMessageBox.StandardButton.Yes:
                         return
             except Exception as exc:
-                QMessageBox.warning(self, 'Entrada TIFF', str(exc))
+                QMessageBox.warning(self, tr('Entrada TIFF'), str(exc))
                 return
-        progress = QProgressDialog('Convertendo mapas…', 'Cancelar', 0, 100, self)
-        progress.setWindowTitle('Vista Saga Plugin — conversor')
+        progress = QProgressDialog(tr('Convertendo mapas…'), tr('Cancelar'), 0, 100, self)
+        progress.setWindowTitle(tr('Vista Saga Plugin — conversor'))
         progress.setMinimumDuration(0)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.show()
@@ -856,6 +857,6 @@ class RS2ConverterDialog(QDialog):
         if completed:
             report += f'\n\nSaída: {Path(completed[0]).parent}'
         if failures:
-            QMessageBox.warning(self, 'Conversão parcialmente concluída', report)
+            QMessageBox.warning(self, tr('Conversão parcialmente concluída'), report)
         else:
-            QMessageBox.information(self, 'Conversão concluída', report)
+            QMessageBox.information(self, tr('Conversão concluída'), report)
