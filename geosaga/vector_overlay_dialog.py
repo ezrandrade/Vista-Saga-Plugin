@@ -1,3 +1,4 @@
+from .i18n import tr
 """Interface de Avaliação por sobreposição de VÁRIAS camadas vetoriais.
 
 Aproveita as mesmas tabelas de notas e pesos já homologadas na avaliação de
@@ -22,7 +23,7 @@ from .vector_overlay_engine import validate_overlay_plan, validate_source_layers
 class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
     def _build(self):
         super()._build()
-        self.setWindowTitle('Vista Saga Plugin — Avaliação por sobreposição')
+        self.setWindowTitle(tr('Vista Saga Plugin — Avaliação por sobreposição'))
         self.setMinimumSize(900, 625)
         heading = self.layout().itemAt(0).widget()
         heading.setText('<b>AVALIAÇÃO ESPACIAL — SOBREPOSIÇÃO DE MAPAS VETORIAIS</b>')
