@@ -1,3 +1,4 @@
+from .i18n import tr
 """Combinação de Mapas: interface própria, compacta, QGIS 4.x/Qt6.
 
 As listas permitem empilhar rasteres ou polígonos sem alterar as camadas do QGIS.
@@ -28,7 +29,7 @@ class CombinationDialog(QDialog):
         self._busy = False
         self._sources = [[], []]
         self._file_layers = []
-        self.setWindowTitle('Vista Saga Plugin — Combinação de Mapas')
+        self.setWindowTitle(tr('Vista Saga Plugin — Combinação de Mapas'))
         self.setModal(False)
         self.setMinimumSize(650, 450)
         self.resize(790, 565)
