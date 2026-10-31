@@ -4,7 +4,9 @@
 
 **Complemento independente de geoprocessamento para QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O projeto reúne procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, **sem incorporar o código do software original** e sem vínculo oficial com seus desenvolvedores.
 
-**Versão publicada:** `1.0.3`. Os sete módulos foram homologados funcionalmente no QGIS 4.2.2 (Windows), e a utilização no Linux/Flatpak também foi testada e aprovada. A versão candidata 1.0.4-rc5 introduz um botão suspenso e a internacionalização português/inglês, aguardando validação final antes da publicação.
+**Site oficial e apresentação do projeto:** [vistasagaplugin.wordpress.com](https://vistasagaplugin.wordpress.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
+
+**Versão publicada:** `1.0.3`. Os sete módulos foram homologados funcionalmente no QGIS 4.2.2 (Windows), e a utilização no Linux/Flatpak também foi testada e aprovada. A versão 1.0.4 foi consolidada para submissão, com um botão suspenso e internacionalização em português e inglês; sua publicação no repositório oficial do QGIS ainda não foi confirmada.
 
 ## Módulos
 
@@ -23,7 +25,7 @@
 - **QGIS 4.x, Qt6 e Python 3.12 ou compatível com a distribuição QGIS utilizada**. O plugin não foi preparado para o QGIS 3.x.
 - Bibliotecas PyQGIS, GDAL/OGR e NumPy do ambiente QGIS. SciPy pode ser usado para acelerar um caso do Voronoi, mas existe alternativa sem SciPy.
 - No QGIS, acesse **Complementos → Gerenciar e Instalar Complementos → Instalar a partir de ZIP**, selecione o **ZIP instalável** e reinicie o programa.
-- Na versão publicada 1.0.3, acesse **Raster → Vista Saga Plugin**. Na candidata 1.0.4-rc5, o painel foi substituído por **um único botão com menu suspenso**, que oferece acesso direto aos sete módulos; os comandos também permanecem no menu Raster.
+- Na versão publicada 1.0.3, acesse **Raster → Vista Saga Plugin**. Na versão 1.0.4 preparada para publicação, o painel foi substituído por **um único botão com menu suspenso**, que oferece acesso direto aos sete módulos; os comandos também permanecem no menu Raster.
 
 **Atenção:** a pasta Python instalável chama-se `geosaga` de propósito. Não a renomeie para `Vista-Saga-Plugin` ou `vista_saga_plugin`: isso quebraria importações e os identificadores históricos `geosaga:*` utilizados por modelos e projetos antigos.
 
@@ -63,4 +65,4 @@ Licença **GNU GPL-3.0-or-later**; consulte [`LICENSE`](LICENSE) e a cópia incl
 
 ---
 
-*Independent QGIS 4.x plugin for geospatial evaluation, monitoring, signatures, thematic overlays, format conversion, weighted Voronoi analyses and animated raster/vector maps. The seven modules have been functionally tested on QGIS 4.2.2 for Windows and on Linux/Flatpak. The candidate 1.0.4 release adds an integrated dropdown menu and Portuguese/English localization; release approval is pending.*
+*Independent QGIS 4.x plugin for geospatial evaluation, monitoring, signatures, thematic overlays, format conversion, weighted Voronoi analyses and animated raster/vector maps. The seven modules have been functionally tested on QGIS 4.2.2 for Windows and on Linux/Flatpak. Version 1.0.4 is prepared for submission with an integrated dropdown menu and Portuguese/English localization; publication in the official QGIS plugin repository has not yet been confirmed.*
