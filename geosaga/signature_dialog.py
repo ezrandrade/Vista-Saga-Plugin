@@ -1,3 +1,4 @@
+from .i18n import tr
 """Interface compacta da Assinatura: composição de classes por área.
 
 QGIS 4.x / Qt6; seleção de camadas do projeto ou arquivos locais. A rotina
@@ -28,7 +29,7 @@ class SignatureDialog(QDialog):
         self._area_stack = []
         self._merged_areas = None
         self.setModal(False)
-        self.setWindowTitle('Vista Saga Plugin — Assinatura')
+        self.setWindowTitle(tr('Vista Saga Plugin — Assinatura'))
         self.resize(800, 530)
         self.setMinimumSize(690, 440)
         self._build_ui()
@@ -395,7 +396,7 @@ class SignatureDialog(QDialog):
         self._busy = True
         self.run_button.setEnabled(False)
         popup = QProgressDialog('Calculando as assinaturas…', 'Cancelar', 0, 100, self)
-        popup.setWindowTitle('Vista Saga — Assinatura')
+        popup.setWindowTitle(tr('Vista Saga — Assinatura'))
         popup.setWindowModality(Qt.WindowModality.WindowModal)
         popup.setMinimumDuration(0)
         popup.setValue(0)
