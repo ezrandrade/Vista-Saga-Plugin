@@ -1,8 +1,8 @@
-from .i18n import tr
 """Avaliação — modalidade vetorial por atributos, QGIS 4 / Qt6.
 
 Esta janela não altera o formulário raster nem oferece fluxo Processing.
 """
+from .i18n import tr
 import os
 from collections import Counter
 
