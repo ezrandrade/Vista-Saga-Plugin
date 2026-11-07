@@ -71,7 +71,7 @@ def publish_geotiff(staged, final):
         keep_backup = bool(errors)
         suffix = (' Falha ao restaurar arquivos originais; backups em ' +
                   str(backup_dir) + ': ' + '; '.join(errors)) if errors else ''
-        raise RS2Error('Falha na substituição do GeoTIFF/auxiliares: ' + str(exc) + suffix) from exc
+        raise RS2Error(f'Falha na substituição do GeoTIFF/auxiliares: {exc}{suffix}') from exc
     finally:
         if not keep_backup:
             shutil.rmtree(backup_dir, ignore_errors=True)

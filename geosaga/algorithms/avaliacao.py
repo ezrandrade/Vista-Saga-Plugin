@@ -47,31 +47,31 @@ class AvaliacaoAlgorithm(QgsProcessingAlgorithm):
     def processAlgorithm(self, parameters, context, feedback):
         layers = self.parameterAsLayerList(parameters, self.RASTERS, context)
         if not layers:
-            raise QgsProcessingException('Selecione pelo menos um raster.')
+            raise QgsProcessingException(tr('Selecione pelo menos um raster.'))
         try:
             rules = parse_config(self.parameterAsString(parameters, self.REGRAS, context), len(layers))
         except ValueError as exc:
-            raise QgsProcessingException(str(exc)) from exc
+            raise QgsProcessingException(tr(str(exc))) from exc
         datasets = [dataset_for_layer(layer) for layer in layers]
         assert_same_grid(datasets)
         output = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
         assert_output_not_input(output, layers)
         for layer, ds in zip(layers, datasets):
             if not ds.GetRasterBand(1):
-                raise QgsProcessingException(f'Raster sem banda: {layer.name()}')
+                raise QgsProcessingException(tr(f'Raster sem banda: {layer.name()}'))
         dest = create_output(output, datasets[0], gdal.GDT_Float32, NODATA_OUT)
         total = datasets[0].RasterYSize
         success = False
         try:
             for x, y, w, h in window_iterator(datasets[0]):
                 if feedback.isCanceled():
-                    raise QgsProcessingException('Operação cancelada.')
+                    raise QgsProcessingException(tr('Operação cancelada.'))
                 arrays = [ds.GetRasterBand(1).ReadAsArray(x, y, w, h) for ds in datasets]
                 nds = [ds.GetRasterBand(1).GetNoDataValue() for ds in datasets]
                 try:
                     output_data = evaluate_block(arrays, nds, rules)
                 except ValueError as exc:
-                    raise QgsProcessingException(str(exc)) from exc
+                    raise QgsProcessingException(tr(str(exc))) from exc
                 dest.GetRasterBand(1).WriteArray(output_data, x, y)
                 feedback.setProgress(100 * (y + h) / total)
             dest.FlushCache()

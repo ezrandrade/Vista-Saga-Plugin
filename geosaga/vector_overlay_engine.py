@@ -10,6 +10,7 @@ import shutil
 import tempfile
 
 from .vector_evaluation_core import category_key, validate_criteria
+from .errors import log_exception
 
 
 def validate_overlay_plan(criteria, min_layers=2):
@@ -56,7 +57,7 @@ def validate_source_layers(criteria, project):
 
 def _single_criterion_layer(source, criterion, cancelled=None, progress=None):
     """Cópia temporária com apenas um campo-chave, para evitar colisões de nomes."""
-    from qgis.PyQt.QtCore import QVariant
+    from qgis.PyQt.QtCore import QMetaType
     from qgis.core import QgsFeature, QgsField, QgsVectorLayer, QgsGeometry
 
     crs_id = source.crs().authid()
@@ -66,7 +67,7 @@ def _single_criterion_layer(source, criterion, cancelled=None, progress=None):
     if not result.isValid():
         raise OSError('Não foi possível criar a camada vetorial temporária.')
     provider = result.dataProvider()
-    if not provider.addAttributes([QgsField(criterion['field'], QVariant.String, len=254)]):
+    if not provider.addAttributes([QgsField(criterion['field'], QMetaType.Type.QString, len=254)]):
         raise OSError('Não foi possível criar o campo do critério temporário.')
     result.updateFields()
     pending = []
@@ -112,7 +113,7 @@ def evaluate_overlay(criteria, scale, destination, project, progress=None, cance
     from .vector_evaluation_writer import evaluate_vector_layer
 
     validate_overlay_plan(criteria)
-    rules = validate_criteria([
+    validate_criteria([  # valida notas e pesos antes da interseção
         {'field': c['field'], 'weight': c['weight'], 'categories': set(c['counts']),
          'notes': dict(c['notes']), 'excluded': set(c['excluded'])}
         for c in criteria], scale=scale)
@@ -153,6 +154,7 @@ def evaluate_overlay(criteria, scale, destination, project, progress=None, cance
             except Exception as exc:
                 if cancelled and cancelled():
                     raise InterruptedError('Avaliação cancelada pelo usuário.') from exc
+                log_exception()
                 raise RuntimeError('A interseção geométrica falhou. Verifique se as geometrias são válidas. '
                                    f'Detalhes: {exc}') from exc
             if cancelled and cancelled():
@@ -167,7 +169,7 @@ def evaluate_overlay(criteria, scale, destination, project, progress=None, cance
             expected = [item['field'] for item in criteria[:i + 1]]
             if any(field not in joined.fields().names() for field in expected):
                 raise RuntimeError('Campos de critérios foram perdidos durante a interseção.')
-            previous = None
+            previous = None  # noqa: F841 (libera a camada intermediária)
             if progress:
                 progress(min(65, int(65 * i / total)))
         summary = evaluate_vector_layer(joined, [

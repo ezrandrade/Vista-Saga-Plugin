@@ -1,3 +1,18 @@
+## 1.0.5 — versão de estabilidade (2026-11-07)
+
+Nenhum algoritmo numérico foi alterado; os identificadores `geosaga:*` foram preservados.
+
+- **Tradução das mensagens de erro e avisos.** As cerca de 700 mensagens de validação e erro passam a ser exibidas no idioma do QGIS. O catálogo aceita modelos com marcadores (`{0}`), o que traduz também mensagens montadas em tempo de execução e mensagens aninhadas. Idiomas sem catálogo usam inglês.
+- **Exceções GDAL com escopo local.** As conversões RS2/GeoTIFF/vetor ligavam `gdal.UseExceptions()` de forma global e permanente, alterando o comportamento do GDAL para todo o QGIS e para outros complementos. Agora as exceções valem apenas durante a operação, e o estado anterior é restaurado (`gdal_scope.py`).
+- **Pastas temporárias.** Na rasterização de vetores, os datasets GDAL são fechados antes da remoção da pasta temporária. No Windows, arquivos abertos impediam a limpeza e substituíam a mensagem real (por exemplo, "Operação cancelada") por um erro de permissão.
+- **Assinatura (Processing e módulo).** A reprojeção usa o contexto de transformação da execução, e falhas de reprojeção de feições geram mensagem clara em vez de exceção crua.
+- **Compatibilidade com GDAL ≥ 3.11.** Uso do driver vetorial `MEM`, com alternativa `Memory` para versões anteriores.
+- **Qt6/QGIS 4.** Tipos de campo `QMetaType` no lugar de `QVariant`, obsoleto.
+- **Diagnóstico.** Falhas inesperadas são registradas com traceback na aba "Vista Saga Plugin" do painel de mensagens. A descarga do complemento não é interrompida por falha em um único módulo.
+- **Consistência.** Títulos "GeoSAGA" visíveis substituídos por "Vista Saga"; `run_evaluation` aceita configuração em texto JSON; imports não utilizados removidos.
+- **Pacote.** Notas de testes de versões candidatas removidas do pacote de instalação; `LICENSE.md` renomeado para `NOTICE.md`.
+- **Verificação.** QGIS 4.2.3 (Qt 6.11, PyQt 6.11, GDAL 3.13) em Linux: 35 testes unitários; 45 testes de integração (carga/descarga, 7 diálogos, 3 algoritmos Processing, todos os motores, cancelamento sem arquivos residuais, entradas inválidas, estado global do GDAL) com e sem exceções GDAL globais; e teste de estresse da interface em português e inglês, sem exceções não tratadas.
+
 ## 1.0.4 — versão estável para publicação (2026-10-31)
 
 - Reconhecimento do idioma da interface do QGIS, com português brasileiro e inglês homologados.

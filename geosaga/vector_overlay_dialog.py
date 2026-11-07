@@ -9,7 +9,7 @@ from collections import Counter
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
-    QApplication, QFileDialog, QGroupBox, QLabel, QMessageBox,
+    QApplication, QFileDialog, QGroupBox, QMessageBox,
     QProgressDialog, QPushButton,
 )
 from qgis.core import QgsProject
@@ -104,8 +104,8 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
                 counts[key] += 1
                 if len(counts) > 256:
                     QMessageBox.warning(self, tr('Campo com muitas categorias'),
-                                        f'{layer.name()} / {field}: há mais de 256 categorias. '
-                                        'Reclassifique valores contínuos antes da avaliação.')
+                                        tr(f'{layer.name()} / {field}: há mais de 256 categorias. '
+                                        'Reclassifique valores contínuos antes da avaliação.'))
                     return
         if not counts:
             QMessageBox.warning(self, tr('Avaliação por sobreposição'),
@@ -148,7 +148,7 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
         index = self.criteria_table.currentRow()
         if 0 <= index < len(self.criteria):
             c = self.criteria[index]
-            self.class_label.setText(f'{c["label"]}: {len(c["counts"])} categorias.')
+            self.class_label.setText(tr(f'{c["label"]}: {len(c["counts"])} categorias.'))
 
     def validate_configuration(self):
         try:
@@ -156,12 +156,12 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
             validate_overlay_plan(self.criteria)
             sources = validate_source_layers(self.criteria, QgsProject.instance())
             QMessageBox.information(self, tr('Sobreposição pronta'),
-                f'{len(sources)} camadas, {len(self.criteria)} critérios; pesos totalizam 100%.\n\n'
+                tr(f'{len(sources)} camadas, {len(self.criteria)} critérios; pesos totalizam 100%.\n\n'
                 'A saída representará SOMENTE áreas cobertas por todos os mapas. '
                 'Sobreposições parciais e lacunas de cobertura podem reduzir a área avaliada. '
-                'Feições com classes excluídas ou nulas permanecem, mas sem nota.')
+                'Feições com classes excluídas ou nulas permanecem, mas sem nota.'))
         except (ValueError, TypeError) as exc:
-            QMessageBox.warning(self, tr('Configuração incompleta'), str(exc))
+            QMessageBox.warning(self, tr('Configuração incompleta'), tr(str(exc)))
 
     def select_output(self):
         suggestion = self.output_edit.text() or os.path.join(os.path.expanduser('~'), 'avaliacao_sobreposicao.gpkg')
@@ -217,7 +217,7 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
                     return
             self.status.setText(tr('Avaliação por sobreposição concluída: ') + dest)
             QMessageBox.information(self, tr('Avaliação concluída'),
-                f'Camadas: {summary["camadas"]}\n'
+                tr(f'Camadas: {summary["camadas"]}\n'
                 f'Polígonos resultantes: {summary["total"]}\n'
                 f'Com nota: {summary["validos"]}\n'
                 f'Sem nota: {summary["excluidos_ou_sem_dado"]}\n'
@@ -225,9 +225,9 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
                 f'Saída: {dest}\n\n'
                 'Apenas a área de interseção comum foi avaliada.'
                 + (f'\nCSV: {summary["relatorio_csv"]}' if summary.get('relatorio_csv') else '')
-                + (f'\nTXT: {summary["relatorio_txt"]}' if summary.get('relatorio_txt') else ''))
+                + (f'\nTXT: {summary["relatorio_txt"]}' if summary.get('relatorio_txt') else '')))
         except (OSError, ValueError, TypeError, InterruptedError, RuntimeError) as exc:
-            QMessageBox.warning(self, tr('Sobreposição não concluída'), str(exc))
+            QMessageBox.warning(self, tr('Sobreposição não concluída'), tr(str(exc)))
         finally:
             self.running = False
             self.run_button.setEnabled(True)

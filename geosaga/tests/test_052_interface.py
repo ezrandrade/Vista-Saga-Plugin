@@ -1,6 +1,9 @@
 """Regressão estática de menus, botões e identificadores estáveis (sem PyQGIS)."""
 import unittest
 from pathlib import Path
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -23,7 +26,7 @@ class UiConsistencyTests(unittest.TestCase):
 
     def test_monitoring_can_close_after_task(self):
         text = source('monitoring_dialog.py')
-        self.assertIn("self.close_button = QPushButton('Fechar')", text)
+        self.assertIn("self.close_button = QPushButton(tr('Fechar'))", text)
         self.assertIn('self.close_button.clicked.connect(self.close)', text)
         self.assertIn('self.close_button.setEnabled(False)', text)
         self.assertIn('self.close_button.setEnabled(True)', text)
@@ -41,4 +44,4 @@ class UiConsistencyTests(unittest.TestCase):
         self.assertIn("'formato': 'geosaga-avaliacao'", source('evaluation_dialog.py'))
 
     def test_version(self):
-        self.assertIn('version=1.0.3', source('metadata.txt'))
+        _support.assert_release_version(self)

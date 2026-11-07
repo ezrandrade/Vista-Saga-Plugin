@@ -74,7 +74,11 @@ def _geometry_for_feature(feature, transform=None):
     if not geom.isGeosValid():
         raise ValueError(f'Geometria inválida na feição {feature.id()}; use Corrigir geometrias no QGIS.')
     if transform:
-        geom.transform(transform)
+        from qgis.core import QgsCsException
+        try:
+            geom.transform(transform)
+        except QgsCsException as exc:
+            raise ValueError(f'Não foi possível reprojetar a feição {feature.id()} para o SRC do mapa temático.') from exc
     return geom
 
 
@@ -97,7 +101,8 @@ def _raster_counts(dataset, geometry, *, cancel=None):
     y1 = min(dataset.RasterYSize, math.ceil(max(p[1] for p in xy)) + 1)
     if x1 <= x0 or y1 <= y0:
         return Counter()
-    memory = ogr.GetDriverByName('Memory').CreateDataSource('')
+    # GDAL >= 3.11: driver vetorial em memória unificado como 'MEM'.
+    memory = (ogr.GetDriverByName('MEM') or ogr.GetDriverByName('Memory')).CreateDataSource('')
     geom_layer = memory.CreateLayer('mask', geom_type=ogr.wkbUnknown)
     feature = ogr.Feature(geom_layer.GetLayerDefn())
     feature.SetGeometry(ogr.CreateGeometryFromWkb(bytes(geometry.asWkb())))
@@ -247,18 +252,18 @@ def _vector_counts(thematic, aoi_geom, field, label_field, measure_area, *,
 
 
 def _write_area_geopackage(path, features, summaries, source_layer):
-    from qgis.PyQt.QtCore import QVariant
+    from qgis.PyQt.QtCore import QMetaType
     from qgis.core import QgsFeature, QgsField, QgsProject, QgsVectorFileWriter, QgsVectorLayer
     layer = QgsVectorLayer('MultiPolygon', 'Assinatura - áreas de análise', 'memory')
     layer.setCrs(source_layer.crs())
     if not layer.isValid():
         raise RuntimeError('Falha ao preparar camada de polígonos do resultado.')
     provider = layer.dataProvider()
-    fields = [QgsField('AREA_ID', QVariant.String), QgsField('AREA_NOME', QVariant.String),
-              QgsField('AREA_AOI_HA', QVariant.Double), QgsField('AREA_ANAL_HA', QVariant.Double),
-              QgsField('COBERT_PCT', QVariant.Double), QgsField('CLASSES_N', QVariant.Int),
-              QgsField('PREDOMINA', QVariant.String),
-              QgsField('AREA_CONF_HA', QVariant.Double), QgsField('PCT_CONF', QVariant.Double)]
+    fields = [QgsField('AREA_ID', QMetaType.Type.QString), QgsField('AREA_NOME', QMetaType.Type.QString),
+              QgsField('AREA_AOI_HA', QMetaType.Type.Double), QgsField('AREA_ANAL_HA', QMetaType.Type.Double),
+              QgsField('COBERT_PCT', QMetaType.Type.Double), QgsField('CLASSES_N', QMetaType.Type.Int),
+              QgsField('PREDOMINA', QMetaType.Type.QString),
+              QgsField('AREA_CONF_HA', QMetaType.Type.Double), QgsField('PCT_CONF', QMetaType.Type.Double)]
     if not provider.addAttributes(fields):
         raise OSError('Não foi possível preparar os campos de Assinatura.')
     layer.updateFields()
@@ -283,7 +288,7 @@ def _write_area_geopackage(path, features, summaries, source_layer):
     result = QgsVectorFileWriter.writeAsVectorFormatV3(
         layer, str(path), QgsProject.instance().transformContext(), opts)
     if int(result[0]) != 0:
-        raise OSError('Não foi possível gravar o GeoPackage das áreas: ' + str(result))
+        raise OSError(f'Não foi possível gravar o GeoPackage das áreas: {result}')
 
 
 def run_signature(thematic, aoi, mode, field, destination, *,
@@ -309,7 +314,8 @@ def run_signature(thematic, aoi, mode, field, destination, *,
             theme_index = QgsSpatialIndex(thematic.getFeatures())
         transform = None
         if aoi.crs() != thematic.crs():
-            transform = QgsCoordinateTransform(aoi.crs(), thematic.crs(), QgsProject.instance())
+            transform = QgsCoordinateTransform(aoi.crs(), thematic.crs(),
+                                               QgsProject.instance().transformContext())
         pixel_ha = None
         names = {}
         if mode == 'raster':

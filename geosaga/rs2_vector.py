@@ -10,6 +10,7 @@ import tempfile
 
 from .rs2_format import RS2Error, RS2Reader
 from .rs2_converter import convert_rs2_to_tif, _gdal
+from .gdal_scope import with_gdal_exceptions
 
 # Formatos vetoriais de arquivo com suporte amplo em instalações GDAL/QGIS.
 VECTOR_FORMATS = {
@@ -108,6 +109,7 @@ def _layer_name(path):
                          for c in Path(path).stem)[:45]
 
 
+@with_gdal_exceptions
 def convert_rs2_to_vector(rs2_path, vector_path, epsg='', progress=None,
                           ignore_background=True, eight_connected=False):
     """Converte RS2 diretamente para polígonos em formato vetorial GDAL.
@@ -136,7 +138,8 @@ def convert_rs2_to_vector(rs2_path, vector_path, epsg='', progress=None,
         if progress is not None and progress(int(max(0., min(1., value)) * 1000), 1000) is False:
             raise RS2Error('Operação cancelada pelo usuário.')
 
-    with tempfile.TemporaryDirectory(prefix='.vista_vector_', dir=target.parent) as td:
+    with tempfile.TemporaryDirectory(prefix='.vista_vector_', dir=target.parent,
+                                     ignore_cleanup_errors=True) as td:
         folder = Path(td)
         temp_tif = folder / 'categories.tif'
         stage = folder / target.name

@@ -1,1 +1,1 @@
-"""Algoritmos GeoSAGA Ambiental."""
+"""Algoritmos Processing do Vista Saga Plugin (identificadores geosaga:*)."""

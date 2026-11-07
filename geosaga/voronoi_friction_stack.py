@@ -115,20 +115,20 @@ def read_friction_stack(components, gdal, target_wkt, transform, width, height, 
     for comp in components:
         path = os.path.abspath(str(comp['path']))
         if not os.path.isfile(path):
-            raise ValueError('Raster de atrito não encontrado: ' + path)
+            raise ValueError(f'Raster de atrito não encontrado: {path}')
         ds = gdal.Open(path, gdal.GA_ReadOnly)
         if ds is None or ds.RasterCount != 1:
-            raise ValueError('O atrito precisa ser monobanda e acessível: ' + path)
+            raise ValueError(f'O atrito precisa ser monobanda e acessível: {path}')
         if (ds.RasterXSize, ds.RasterYSize) != (width, height):
-            raise ValueError('Dimensões diferentes entre superfícies de atrito: ' + path)
+            raise ValueError(f'Dimensões diferentes entre superfícies de atrito: {path}')
         gt = ds.GetGeoTransform()
         # Tolerância numérica subpixel; não altera pixels nem realiza reprojeção.
         if any(abs(float(a)-float(b)) > max(1.e-7, abs(transform[1]) * 1.e-6)
                for a,b in zip(gt, transform)):
-            raise ValueError('Grades espacialmente desalinhadas: ' + path)
+            raise ValueError(f'Grades espacialmente desalinhadas: {path}')
         srs = osr.SpatialReference()
         if srs.ImportFromWkt(ds.GetProjectionRef()) != 0 or not srs.IsSame(target):
-            raise ValueError('SRC distinto na superfície de atrito: ' + path)
+            raise ValueError(f'SRC distinto na superfície de atrito: {path}')
         band = ds.GetRasterBand(1)
         raster = band.ReadAsArray().astype(np.float64)
         nodata = band.GetNoDataValue()

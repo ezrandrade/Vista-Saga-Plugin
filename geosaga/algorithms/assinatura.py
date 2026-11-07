@@ -7,7 +7,7 @@ from qgis.core import (
     Qgis, QgsProcessingAlgorithm, QgsProcessingException,
     QgsProcessingParameterRasterLayer, QgsProcessingParameterFeatureSource,
     QgsProcessingParameterFileDestination, QgsCoordinateTransform,
-    QgsCoordinateReferenceSystem, QgsProject, QgsGeometry,
+    QgsCoordinateReferenceSystem, QgsCsException, QgsGeometry,
 )
 
 from ..core import valid_mask
@@ -45,17 +45,18 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
         raster = dataset_for_layer(self.parameterAsRasterLayer(parameters, self.RASTER, context))
         source = self.parameterAsSource(parameters, self.POLIGONOS, context)
         if source is None:
-            raise QgsProcessingException('Camada poligonal inválida.')
+            raise QgsProcessingException(tr('Camada poligonal inválida.'))
         raster_crs = QgsCoordinateReferenceSystem.fromWkt(raster.GetProjection())
         if not raster_crs.isValid():
-            raise QgsProcessingException('Raster sem SRC válido.')
+            raise QgsProcessingException(tr('Raster sem SRC válido.'))
         src_crs = source.sourceCrs()
         if not src_crs.isValid():
-            raise QgsProcessingException('Polígonos sem SRC válido.')
+            raise QgsProcessingException(tr('Polígonos sem SRC válido.'))
         transform = None
         if src_crs != raster_crs:
-            transform = QgsCoordinateTransform(src_crs, raster_crs, QgsProject.instance())
-        mem_driver = ogr.GetDriverByName('Memory')
+            # Processing: usar o contexto de transformação da execução, não o projeto global.
+            transform = QgsCoordinateTransform(src_crs, raster_crs, context.transformContext())
+        mem_driver = (ogr.GetDriverByName('MEM') or ogr.GetDriverByName('Memory'))
         vector_mem = mem_driver.CreateDataSource('')
         srs = osr.SpatialReference()
         srs.ImportFromWkt(raster.GetProjection())
@@ -63,21 +64,25 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
         nfeat = 0
         for feature in source.getFeatures():
             if feedback.isCanceled():
-                raise QgsProcessingException('Operação cancelada.')
+                raise QgsProcessingException(tr('Operação cancelada.'))
             geom = QgsGeometry(feature.geometry())
             if geom.isEmpty():
                 continue
             if transform is not None:
-                geom.transform(transform)
+                try:
+                    geom.transform(transform)
+                except QgsCsException as exc:
+                    raise QgsProcessingException(
+                        tr(tr('Não foi possível reprojetar a feição {fid} para o SRC do raster.').format(fid=feature.id()))) from exc
             ogr_geom = ogr.CreateGeometryFromWkb(bytes(geom.asWkb()))
             ogr_feature = ogr.Feature(polygon_layer.GetLayerDefn())
             ogr_feature.SetGeometry(ogr_geom)
             if polygon_layer.CreateFeature(ogr_feature) != 0:
-                raise QgsProcessingException('Erro ao converter polígonos para análise.')
+                raise QgsProcessingException(tr('Erro ao converter polígonos para análise.'))
             ogr_feature = None
             nfeat += 1
         if nfeat == 0:
-            raise QgsProcessingException('Não há polígonos válidos de entrada.')
+            raise QgsProcessingException(tr('Não há polígonos válidos de entrada.'))
         counts = Counter()
         data_band = raster.GetRasterBand(1)
         nd = data_band.GetNoDataValue()
@@ -86,7 +91,7 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
         total = raster.RasterYSize
         for x, y, w, h in window_iterator(raster):
             if feedback.isCanceled():
-                raise QgsProcessingException('Operação cancelada.')
+                raise QgsProcessingException(tr('Operação cancelada.'))
             mask_ds = mem_raster_driver.Create('', w, h, 1, gdal.GDT_Byte)
             window_gt = (
                 gt[0] + x * gt[1] + y * gt[2], gt[1], gt[2],
@@ -106,7 +111,7 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
             polygon_layer.SetSpatialFilterRect(min(xs), min(ys), max(xs), max(ys))
             err = gdal.RasterizeLayer(mask_ds, [1], polygon_layer, burn_values=[1])
             if err != 0:
-                raise QgsProcessingException('Falha na rasterização dos polígonos.')
+                raise QgsProcessingException(tr('Falha na rasterização dos polígonos.'))
             mask = mask_band.ReadAsArray() != 0
             data = data_band.ReadAsArray(x, y, w, h)
             valid = mask & valid_mask(data, nd)
@@ -117,7 +122,7 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
             feedback.setProgress(100 * (y + h) / total)
         polygon_layer.SetSpatialFilter(None)
         if not counts:
-            raise QgsProcessingException('Não há pixels válidos na área definida.')
+            raise QgsProcessingException(tr('Não há pixels válidos na área definida.'))
         total_valid = sum(counts.values())
         ha = area_ha(raster)
         rows = [
@@ -128,7 +133,7 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
         table = self.parameterAsFileOutput(parameters, self.TABELA, context)
         write_csv(table, ['classe', 'pixels', 'percentual_validos', 'area_ha'], rows)
         if ha is None:
-            feedback.pushWarning('SRC não projetado: não foi calculada área em hectares.')
+            feedback.pushWarning(tr('SRC não projetado: não foi calculada área em hectares.'))
         return {self.TABELA: table}
 
     def createInstance(self):

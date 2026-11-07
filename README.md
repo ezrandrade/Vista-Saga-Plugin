@@ -6,9 +6,9 @@
 
 **Site oficial e apresentação do projeto:** [vistasagaplugin.wordpress.com](https://vistasagaplugin.wordpress.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
 
-**Versão estável do código-fonte: `1.0.4` (31/10/2026).** Internacionalização homologada em português brasileiro e inglês, acesso direto aos sete módulos por botão com menu suspenso, identidade visual própria e validação funcional relatada em Windows 11 e Linux/Flatpak. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
+**Versão do código-fonte: `1.0.5` (07/11/2026), versão de estabilidade.** Mensagens de erro traduzidas, exceções GDAL sem alteração do estado global do QGIS, limpeza segura de arquivos temporários e registro de falhas com traceback; os algoritmos numéricos não foram alterados. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
 
-> **Código-fonte 1.0.4 sincronizado:** os 80 arquivos do ZIP instalável 1.0.4 foram conferidos por identificador de conteúdo Git e estão idênticos na branch `main`, inclusive `geosaga/metadata.txt` (`version=1.0.4`), traduções, código e ícones. O histórico das versões anteriores permanece no GitHub. **A publicação da Release 1.0.4 no GitHub e o envio ao catálogo oficial do QGIS são etapas separadas**. Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.4](geosaga/NOTAS_DA_VERSAO_104.md).
+> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.5](geosaga/NOTAS_DA_VERSAO_105.md) · [Testes](tests/README.md).
 
 ## Módulos
 
@@ -58,6 +58,7 @@ python scripts/build_release.py
 
 ## Histórico, suporte e licença
 
+- [Notas da versão 1.0.5 (estabilidade)](geosaga/NOTAS_DA_VERSAO_105.md)
 - [Notas da versão 1.0.4 (pacote consolidado)](geosaga/NOTAS_DA_VERSAO_104.md)
 - [Notas da versão 1.0.3](geosaga/NOTAS_DA_VERSAO_103.md)
 - [Histórico de alterações](geosaga/CHANGELOG.md)

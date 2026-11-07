@@ -4,9 +4,7 @@ Os relatórios registram pares (classe inicial, classe final) e respectivas áre
 Com nomes em ambos os períodos, a permanência usa identidade temática;
 sem legenda comparável, usa igualdade de códigos numéricos.
 """
-from collections import Counter
 import csv
-import math
 
 from .core import transition_counts
 

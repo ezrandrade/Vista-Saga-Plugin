@@ -1,6 +1,7 @@
 """Tarefa com entradas imutáveis e processamento GDAL fora da interface Qt."""
 from qgis.core import QgsTask
 from .raster_engine import run_evaluation
+from .errors import log_exception
 
 
 class EvaluationTask(QgsTask):
@@ -29,6 +30,7 @@ class EvaluationTask(QgsTask):
             self.error = str(exc)
             return False
         except Exception as exc:
+            log_exception()
             self.error = f'Falha inesperada ({type(exc).__name__}): {exc}'
             return False
 

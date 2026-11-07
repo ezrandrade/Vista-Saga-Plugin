@@ -13,8 +13,7 @@ from collections import Counter
 
 import numpy as np
 
-from .combination_core import (MAX_COMBINATIONS, normalized_code,
-                               combination_index, composition_rows, write_combination_reports)
+from .combination_core import (MAX_COMBINATIONS, combination_index, composition_rows, write_combination_reports)
 
 
 def _cancelled(cancelled):
