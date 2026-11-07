@@ -2,6 +2,9 @@
 import ast
 from pathlib import Path
 import unittest
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,4 +33,4 @@ class StyleScanRegressionTests(unittest.TestCase):
         self.assertEqual(aliases.count('QAbstractItemView'), 1)
 
     def test_release_version(self):
-        self.assertEqual((ROOT / 'metadata.txt').read_text(encoding='utf-8').count('version=1.0.3'), 1)
+        _support.assert_release_version(self)

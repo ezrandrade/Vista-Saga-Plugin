@@ -1,5 +1,8 @@
 import unittest
 from pathlib import Path
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,9 +18,9 @@ class TaskStabilityTests(unittest.TestCase):
         self.assertIn('if not asynchronous:', content)
     def test_shutdown_disconnects(self):
         p=(ROOT/'plugin.py').read_text(encoding='utf-8')
-        self.assertIn('self.voronoi_dialog.shutdown()', p)
+        self.assertIn("getattr(dialog, 'shutdown', None)", p)
+        self.assertIn('def shutdown(self):', (ROOT/'voronoi_dialog.py').read_text(encoding='utf-8'))
     def test_version(self):
-        m=(ROOT/'metadata.txt').read_text(encoding='utf-8')
-        self.assertIn('version=1.0.3',m)
+        _support.assert_release_version(self)
 
 if __name__=='__main__':unittest.main()

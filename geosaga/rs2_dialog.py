@@ -23,6 +23,7 @@ from .rs2_outputs import output_conflicts
 from .rs2_vector import (VECTOR_FORMATS, convert_rs2_to_vector, vector_conflicts)
 from .tiff_vector import convert_tif_to_vector, _legend
 from .vector_raster import convert_vector_to_tif, split_vector_source
+from .errors import log_exception
 
 
 class RS2ConverterDialog(QDialog):
@@ -458,7 +459,7 @@ class RS2ConverterDialog(QDialog):
             else:
                 self._set_source(self._layer_path(self.loaded_layers.currentLayer()))
         except ValueError as exc:
-            QMessageBox.warning(self, tr('Camada raster'), str(exc))
+            QMessageBox.warning(self, tr('Camada raster'), tr(str(exc)))
 
     def _add_many_loaded_layers(self):
         layers = choose_project_layers(self, 'raster', 'Adicionar vários rasters do projeto')
@@ -467,7 +468,7 @@ class RS2ConverterDialog(QDialog):
             try:
                 paths.append(self._layer_path(layer))
             except ValueError as exc:
-                QMessageBox.warning(self, tr('Camada ignorada'), str(exc))
+                QMessageBox.warning(self, tr('Camada ignorada'), tr(str(exc)))
         if paths:
             self._add_to_batch(paths)
 
@@ -475,7 +476,7 @@ class RS2ConverterDialog(QDialog):
         try:
             self._add_to_batch([self._layer_path(self.batch_loaded_layers.currentLayer())])
         except ValueError as exc:
-            QMessageBox.warning(self, tr('Camada raster'), str(exc))
+            QMessageBox.warning(self, tr('Camada raster'), tr(str(exc)))
 
     def _browse_source(self):
         pattern = ('Vetores (*.gpkg *.shp *.geojson *.json *.fgb)' if self.mode.currentIndex() == 4 else
@@ -545,13 +546,14 @@ class RS2ConverterDialog(QDialog):
             if len(h.labels) > 16:
                 classes += '\n  ...'
             QMessageBox.information(self, tr('Propriedades do RS2'),
-                f'Dimensões: {h.width} × {h.height}\n'
+                tr(f'Dimensões: {h.width} × {h.height}\n'
                 f'Resolução: {h.pixel_x:g} × {h.pixel_y:g}\n'
                 f'X: {h.xmin} — {h.xmax}\nY: {h.ymin} — {h.ymax}\n'
                 f'Categorias: {h.num_classes}\n\n{classes}\n\n'
-                'SRC não identificado no cabeçalho RS2.')
+                'SRC não identificado no cabeçalho RS2.'))
         except Exception as exc:
-            QMessageBox.critical(self, tr('Falha na leitura do RS2'), str(exc))
+            log_exception()
+            QMessageBox.critical(self, tr('Falha na leitura do RS2'), tr(str(exc)))
 
     def _epsg(self):
         if self.mode.currentIndex() in (1, 4):
@@ -642,8 +644,9 @@ class RS2ConverterDialog(QDialog):
             layer.triggerRepaint()
         except Exception as exc:
             # Falha de simbologia não invalida o vetor exportado; registrar o erro.
+            log_exception()
             QgsMessageLog.logMessage(
-                f'Não foi possível aplicar a simbologia RS2 ao vetor: {exc}',
+                tr(f'Não foi possível aplicar a simbologia RS2 ao vetor: {exc}'),
                 'Vista Saga Plugin', Qgis.MessageLevel.Warning,
             )
 
@@ -686,8 +689,9 @@ class RS2ConverterDialog(QDialog):
             layer.triggerRepaint()
         except Exception as exc:
             # A simbologia é opcional: manter o vetor e registrar a falha.
+            log_exception()
             QgsMessageLog.logMessage(
-                f'Não foi possível aplicar a simbologia do GeoTIFF ao vetor: {exc}',
+                tr(f'Não foi possível aplicar a simbologia do GeoTIFF ao vetor: {exc}'),
                 'Vista Saga Plugin', Qgis.MessageLevel.Warning,
             )
 
@@ -696,7 +700,8 @@ class RS2ConverterDialog(QDialog):
             operation, plans = self._plans()
             epsg = self._epsg()
         except Exception as exc:
-            QMessageBox.warning(self, tr('Conferir parâmetros'), str(exc))
+            log_exception()
+            QMessageBox.warning(self, tr('Conferir parâmetros'), tr(str(exc)))
             return
         total = len(plans)
         if self.batch.isChecked() and total > 1:
@@ -709,11 +714,11 @@ class RS2ConverterDialog(QDialog):
                     lines += f'\n… e mais {len(warnings)-8} arquivos.'
                 answer = QMessageBox.question(
                     self, tr('Atenção: grades deslocadas'),
-                    'Os mapas possuem mesmas dimensões e resolução, mas nem '
+                    tr('Os mapas possuem mesmas dimensões e resolução, mas nem '
                     'todos apresentam a mesma localização espacial:\n\n' + lines +
                     '\n\nA conversão de cada arquivo será feita sem alteração '
                     'das coordenadas. Para análises integradas será necessário '
-                    'verificar o alinhamento das grades. Continuar?',
+                    'verificar o alinhamento das grades. Continuar?'),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No)
                 if answer != QMessageBox.StandardButton.Yes:
@@ -727,11 +732,11 @@ class RS2ConverterDialog(QDialog):
             if blocked:
                 QMessageBox.warning(
                     self, tr('Arquivo de saída aberto no QGIS'),
-                    'Um ou mais arquivos de saída já estão carregados no projeto. '
+                    tr('Um ou mais arquivos de saída já estão carregados no projeto. '
                     'No Windows, o QGIS/GDAL pode manter esses arquivos bloqueados. '
                     'Remova temporariamente as camadas de saída do projeto, '
                     'ou escolha outra pasta/nome antes de sobrescrevê-los:\n\n' +
-                    '\n'.join(blocked[:8]))
+                    '\n'.join(blocked[:8])))
                 return
         conflicts = []
         for _, dest in plans:
@@ -749,9 +754,9 @@ class RS2ConverterDialog(QDialog):
                 preview += f'\n… e outros {len(conflicts) - 9} arquivos.'
             answer = QMessageBox.question(
                 self, tr('Sobrescrever saídas e arquivos auxiliares'),
-                f'{len(conflicts)} arquivo(s) existente(s) serão substituídos ou '
+                tr(f'{len(conflicts)} arquivo(s) existente(s) serão substituídos ou '
                 f'removidos para evitar metadados obsoletos:\n\n{preview}\n\n'
-                'Deseja continuar?',
+                'Deseja continuar?'),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No)
             if answer != QMessageBox.StandardButton.Yes:
@@ -776,7 +781,8 @@ class RS2ConverterDialog(QDialog):
                     if answer != QMessageBox.StandardButton.Yes:
                         return
             except Exception as exc:
-                QMessageBox.warning(self, tr('Entrada TIFF'), str(exc))
+                log_exception()
+                QMessageBox.warning(self, tr('Entrada TIFF'), tr(str(exc)))
                 return
         progress = QProgressDialog(tr('Convertendo mapas…'), tr('Cancelar'), 0, 100, self)
         progress.setWindowTitle(tr('Vista Saga Plugin — conversor'))
@@ -789,7 +795,7 @@ class RS2ConverterDialog(QDialog):
             for i, (source, dest) in enumerate(plans):
                 if progress.wasCanceled():
                     break
-                progress.setLabelText(f"Arquivo {i+1}/{total}: {Path(str(source).split('|')[0]).name}")
+                progress.setLabelText(tr(f"Arquivo {i+1}/{total}: {Path(str(source).split('|')[0]).name}"))
 
                 def on_progress(done, height, item=i):
                     progress.setValue(round(100 * (item + done / max(height, 1)) / total))
@@ -842,21 +848,22 @@ class RS2ConverterDialog(QDialog):
                                 QgsProject.instance().addMapLayer(layer)
                     completed.append(str(result))
                 except Exception as exc:
-                    failures.append(f"{Path(str(source).split('|')[0]).name}: {exc}")
+                    log_exception()
+                    failures.append(f"{Path(str(source).split('|')[0]).name}: {tr(str(exc))}")
                     # Não impede processar os outros arquivos no lote.
             progress.setValue(100)
         finally:
             progress.close()
-        report = f'Convertidos com sucesso: {len(completed)} de {total}.'
+        report = tr('Convertidos com sucesso: {done} de {total}.').format(done=len(completed), total=total)
         if failures:
-            report += '\n\nFalhas:\n' + '\n'.join(failures[:12])
+            report += '\n\n' + tr('Falhas:') + '\n' + '\n'.join(tr(item) for item in failures[:12])
             if len(failures) > 12:
-                report += f'\n… e mais {len(failures) - 12} falhas.'
+                report += '\n' + tr('… e mais {count} falhas.').format(count=len(failures) - 12)
         if len(completed) < total and not failures:
-            report += '\n\nProcessamento cancelado antes do término.'
+            report += '\n\n' + tr('Processamento cancelado antes do término.')
         if completed:
-            report += f'\n\nSaída: {Path(completed[0]).parent}'
+            report += '\n\n' + tr('Saída: {path}').format(path=Path(completed[0]).parent)
         if failures:
-            QMessageBox.warning(self, tr('Conversão parcialmente concluída'), report)
+            QMessageBox.warning(self, tr('Conversão parcialmente concluída'), tr(report))
         else:
-            QMessageBox.information(self, tr('Conversão concluída'), report)
+            QMessageBox.information(self, tr('Conversão concluída'), tr(report))

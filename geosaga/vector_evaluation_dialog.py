@@ -8,12 +8,11 @@ from collections import Counter
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
-    QApplication, QAbstractItemView, QCheckBox, QComboBox, QDialog,
-    QDoubleSpinBox, QFileDialog, QGroupBox, QHBoxLayout, QHeaderView,
+    QApplication, QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QGroupBox, QHBoxLayout, QHeaderView,
     QLabel, QLineEdit, QMessageBox, QProgressDialog, QPushButton,
     QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
-from qgis.core import QgsProject, Qgis, QgsVectorLayer
+from qgis.core import Qgis, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
 from .ui_shared import temporary_destination
 
@@ -234,9 +233,9 @@ class VectorEvaluationDialog(QWidget):
                 counts[key] += 1
                 if len(counts) > 256:
                     QMessageBox.warning(self, tr('Campo com muitas categorias'),
-                        f'O campo {field} apresenta mais de 256 valores distintos. '
+                        tr(f'O campo {field} apresenta mais de 256 valores distintos. '
                         'Reclassifique-o por intervalos antes da avaliação; '
-                        'esta modalidade aplica notas a categorias discretas.')
+                        'esta modalidade aplica notas a categorias discretas.'))
                     return
         if not counts:
             QMessageBox.warning(self, tr('Avaliação vetorial'),
@@ -355,7 +354,7 @@ class VectorEvaluationDialog(QWidget):
             return
         scale = int(self.scale_combo.currentData())
         if self.batch_note.value() > scale:
-            QMessageBox.warning(self, tr('Nota fora da escala'), f'O limite é {scale}.')
+            QMessageBox.warning(self, tr('Nota fora da escala'), tr(f'O limite é {scale}.'))
             return
         selected = {item.row() for item in self.classes_table.selectedItems()}
         for row in selected:
@@ -379,10 +378,10 @@ class VectorEvaluationDialog(QWidget):
             if layer.isEditable():
                 raise ValueError('Salve as alterações da camada antes de avaliar.')
             QMessageBox.information(self, tr('Avaliação vetorial'),
-                f'Configuração válida: {len(rules)} critérios; {layer.featureCount()} feições. '
-                'As feições excluídas ou sem dado terão avaliação nula.')
+                tr(f'Configuração válida: {len(rules)} critérios; {layer.featureCount()} feições. '
+                'As feições excluídas ou sem dado terão avaliação nula.'))
         except (ValueError, TypeError) as exc:
-            QMessageBox.warning(self, tr('Regras incompletas'), str(exc))
+            QMessageBox.warning(self, tr('Regras incompletas'), tr(str(exc)))
 
     def select_output(self):
         suggestion = self.output_edit.text() or os.path.join(os.path.expanduser('~'), 'avaliacao_vetorial.gpkg')
@@ -395,7 +394,7 @@ class VectorEvaluationDialog(QWidget):
         if self.running:
             return
         try:
-            rules = self._rules()
+            self._rules()  # valida as regras antes de abrir a camada
             layer = self._layer()
             if not layer:
                 raise ValueError('Selecione uma camada poligonal válida.')
@@ -435,14 +434,14 @@ class VectorEvaluationDialog(QWidget):
                     self.status.setText(tr('Arquivo criado, mas não foi possível adicioná-lo ao QGIS.'))
             self.status.setText(tr('Avaliação vetorial concluída: ') + dest)
             QMessageBox.information(self, tr('Avaliação concluída'),
-                f'Feições: {result["total"]}\nAvaliadas: {result["validos"]}\n'
+                tr(f'Feições: {result["total"]}\nAvaliadas: {result["validos"]}\n'
                 f'Sem avaliação: {result["excluidos_ou_sem_dado"]}\n'
                 f'Área total: {result["area_total_ha"]:.4f} ha\n'
                 f'Área avaliada: {result["area_avaliada_ha"]:.4f} ha\n\nSaída: {dest}'
                 + (f'\nCSV: {result["relatorio_csv"]}' if result.get('relatorio_csv') else '')
-                + (f'\nTXT: {result["relatorio_txt"]}' if result.get('relatorio_txt') else ''))
+                + (f'\nTXT: {result["relatorio_txt"]}' if result.get('relatorio_txt') else '')))
         except (OSError, ValueError, InterruptedError, RuntimeError) as exc:
-            QMessageBox.warning(self, tr('Avaliação vetorial não concluída'), str(exc))
+            QMessageBox.warning(self, tr('Avaliação vetorial não concluída'), tr(str(exc)))
         finally:
             self.running = False
             self.run_button.setEnabled(True)

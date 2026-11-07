@@ -6,6 +6,7 @@ from osgeo import gdal, osr
 from qgis.core import QgsProcessingException
 
 from ..core import pixel_area_ha
+from ..i18n import tr
 
 BLOCK = 256
 
@@ -17,11 +18,11 @@ def dataset_for_layer(layer):
     ds = gdal.Open(source, gdal.GA_ReadOnly)
     if ds is None:
         raise QgsProcessingException(
-            f'Não foi possível abrir o raster "{layer.name()}" via GDAL. '
-            'Exporte a camada para GeoTIFF e tente novamente.'
+            tr(f'Não foi possível abrir o raster "{layer.name()}" via GDAL. '
+            'Exporte a camada para GeoTIFF e tente novamente.')
         )
     if ds.RasterCount < 1:
-        raise QgsProcessingException('Raster sem bandas.')
+        raise QgsProcessingException(tr('Raster sem bandas.'))
     return ds
 
 
@@ -29,14 +30,14 @@ def assert_same_grid(datasets):
     base = datasets[0]
     for other in datasets[1:]:
         if base.RasterXSize != other.RasterXSize or base.RasterYSize != other.RasterYSize:
-            raise QgsProcessingException('Dimensões diferentes. Alinhe as grades antes do processamento.')
+            raise QgsProcessingException(tr('Dimensões diferentes. Alinhe as grades antes do processamento.'))
         if not np.allclose(base.GetGeoTransform(), other.GetGeoTransform(), atol=1e-8, rtol=0):
-            raise QgsProcessingException('Resolução, extensão ou grade diferentes. Alinhe os rasters.')
+            raise QgsProcessingException(tr('Resolução, extensão ou grade diferentes. Alinhe os rasters.'))
         if base.GetProjection() != other.GetProjection():
             # Podem ser matematicamente iguais mas serializados de modo distinto.
             sr1, sr2 = osr.SpatialReference(), osr.SpatialReference()
             if sr1.ImportFromWkt(base.GetProjection()) != 0 or sr2.ImportFromWkt(other.GetProjection()) != 0 or not sr1.IsSame(sr2):
-                raise QgsProcessingException('Sistemas de referência diferentes. Reprojete os rasters.')
+                raise QgsProcessingException(tr('Sistemas de referência diferentes. Reprojete os rasters.'))
 
 
 def window_iterator(dataset):
@@ -49,7 +50,7 @@ def window_iterator(dataset):
 
 def create_output(path, reference, dtype, nodata):
     if not path.lower().endswith(('.tif', '.tiff')):
-        raise QgsProcessingException('Saída raster deve ser um arquivo GeoTIFF (.tif).')
+        raise QgsProcessingException(tr('Saída raster deve ser um arquivo GeoTIFF (.tif).'))
     driver = gdal.GetDriverByName('GTiff')
     options = ['TILED=YES', 'COMPRESS=DEFLATE', 'BIGTIFF=IF_SAFER']
     if dtype == gdal.GDT_Float32:
@@ -58,7 +59,7 @@ def create_output(path, reference, dtype, nodata):
         options += ['PREDICTOR=2']
     dst = driver.Create(path, reference.RasterXSize, reference.RasterYSize, 1, dtype, options=options)
     if dst is None:
-        raise QgsProcessingException(f'Não foi possível criar o arquivo {path}')
+        raise QgsProcessingException(tr(f'Não foi possível criar o arquivo {path}'))
     dst.SetGeoTransform(reference.GetGeoTransform())
     dst.SetProjection(reference.GetProjection())
     band = dst.GetRasterBand(1)
@@ -71,7 +72,7 @@ def assert_output_not_input(output_path, layers):
     for layer in layers:
         source = layer.source().split('|', 1)[0]
         if os.path.realpath(source) == destination:
-            raise QgsProcessingException('A saída não pode sobrescrever um raster de entrada.')
+            raise QgsProcessingException(tr('A saída não pode sobrescrever um raster de entrada.'))
 
 
 def area_ha(dataset):

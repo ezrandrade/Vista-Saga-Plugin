@@ -29,8 +29,12 @@ with ZipFile(OUT, "w", ZIP_DEFLATED) as z:
         if ("tests" in rel.parts or "__pycache__" in rel.parts or
                 path.suffix in {".pyc", ".pyo"}):
             continue
+        # Painel anterior à 1.0.4-rc5: não é importado pelo plugin; mantido no
+        # repositório apenas para os testes históricos de interface.
+        if path.name == "home_dialog.py":
+            continue
         if path.suffix == ".md" and path.name not in {
-            "README.md", "CHANGELOG.md", "LICENSE.md", release_notes
+            "README.md", "CHANGELOG.md", "NOTICE.md", release_notes
         }:
             continue
         z.write(path, rel.as_posix())

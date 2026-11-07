@@ -6,6 +6,9 @@ from pathlib import Path
 from geosaga.signature_core import (category_code, summarize_area,
                                     write_signature_reports)
 from geosaga.signature_engine import _outpaths
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 
 class SignatureCoreTest(unittest.TestCase):
@@ -87,7 +90,7 @@ class SignatureCoreTest(unittest.TestCase):
         base = Path(__file__).resolve().parents[1]
         plugin = (base/'plugin.py').read_text(encoding='utf-8')
         home = (base/'home_dialog.py').read_text(encoding='utf-8')
-        self.assertIn("'Assinatura', self.open_signature", plugin)
+        self.assertIn(('Assinatura', 'open_signature'), _support.menu_entries())
         self.assertIn('self.plugin.open_signature', home)
         self.assertNotIn("self.plugin.open_algorithm('assinatura')", home)
         self.assertIn('self.addAlgorithm(AssinaturaAlgorithm())',

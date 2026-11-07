@@ -1,7 +1,6 @@
 """Regras independentes de QGIS para Combinação de Mapas categóricos."""
 import csv
 import math
-from collections import Counter
 
 MAX_COMBINATIONS = 100000
 

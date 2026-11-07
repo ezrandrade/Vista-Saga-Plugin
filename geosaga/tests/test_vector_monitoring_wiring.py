@@ -1,6 +1,9 @@
 """Smoke-test da integração de UI e do empacotamento 0.4.3 sem QGIS."""
 import unittest
 from pathlib import Path
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 
 class WiringTests(unittest.TestCase):
@@ -20,8 +23,7 @@ class WiringTests(unittest.TestCase):
 
     def test_metadata_version(self):
         root = Path(__file__).resolve().parents[1]
-        meta = (root / 'metadata.txt').read_text(encoding='utf-8')
-        self.assertIn('version=1.0.3', meta)
+        _support.assert_release_version(self)
 
 
 if __name__ == '__main__':

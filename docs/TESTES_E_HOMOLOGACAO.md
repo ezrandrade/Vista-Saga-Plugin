@@ -26,3 +26,16 @@ python -m unittest discover -s geosaga/tests -p 'test_*.py'
 Os arquivos `geosaga/tests/integration_*_qgis.py` destinam-se a um QGIS real; podem ser executados pelo Console Python do QGIS conforme as instruções de cada módulo.
 
 **Aviso metodológico:** testes funcionais satisfatórios não demonstram por si só equivalência com a formulação numérica original do Vista SAGA/UFRJ.
+
+## Verificação da versão 1.0.5 (QGIS 4.2.3, Linux)
+
+Ambiente: QGIS 4.2.3, Qt 6.11, PyQt 6.11, GDAL 3.13 (conda-forge), modo `offscreen`.
+
+| Suíte | Resultado |
+|---|---|
+| `geosaga/tests` (unittest; testes de versão/menu reescritos como verificações estruturais em `_support.py`) | 321 testes, 0 falhas, 14 pulados (Shapely/rasterio/PIL ausentes, arquivos de referência antigos) |
+| `tests/unit` (pytest) | 35/35 |
+| `tests/qgis/smoke_qgis.py`, exceções GDAL ligadas e desligadas | 45/45 em cada modo |
+| `tests/qgis/gui_monkey.py` em `pt_BR` e `en_US` | 0 exceções não tratadas |
+
+Pendente: execução das mesmas suítes no QGIS para Windows (OSGeo4W) e comparação numérica com o Vista SAGA/UFRJ. Instruções em [`tests/README.md`](../tests/README.md).

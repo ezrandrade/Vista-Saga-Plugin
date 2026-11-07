@@ -12,6 +12,7 @@ import numpy as np
 
 from .rs2_format import RS2Error
 from .rs2_converter import _gdal
+from .gdal_scope import with_gdal_exceptions
 from .rs2_rgb import RS2RGBMapper, discover_rgb_palette
 from .rs2_vector import _layer_name, _publish_vector, vector_format
 from .continuous_vector import discretize_tiff
@@ -165,6 +166,7 @@ def _indexed_rgb(gdal, ds, path, progress_callback):
     return mapping, has_background
 
 
+@with_gdal_exceptions
 def convert_tif_to_vector(tif_path, vector_path, epsg='', progress=None,
                           ignore_background=True, eight_connected=False,
                           manual_bounds=None, continuous_classes=5):
@@ -216,7 +218,8 @@ def convert_tif_to_vector(tif_path, vector_path, epsg='', progress=None,
             if srs.ImportFromWkt(ds.GetProjectionRef()) != 0:
                 raise RS2Error('O SRC armazenado no GeoTIFF é inválido.')
         target.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryDirectory(prefix='.vista_tif_vector_', dir=target.parent) as temp:
+        with tempfile.TemporaryDirectory(prefix='.vista_tif_vector_', dir=target.parent,
+                                     ignore_cleanup_errors=True) as temp:
             tmp = Path(temp)
             stage = tmp / target.name
             work = tmp / 'work_classes.gpkg'

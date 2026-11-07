@@ -5,9 +5,13 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location('vs_ui_shared_test', ROOT / 'ui_shared.py')
-ui = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(ui)
+# ui_shared usa importação relativa (from .i18n import tr): importar pelo pacote.
+import sys  # noqa: E402
+sys.path.insert(0, str(ROOT.parent))
+try:
+    from geosaga import ui_shared as ui  # noqa: E402
+except ImportError as exc:  # QGIS ausente no Python que executa a suíte
+    raise unittest.SkipTest(f'ui_shared requer PyQGIS: {exc}')
 
 class TemporaryOutputTests(unittest.TestCase):
     def test_generates_distinct_real_directories(self):
@@ -26,8 +30,9 @@ class TemporaryOutputTests(unittest.TestCase):
         self.assertEqual(Path(temp).suffix, '.tif')
 
     def test_engines_unchanged_by_gui_update(self):
-        text = (ROOT / 'metadata.txt').read_text(encoding='utf-8')
-        self.assertIn('version=1.0.3', text)
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import _support
+        _support.assert_release_version(self)
         from zipfile import ZipFile
         archive = Path('/mnt/data/Vista_Saga_Plugin_QGIS4_v0.6.0_COMBINACAO_MAPAS.zip')
         if not archive.exists():

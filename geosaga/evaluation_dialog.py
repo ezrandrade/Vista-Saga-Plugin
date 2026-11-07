@@ -12,7 +12,7 @@ from pathlib import Path
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
     QApplication, QAbstractItemView, QCheckBox, QComboBox, QDialog,
-    QDoubleSpinBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout,
+    QDoubleSpinBox, QFileDialog, QGroupBox, QHBoxLayout,
     QHeaderView, QLabel, QLineEdit, QMessageBox, QProgressDialog,
     QPushButton, QSplitter, QTableWidget, QTableWidgetItem,
     QVBoxLayout, QWidget, QTabWidget, QScrollArea, QFrame,
@@ -22,6 +22,7 @@ from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsPalettedRas
 from .evaluation_task import EvaluationTask
 from .ui_shared import choose_project_layers, temporary_destination
 from .raster_engine import file_source, open_raster, same_grid, scan_classes
+from .errors import log_exception
 
 
 def button(text, callback, tooltip=''):
@@ -254,6 +255,7 @@ class EvaluationDialog(QDialog):
                 scroll.setWidget(dialog)
                 setattr(self, attribute, dialog)
             except Exception:
+                log_exception()
                 details = traceback.format_exc()
                 QgsMessageLog.logMessage(details, 'Vista Saga Plugin', Qgis.MessageLevel.Critical)
                 if scroll.widget() is not None:
@@ -319,7 +321,7 @@ class EvaluationDialog(QDialog):
         layer_id = self.layer_combo.currentData()
         layer = QgsProject.instance().mapLayer(layer_id) if layer_id else None
         if layer is None:
-            QMessageBox.warning(self, tr('GeoSAGA'), tr('Selecione um raster do projeto QGIS.'))
+            QMessageBox.warning(self, tr('Vista Saga'), tr('Selecione um raster do projeto QGIS.'))
             return
         self._add_layer(layer)
 
@@ -329,11 +331,11 @@ class EvaluationDialog(QDialog):
 
     def add_file(self):
         paths, _ = QFileDialog.getOpenFileNames(self, tr('Selecionar mapas raster'), '',
-                                              'Rasters (*.tif *.tiff *.img *.asc *.vrt);;Todos os arquivos (*)')
+                                              tr('Rasters (*.tif *.tiff *.img *.asc *.vrt);;Todos os arquivos (*)'))
         for path in paths:
             layer = self.iface.addRasterLayer(path, Path(path).stem)
             if not layer or not layer.isValid():
-                QMessageBox.warning(self, tr('GeoSAGA'), f'Não foi possível carregar o raster: {path}')
+                QMessageBox.warning(self, tr('Vista Saga'), tr(f'Não foi possível carregar o raster: {path}'))
                 continue
             self.refresh_available()
             self._add_layer(layer)
@@ -361,7 +363,7 @@ class EvaluationDialog(QDialog):
             self.status.setText(tr('Lendo as classes de {layer}…').format(layer=layer.name()))
             categories = self._scan_with_progress(path)
         except (ValueError, OSError, InterruptedError) as exc:
-            QMessageBox.warning(self, tr('Não foi possível adicionar o raster'), str(exc))
+            QMessageBox.warning(self, tr('Não foi possível adicionar o raster'), tr(str(exc)))
             return False
         category_names = {}
         renderer = layer.renderer()
@@ -496,8 +498,8 @@ class EvaluationDialog(QDialog):
                 self.class_info.setText(tr('Selecione um mapa à esquerda.'))
                 return
             e = self.entries[idx]
-            self.class_info.setText(f'<b>{e["name"]}</b> — {len(e["classes"])} classes identificadas '
-                                    'na banda 1, excluindo NoData.')
+            self.class_info.setText(tr(f'<b>{e["name"]}</b> — {len(e["classes"])} classes identificadas '
+                                    'na banda 1, excluindo NoData.'))
             self.class_table.setRowCount(len(e['classes']))
             for r, (code, count) in enumerate(e['classes']):
                 self.class_table.setItem(r, 0, view_item(code))
@@ -536,7 +538,7 @@ class EvaluationDialog(QDialog):
     def apply_score(self):
         rows = {i.row() for i in self.class_table.selectedIndexes()}
         if not rows:
-            QMessageBox.information(self, tr('GeoSAGA'), tr('Selecione uma ou mais classes na tabela de notas.'))
+            QMessageBox.information(self, tr('Vista Saga'), tr('Selecione uma ou mais classes na tabela de notas.'))
             return
         for r in rows:
             spin = self.class_table.cellWidget(r, 2)
@@ -578,12 +580,12 @@ class EvaluationDialog(QDialog):
         try:
             config = self._collect_configuration()
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Validação — GeoSAGA'), str(exc))
+            QMessageBox.warning(self, tr('Validação — Vista Saga'), tr(str(exc)))
             return
-        QMessageBox.information(self, tr('Validação — GeoSAGA'),
-            f'Configuração válida.\nMapas: {len(config["camadas"])}\n'
+        QMessageBox.information(self, tr('Validação — Vista Saga'),
+            tr(f'Configuração válida.\nMapas: {len(config["camadas"])}\n'
             f'Escala: 0–{config["escala"]}\nPesos: 100%\n'
-            'Grades verificadas: dimensões, resolução, alinhamento e SRC.')
+            'Grades verificadas: dimensões, resolução, alinhamento e SRC.'))
 
     def select_output(self):
         suggested = self.output_edit.text() or os.path.join(os.path.expanduser('~'), 'avaliacao_geosaga.tif')
@@ -608,7 +610,7 @@ class EvaluationDialog(QDialog):
                 raise ValueError('A saída não pode sobrescrever um mapa de entrada.')
             if os.path.exists(dest):
                 if QMessageBox.question(self, tr('Substituir resultado?'),
-                    f'O arquivo já existe:\n{dest}\n\nDeseja substituí-lo?') != QMessageBox.StandardButton.Yes:
+                    tr(f'O arquivo já existe:\n{dest}\n\nDeseja substituí-lo?')) != QMessageBox.StandardButton.Yes:
                     return
             report = os.path.splitext(dest)[0] + '_relatorio.csv' if self.csv_check.isChecked() else ''
             report_txt = os.path.splitext(dest)[0] + '_relatorio.txt' if self.txt_check.isChecked() else ''
@@ -621,7 +623,7 @@ class EvaluationDialog(QDialog):
             self.status.setText(tr('Avaliação em execução no gerenciador de tarefas do QGIS…'))
             QgsApplication.taskManager().addTask(task)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('GeoSAGA — Configuração incompleta'), str(exc))
+            QMessageBox.warning(self, tr('Vista Saga — Configuração incompleta'), tr(str(exc)))
 
     def cancel_task(self):
         if self._task:
@@ -634,9 +636,9 @@ class EvaluationDialog(QDialog):
         self.cancel_button.setEnabled(False)
         self.close_button.setEnabled(True)
         if not success:
-            text = task.error or ('Operação cancelada.' if task.isCanceled() else 'Falha na avaliação.')
+            text = tr(task.error or ('Operação cancelada.' if task.isCanceled() else 'Falha na avaliação.'))
             self.status.setText(text)
-            QMessageBox.warning(self, tr('GeoSAGA — Execução não concluída'), text)
+            QMessageBox.warning(self, tr('Vista Saga — Execução não concluída'), tr(text))
             return
         summary = task.summary or {}
         msg = f'Resultado salvo em:\n{task.destination}\n\nPixels avaliados: {summary.get("pixels_validos", 0):,}'
@@ -649,7 +651,7 @@ class EvaluationDialog(QDialog):
             if not layer or not layer.isValid():
                 msg += '\n(Atenção: não foi possível adicionar o raster ao QGIS.)'
         self.status.setText(tr('Avaliação concluída. O resultado foi salvo em GeoTIFF.'))
-        QMessageBox.information(self, tr('GeoSAGA — Avaliação concluída'), msg)
+        QMessageBox.information(self, tr('Vista Saga — Avaliação concluída'), tr(msg))
 
     def _serialize(self, dest):
         self._save_current_notes()
@@ -668,8 +670,8 @@ class EvaluationDialog(QDialog):
 
     def save_project(self):
         suggestion = self.project_path or os.path.join(os.path.expanduser('~'), 'avaliacao.geosaga.json')
-        filename, _ = QFileDialog.getSaveFileName(self, tr('Salvar projeto GeoSAGA'), suggestion,
-                                                  'Projetos GeoSAGA (*.geosaga.json)')
+        filename, _ = QFileDialog.getSaveFileName(self, tr('Salvar projeto Vista Saga'), suggestion,
+                                                  tr('Projetos Vista Saga (*.geosaga.json)'))
         if not filename:
             return
         if not filename.lower().endswith('.geosaga.json'):
@@ -680,7 +682,7 @@ class EvaluationDialog(QDialog):
             self.project_path = filename
             self.status.setText(tr('Projeto salvo: ') + filename)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('GeoSAGA'), f'Falha ao salvar projeto:\n{exc}')
+            QMessageBox.warning(self, tr('Vista Saga'), tr(f'Falha ao salvar projeto:\n{exc}'))
 
     def new_project(self):
         if self._task:
@@ -702,8 +704,8 @@ class EvaluationDialog(QDialog):
     def open_project(self):
         if self._task:
             return
-        path, _ = QFileDialog.getOpenFileName(self, tr('Abrir projeto GeoSAGA'), '',
-                                              'Projetos GeoSAGA (*.geosaga.json *.json)')
+        path, _ = QFileDialog.getOpenFileName(self, tr('Abrir projeto Vista Saga'), '',
+                                              tr('Projetos Vista Saga (*.geosaga.json *.json)'))
         if not path:
             return
         try:
@@ -747,7 +749,18 @@ class EvaluationDialog(QDialog):
             self.status.setText(tr('Projeto carregado: {count} mapa(s).').format(count=len(self.entries)))
             self.refresh_available()
         except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
-            QMessageBox.warning(self, tr('GeoSAGA — Projeto inválido'), str(exc))
+            QMessageBox.warning(self, tr('Vista Saga — Projeto inválido'), tr(str(exc)))
+
+    def shutdown(self):
+        """Descarga do plugin: cancela a tarefa e impede callbacks em janela destruída."""
+        task, self._task = self._task, None
+        if task is not None:
+            task.callback = None
+            try:
+                task.progressChanged.disconnect()
+            except (TypeError, RuntimeError):
+                pass  # sem conexões ou objeto C++ já liberado
+            task.cancel()
 
     def closeEvent(self, event):
         if any(getattr(getattr(self, name, None), 'running', False)
@@ -757,7 +770,7 @@ class EvaluationDialog(QDialog):
             event.ignore()
             return
         if self._task:
-            QMessageBox.information(self, tr('GeoSAGA'),
+            QMessageBox.information(self, tr('Vista Saga'),
                                     tr('A avaliação está em andamento. Cancele ou conclua antes de fechar.'))
             event.ignore()
         else:

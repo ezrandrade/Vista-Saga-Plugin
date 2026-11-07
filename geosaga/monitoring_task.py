@@ -2,6 +2,7 @@
 from qgis.core import QgsTask
 
 from .monitoring_engine import run_monitoring
+from .errors import log_exception
 
 
 class MonitoringTask(QgsTask):
@@ -35,6 +36,7 @@ class MonitoringTask(QgsTask):
             self.error = str(exc)
             return False
         except Exception as exc:
+            log_exception()
             self.error = f'Falha inesperada ({type(exc).__name__}): {exc}'
             return False
 

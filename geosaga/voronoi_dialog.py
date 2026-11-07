@@ -16,7 +16,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import (
     Qgis, QgsApplication, QgsTask, QgsCoordinateTransform, QgsFillSymbol, QgsPalettedRasterRenderer,
     QgsProject, QgsRasterLayer, QgsVectorLayer, QgsCategorizedSymbolRenderer,
-    QgsRendererCategory, QgsWkbTypes, QgsGeometry, QgsPointXY,
+    QgsRendererCategory, QgsWkbTypes, QgsGeometry,
 )
 from qgis.gui import QgsMapLayerComboBox
 
@@ -24,6 +24,7 @@ from .ui_shared import temporary_destination
 from .voronoi_core import Generator
 from .voronoi_engine import grid_from_extent, run_voronoi
 from .voronoi_vector import save_simple_voronoi
+from .errors import log_exception
 
 
 class VoronoiRasterTask(QgsTask):
@@ -60,6 +61,7 @@ class VoronoiRasterTask(QgsTask):
         except InterruptedError:
             return False
         except Exception as exc:
+            log_exception()
             self.error = str(exc)
             return False
 
@@ -344,7 +346,7 @@ class VoronoiDialog(QDialog):
     def _add_friction_files(self):
         files, _ = QFileDialog.getOpenFileNames(
             self.friction_stack_dialog, tr('Selecionar GeoTIFFs de atrito'), '',
-            'GeoTIFF (*.tif *.tiff);;Todos os arquivos (*.*)')
+            tr('GeoTIFF (*.tif *.tiff);;Todos os arquivos (*.*)'))
         if not files:
             return
         from .raster_engine import file_source
@@ -363,7 +365,7 @@ class VoronoiDialog(QDialog):
                 layer = QgsRasterLayer(path, Path(path).stem, 'gdal')
                 if not layer.isValid():
                     QMessageBox.warning(self, tr('Superfícies de atrito'),
-                                        f'O raster não pôde ser aberto: {path}')
+                                        tr(f'O raster não pôde ser aberto: {path}'))
                     continue
             if not self._append_friction_layer(layer):
                 break
@@ -771,18 +773,19 @@ class VoronoiDialog(QDialog):
             if direct:
                 self.status.setText(tr('Voronoi vetorial concluído: {count} regiões.').format(count=len(result["rows"])))
             else:
-                self.status.setText(f'Voronoi concluído: {len(points)} centros; '
-                                    f'{result["pixels_valid"]:,} pixels classificados.')
+                self.status.setText(tr(f'Voronoi concluído: {len(points)} centros; '
+                                    f'{result["pixels_valid"]:,} pixels classificados.'))
             QMessageBox.information(self,tr('Voronoi concluído'),
-                 ('GeoPackage vetorial direto, CSV e TXT produzidos.' if direct else
+                 tr(('GeoPackage vetorial direto, CSV e TXT produzidos.' if direct else
                   'GeoTIFF, CSV e TXT produzidos. '+('GeoPackage gerado.' if result['gpkg'] else ''))+
                  ('\nSaída temporária: salve antes de fechar o QGIS.' if self.temp_output.isChecked()
-                  else '\nResultado: '+destination))
+                  else '\nResultado: '+destination)))
         except InterruptedError:
             self.status.setText(tr('Processamento cancelado; os dados de entrada foram preservados.'))
         except Exception as exc:
+            log_exception()
             self.status.setText(tr('Falha na execução; revise os parâmetros.'))
-            QMessageBox.critical(self,tr('Voronoi não concluído'),str(exc))
+            QMessageBox.critical(self,tr('Voronoi não concluído'),tr(str(exc)))
         finally:
             if not asynchronous:
                 dialog.close()
@@ -808,19 +811,20 @@ class VoronoiDialog(QDialog):
                 if self.load_project.isChecked() or self.temp_output.isChecked():
                     self._load_output(task.result)
                 self.status.setText(
-                    f'Voronoi concluído: {len(task.points)} centros; '
-                    f'{task.result["pixels_valid"]:,} pixels classificados.')
+                    tr(f'Voronoi concluído: {len(task.points)} centros; '
+                    f'{task.result["pixels_valid"]:,} pixels classificados.'))
                 QMessageBox.information(self,tr('Voronoi concluído'),
-                    'GeoTIFF, CSV e TXT produzidos. '
+                    tr('GeoTIFF, CSV e TXT produzidos. '
                     + ('GeoPackage gerado.' if task.result.get('gpkg') else '')
                     + ('\nSaída temporária: salve antes de fechar o QGIS.'
-                       if self.temp_output.isChecked() else '\nResultado: '+task.destination))
+                       if self.temp_output.isChecked() else '\nResultado: '+task.destination)))
             except Exception as exc:
+                log_exception()
                 self.status.setText(tr('Resultado criado, mas não foi possível carregar no QGIS.'))
-                QMessageBox.warning(self, tr('Voronoi — carregar resultado'), str(exc))
+                QMessageBox.warning(self, tr('Voronoi — carregar resultado'), tr(str(exc)))
         elif task.error:
             self.status.setText(tr('Falha na execução; revise os parâmetros.'))
-            QMessageBox.critical(self, tr('Voronoi não concluído'), task.error)
+            QMessageBox.critical(self, tr('Voronoi não concluído'), tr(task.error))
         else:
             self.status.setText(tr('Processamento cancelado; dados de entrada preservados.'))
 

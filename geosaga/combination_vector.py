@@ -10,6 +10,7 @@ from collections import defaultdict
 
 from .combination_core import (normalized_code, combination_index,
                                composition_rows, write_combination_reports)
+from .errors import log_exception
 
 
 def validate_vector_sources(sources, fields, labels, destination):
@@ -46,7 +47,7 @@ def validate_vector_sources(sources, fields, labels, destination):
 
 
 def _make_thematic(source, field, label_field, index, cancelled):
-    from qgis.PyQt.QtCore import QVariant
+    from qgis.PyQt.QtCore import QMetaType
     from qgis.core import QgsGeometry, QgsFeature, QgsField, QgsVectorLayer, QgsSpatialIndex
     temporary = QgsVectorLayer('MultiPolygon', 'Mapa temporário', 'memory')
     temporary.setCrs(source.crs())
@@ -54,8 +55,8 @@ def _make_thematic(source, field, label_field, index, cancelled):
         raise RuntimeError('Falha na criação da camada temporária.')
     code_name, label_name = f'C{index:02d}', f'L{index:02d}'
     provider = temporary.dataProvider()
-    if not provider.addAttributes([QgsField(code_name, QVariant.String),
-                                   QgsField(label_name, QVariant.String)]):
+    if not provider.addAttributes([QgsField(code_name, QMetaType.Type.QString),
+                                   QgsField(label_name, QMetaType.Type.QString)]):
         raise RuntimeError('Falha ao criar os campos temáticos temporários.')
     temporary.updateFields()
     feats = []
@@ -111,7 +112,7 @@ def _make_thematic(source, field, label_field, index, cancelled):
 
 def run_vector_combination(sources, fields, labels, destination, *, progress=None, cancelled=None):
     """Cria GPKG e relatórios, combinando polígonos por interseção de N mapas."""
-    from qgis.PyQt.QtCore import QVariant
+    from qgis.PyQt.QtCore import QMetaType
     from qgis.core import (QgsField, QgsProcessingFeedback, QgsProject, QgsVectorLayer,
                            QgsVectorFileWriter)
     from .vector_evaluation_writer import _area_function, _publish_set
@@ -145,6 +146,7 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
             except Exception as exc:
                 if cancelled and cancelled():
                     raise InterruptedError('Combinação vetorial cancelada.') from exc
+                log_exception()
                 raise RuntimeError(f'Falha na interseção do mapa {idx}: {exc}') from exc
             joined = QgsVectorLayer(str(processed['OUTPUT']), 'Mapas combinados', 'ogr')
             if not joined.isValid() or joined.featureCount() == 0:
@@ -161,7 +163,7 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
         result = QgsVectorFileWriter.writeAsVectorFormatV3(
             joined, gpkg, QgsProject.instance().transformContext(), options)
         if int(result[0]) != 0:
-            raise OSError('Erro ao gravar GeoPackage temporário: ' + str(result))
+            raise OSError(f'Erro ao gravar GeoPackage temporário: {result}')
         joined = None
         output = QgsVectorLayer(gpkg+'|layername=combinacao_mapas', 'Combinação de Mapas', 'ogr')
         if not output.isValid():
@@ -191,9 +193,9 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
                     raise ValueError(f'Mapa {j}: código {code} possui legendas inconsistentes.')
         ids = combination_index(counts)
         rows = composition_rows(counts, names, vector=True)
-        additional = [QgsField('ID_COMB', QVariant.Int), QgsField('LEGENDA', QVariant.String),
-                      QgsField('AREA_M2', QVariant.Double), QgsField('AREA_HA', QVariant.Double),
-                      QgsField('PCT_AREA', QVariant.Double)]
+        additional = [QgsField('ID_COMB', QMetaType.Type.Int), QgsField('LEGENDA', QMetaType.Type.QString),
+                      QgsField('AREA_M2', QMetaType.Type.Double), QgsField('AREA_HA', QMetaType.Type.Double),
+                      QgsField('PCT_AREA', QMetaType.Type.Double)]
         provider = output.dataProvider()
         if not provider.addAttributes(additional):
             raise OSError('Erro ao adicionar atributos da combinação.')

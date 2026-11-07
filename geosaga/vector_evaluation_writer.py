@@ -8,7 +8,7 @@ import shutil
 import tempfile
 from collections import defaultdict
 
-from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtCore import QMetaType
 from qgis.core import (QgsDistanceArea, QgsField, QgsProject,
                        QgsVectorFileWriter, QgsVectorLayer)
 
@@ -48,7 +48,7 @@ def _publish_set(staged_pairs, parent):
     try:
         for i, (_, final) in enumerate(staged_pairs):
             if os.path.isdir(final):
-                raise OSError('Destino é uma pasta: ' + final)
+                raise OSError(f'Destino é uma pasta: {final}')
             if os.path.exists(final):
                 backup = os.path.join(backups, f'{i:02d}.bak')
                 os.replace(final, backup)
@@ -90,8 +90,7 @@ def evaluate_vector_layer(layer, criteria, scale, destination, progress=None,
     existing = {field.name().casefold() for field in layer.fields()}
     names = list(OUTPUT_FIELDS) + [f'NOTA_{i:02d}' for i in range(1, len(rules) + 1)]
     if any(name.casefold() in existing for name in names):
-        raise ValueError('A camada já contém um campo de resultado (' + ', '.join(names) + '). '
-                         'Renomeie os campos de entrada ou use uma cópia da camada.')
+        raise ValueError(f"A camada já contém um campo de resultado ({', '.join(names)}). Renomeie os campos de entrada ou use uma cópia da camada.")
     field_names = {field.name() for field in layer.fields()}
     if any(rule['field'] not in field_names for rule in rules):
         raise ValueError('Um dos campos selecionados não existe na camada.')
@@ -117,16 +116,16 @@ def evaluate_vector_layer(layer, criteria, scale, destination, progress=None,
         result = QgsVectorFileWriter.writeAsVectorFormatV3(
             layer, tmpfile, QgsProject.instance().transformContext(), options)
         if int(result[0]) != 0:
-            raise OSError('Erro ao copiar camada para GeoPackage: ' + str(result))
+            raise OSError(f'Erro ao copiar camada para GeoPackage: {result}')
         output_layer = QgsVectorLayer(tmpfile, 'Avaliação', 'ogr')
         if not output_layer.isValid():
             raise OSError('Não foi possível abrir o GeoPackage temporário.')
         provider = output_layer.dataProvider()
-        extra = [QgsField('AVALIACAO', QVariant.Double), QgsField('VALIDO', QVariant.Int),
-                 QgsField('MOTIVO', QVariant.String, len=254),
-                 QgsField('AREA_M2', QVariant.Double), QgsField('AREA_HA', QVariant.Double),
-                 QgsField('PCT_AREA', QVariant.Double)]
-        extra.extend(QgsField(f'NOTA_{i:02d}', QVariant.Double) for i in range(1, len(rules) + 1))
+        extra = [QgsField('AVALIACAO', QMetaType.Type.Double), QgsField('VALIDO', QMetaType.Type.Int),
+                 QgsField('MOTIVO', QMetaType.Type.QString, len=254),
+                 QgsField('AREA_M2', QMetaType.Type.Double), QgsField('AREA_HA', QMetaType.Type.Double),
+                 QgsField('PCT_AREA', QMetaType.Type.Double)]
+        extra.extend(QgsField(f'NOTA_{i:02d}', QMetaType.Type.Double) for i in range(1, len(rules) + 1))
         if not provider.addAttributes(extra):
             raise OSError('Não foi possível adicionar os atributos de avaliação e área.')
         output_layer.updateFields()

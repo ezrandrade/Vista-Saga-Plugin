@@ -108,7 +108,7 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
                           ('MASSA',ogr.OFTReal),('AREA_M2',ogr.OFTReal),
                           ('AREA_HA',ogr.OFTReal),('PCT_AREA',ogr.OFTReal)]:
             if layer.CreateField(ogr.FieldDefn(name,kind)) != ogr.OGRERR_NONE:
-                raise OSError('Falha ao criar campo '+name)
+                raise OSError(f'Falha ao criar campo {name}')
         records=[]
         for generator,ring in simple_voronoi_polygons(generators,bounds,cancelled=cancelled,progress=progress):
             geometry=QgsGeometry.fromPolygonXY([[QgsPointXY(*xy) for xy in ring]])

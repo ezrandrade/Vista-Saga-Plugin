@@ -10,6 +10,7 @@ import tempfile
 
 from .vector_evaluation_core import category_key
 from .vector_monitoring_core import aggregate_transitions, make_transition, write_reports
+from .errors import log_exception
 
 
 def validate_vector_monitoring(before, after, field_before, field_after, destination,
@@ -52,15 +53,15 @@ def validate_vector_monitoring(before, after, field_before, field_after, destina
 
 
 def _prepare_layer(layer, field, name_field, out_field, out_name, progress=None, cancelled=None):
-    from qgis.PyQt.QtCore import QVariant
+    from qgis.PyQt.QtCore import QMetaType
     from qgis.core import QgsFeature, QgsField, QgsGeometry, QgsVectorLayer
     mem = QgsVectorLayer('MultiPolygon', 'VISTA_TEMP_' + out_field, 'memory')
     mem.setCrs(layer.crs())
     if not mem.isValid():
         raise RuntimeError('Falha ao criar camada temporária para interseção.')
     provider = mem.dataProvider()
-    if not provider.addAttributes([QgsField(out_field, QVariant.String),
-                                   QgsField(out_name, QVariant.String)]):
+    if not provider.addAttributes([QgsField(out_field, QMetaType.Type.QString),
+                                   QgsField(out_name, QMetaType.Type.QString)]):
         raise RuntimeError('Não foi possível criar campos temporários de classes.')
     mem.updateFields()
     pending = []
@@ -113,7 +114,7 @@ def run_vector_monitoring(before, after, field_before, field_after, destination,
     As áreas são determinadas com a mesma rotina já homologada na Avaliação
     Espacial vetorial. Apenas a cobertura comum é avaliada. Não há rasterização.
     """
-    from qgis.PyQt.QtCore import QVariant
+    from qgis.PyQt.QtCore import QMetaType
     from qgis.core import QgsField, QgsProject, QgsProcessingFeedback, QgsVectorFileWriter, QgsVectorLayer
     from .vector_evaluation_writer import _area_function, _publish_set
     import processing
@@ -157,6 +158,7 @@ def run_vector_monitoring(before, after, field_before, field_after, destination,
         except Exception as exc:
             if cancelled and cancelled():
                 raise InterruptedError('Monitoria vetorial cancelada.') from exc
+            log_exception()
             raise RuntimeError(f'Falha na interseção das camadas: {exc}') from exc
         if cancelled and cancelled():
             raise InterruptedError('Monitoria vetorial cancelada.')
@@ -174,16 +176,16 @@ def run_vector_monitoring(before, after, field_before, field_after, destination,
         response = QgsVectorFileWriter.writeAsVectorFormatV3(
             intersection, tmp_gpkg, QgsProject.instance().transformContext(), save)
         if int(response[0]) != 0:
-            raise OSError('Falha ao escrever o GeoPackage intermediário: ' + str(response))
+            raise OSError(f'Falha ao escrever o GeoPackage intermediário: {response}')
         intersection = None
         result_layer = QgsVectorLayer(tmp_gpkg + '|layername=monitoria_vetorial',
                                       'Monitoria vetorial', 'ogr')
         if not result_layer.isValid():
             raise OSError('O GeoPackage intermediário não pôde ser aberto.')
-        extra = [QgsField('ID_TRANS', QVariant.Int), QgsField('SITUACAO', QVariant.String),
-                 QgsField('LEGENDA', QVariant.String), QgsField('DEIXOU_SER', QVariant.String),
-                 QgsField('TORNOU_SE', QVariant.String), QgsField('AREA_M2', QVariant.Double),
-                 QgsField('AREA_HA', QVariant.Double), QgsField('PCT_AREA', QVariant.Double)]
+        extra = [QgsField('ID_TRANS', QMetaType.Type.Int), QgsField('SITUACAO', QMetaType.Type.QString),
+                 QgsField('LEGENDA', QMetaType.Type.QString), QgsField('DEIXOU_SER', QMetaType.Type.QString),
+                 QgsField('TORNOU_SE', QMetaType.Type.QString), QgsField('AREA_M2', QMetaType.Type.Double),
+                 QgsField('AREA_HA', QMetaType.Type.Double), QgsField('PCT_AREA', QMetaType.Type.Double)]
         provider = result_layer.dataProvider()
         if not provider.addAttributes(extra):
             raise OSError('Não foi possível acrescentar os campos de monitoria e áreas.')

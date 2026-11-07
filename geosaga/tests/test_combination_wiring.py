@@ -2,6 +2,9 @@
 import configparser
 from pathlib import Path
 import unittest
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -12,15 +15,16 @@ class CombinationWiring(unittest.TestCase):
         plugin=(ROOT/'plugin.py').read_text(encoding='utf-8')
         self.assertIn('Combinação de Mapas',panel)
         self.assertIn('self.plugin.open_combination',panel)
-        self.assertIn("self._add_menu_action('Combinação de Mapas', self.open_combination)",plugin)
-        self.assertIn('def open_combination(self, checked=False):',plugin)
-        self.assertIn('self.combination_dialog.deleteLater()',plugin)
+        self.assertIn(('Combinação de Mapas', 'open_combination'), _support.menu_entries())
+        self.assertIn('open_combination', _support.plugin_methods())
+        self.assertIn('combination_dialog', _support.module_attributes())
+        self.assertIn('dialog.deleteLater()', plugin)  # descarga genérica em _dispose_dialog
         self.assertIn('def closeEvent(self,event):',(ROOT/'combination_dialog.py').read_text())
 
     def test_metadata(self):
         cfg=configparser.ConfigParser(interpolation=None)
         cfg.read(ROOT/'metadata.txt',encoding='utf-8')
-        self.assertEqual(cfg['general']['version'],'1.0.3')
+        _support.assert_release_version(self)
         self.assertEqual(cfg['general']['qgisMinimumVersion'],'4.0')
 
     def test_old_modules_not_modified_in_core(self):
