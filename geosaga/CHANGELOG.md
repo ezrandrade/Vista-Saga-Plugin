@@ -1,3 +1,15 @@
+## Em desenvolvimento — Vetor → RS2 (não publicado)
+
+- Nova sexta operação no Conversor de formatos: **Vetor → RS2 (rasterização Vista SAGA)**,
+  sem etapa intermediária manual por GeoTIFF; as cinco operações anteriores não foram alteradas.
+- Grade copiada de um RS2 de referência ou alinhada a múltiplos inteiros do pixel;
+  exige SRC projetado e não reprojeta.
+- Códigos inteiros preservados ou renumerados (automático, preservar, renumerar), com a
+  correspondência e a contagem de células por classe registradas no `.rs2.json`.
+- Relatório de células sobrepostas, feições ignoradas e classes sem células.
+- Testes com GDAL real e roteiro de homologação no QGIS (`integration_vector_rs2_qgis.py`).
+- Abertura no Vista SAGA original ainda não validada. Detalhes em `VETOR_RS2.md`.
+
 ## 1.0.4 — versão estável para publicação (2026-10-31)
 
 - Reconhecimento do idioma da interface do QGIS, com português brasileiro e inglês homologados.

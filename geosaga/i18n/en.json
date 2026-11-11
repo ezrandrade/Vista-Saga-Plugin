@@ -652,5 +652,15 @@
   "Último mapa: {count} categorias; {missing} valores nulos.": "Last map: {count} categories; {missing} missing values.",
   "— selecione um polígono —": "— select a polygon layer —",
   "…": "…",
-  "Vista Saga Plugin — selecionar módulo": "Vista Saga Plugin — select module"
+  "Vista Saga Plugin — selecionar módulo": "Vista Saga Plugin — select module",
+  "Vetor → RS2 (rasterização Vista SAGA)": "Vector → RS2 (Vista SAGA rasterization)",
+  "Automático (preservar códigos pequenos; renumerar os demais)": "Automatic (keep small codes; renumber the others)",
+  "Preservar os códigos originais": "Keep the original codes",
+  "Renumerar sequencialmente (1..n)": "Renumber sequentially (1..n)",
+  "Campos inteiros: o RS2 exige códigos consecutivos a partir de 0 (FUNDO). A correspondência entre códigos originais e RS2 fica no arquivo .rs2.json.": "Integer fields: RS2 requires consecutive codes starting at 0 (BACKGROUND). The mapping between original and RS2 codes is stored in the .rs2.json file.",
+  "Códigos RS2:": "RS2 codes:",
+  "RS2 de referência (grade):": "Reference RS2 (grid):",
+  "Opcional: copia origem, resolução e dimensões de um RS2 da mesma área": "Optional: copies origin, resolution and size from an RS2 of the same area",
+  "Rasteriza uma camada vetorial por atributo diretamente no formato RS2 do Vista SAGA.": "Rasterizes a vector layer by attribute directly into the Vista SAGA RS2 format.",
+  "Exige SRC projetado (por exemplo, UTM), sem reprojeção. Sem RS2 de referência, o pixel deve ser inteiro e a grade é alinhada a múltiplos dele; com referência (Opções avançadas), a grade do RS2 indicado é copiada para permitir cruzamentos célula a célula. Use campo inteiro ou textual; fundo = 0. O SRC fica apenas no arquivo .rs2.json.": "Requires a projected CRS (e.g. UTM); no reprojection is done. Without a reference RS2, the pixel size must be an integer and the grid is aligned to its multiples; with a reference (Advanced options), that RS2 grid is copied so maps can be overlaid cell by cell. Use an integer or text field; background = 0. The CRS is stored only in the .rs2.json file."
 }
