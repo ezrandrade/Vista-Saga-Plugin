@@ -2,6 +2,8 @@
 import unittest
 from pathlib import Path
 
+from geosaga.tests._support import check_release_metadata, ui_text
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -23,7 +25,7 @@ class UiConsistencyTests(unittest.TestCase):
 
     def test_monitoring_can_close_after_task(self):
         text = source('monitoring_dialog.py')
-        self.assertIn("self.close_button = QPushButton('Fechar')", text)
+        self.assertRegex(text, r"self\.close_button = QPushButton\(" + ui_text('Fechar') + r"\)")
         self.assertIn('self.close_button.clicked.connect(self.close)', text)
         self.assertIn('self.close_button.setEnabled(False)', text)
         self.assertIn('self.close_button.setEnabled(True)', text)
@@ -41,4 +43,4 @@ class UiConsistencyTests(unittest.TestCase):
         self.assertIn("'formato': 'geosaga-avaliacao'", source('evaluation_dialog.py'))
 
     def test_version(self):
-        self.assertIn('version=1.0.3', source('metadata.txt'))
+        check_release_metadata(self)

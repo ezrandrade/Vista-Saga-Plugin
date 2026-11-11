@@ -1,5 +1,6 @@
 from pathlib import Path
-import configparser
+
+from geosaga.tests._support import check_release_metadata, menu_modules
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -9,7 +10,7 @@ class VoronoiWiring(unittest.TestCase):
         plugin=(ROOT/'plugin.py').read_text(encoding='utf-8')
         self.assertIn("'Análises Voronoi'",home)
         self.assertIn('self.plugin.open_voronoi',home)
-        self.assertIn("self._add_menu_action('Análises Voronoi', self.open_voronoi)",plugin)
+        self.assertIn(('Análises Voronoi', 'open_voronoi'), menu_modules())
         self.assertIn('def open_voronoi(self, checked=False):',plugin)
         self.assertIn('self.voronoi_dialog.deleteLater()',plugin)
 
@@ -32,9 +33,6 @@ class VoronoiWiring(unittest.TestCase):
                 self.assertEqual((ROOT/filename).read_bytes(), archive.read('geosaga/'+filename))
 
     def test_metadata(self):
-        cfg=configparser.ConfigParser(interpolation=None)
-        cfg.read(ROOT/'metadata.txt',encoding='utf-8')
-        self.assertEqual(cfg['general']['version'],'1.0.3')
-        self.assertEqual(cfg['general']['qgisMinimumVersion'],'4.0')
+        check_release_metadata(self)
 
 if __name__=='__main__':unittest.main()

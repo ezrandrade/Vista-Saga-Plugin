@@ -2,6 +2,7 @@
 from pathlib import Path
 import unittest
 from zipfile import ZipFile
+from geosaga.tests._support import ui_text
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -44,7 +45,7 @@ class TabsUX062(unittest.TestCase):
     def test_monitoring_contains_embedded_vector_and_shared_results(self):
         code = source('monitoring_dialog.py')
         self.assertIn('self.vector_tab.setWidget(dialog)', code)
-        self.assertIn("self.results_tab.addTab(results_page, 'Vetorial')", code)
+        self.assertRegex(code, r"self\.results_tab\.addTab\(results_page, " + ui_text('Vetorial') + r"\)")
         self.assertIn('dialog.tabs.removeTab(1)', code)
         self.assertIn('self.tabs.currentChanged.connect(self._on_mode_changed)', code)
         self.assertIn('control.setVisible(is_raster)', code)

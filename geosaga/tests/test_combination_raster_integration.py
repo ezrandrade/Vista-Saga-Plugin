@@ -1,15 +1,23 @@
 """Exercita o processamento raster real com TIFFs, substituindo só a interface GDAL.
 
 A homologação do driver GDAL fornecido pelo QGIS será feita no QGIS 4.x.
+Convertido de pytest para unittest; pulado quando rasterio não está instalado.
 """
 import os
+from pathlib import Path
 import sys
+import tempfile
 import types
+import unittest
+from unittest.mock import patch
 
 import numpy as np
-import pytest
-import rasterio
-from rasterio.transform import from_origin
+
+try:
+    import rasterio
+    from rasterio.transform import from_origin
+except ImportError as exc:  # o QGIS não traz rasterio; o teste é opcional
+    raise unittest.SkipTest('rasterio não instalado: teste de integração opcional') from exc
 
 from geosaga.combination_raster import run_raster_combination
 
@@ -76,14 +84,18 @@ class SRS:
     def GetLinearUnits(self):return 1.0
 
 
-def install_fake_gdal(monkeypatch):
+def install_fake_gdal(test):
+    """Substitui osgeo e o publicador apenas durante o teste (equivale ao monkeypatch)."""
     gdal=types.SimpleNamespace(Open=lambda p,mode: Reader(p), GA_ReadOnly=0,
            GDT_Int32=5, GetDriverByName=lambda _:Driver())
     osr=types.SimpleNamespace(SpatialReference=SRS)
-    monkeypatch.setitem(sys.modules,'osgeo',types.SimpleNamespace(gdal=gdal,osr=osr))
     publish = lambda pairs, parent: [os.replace(source,dest) for source,dest in pairs]
-    monkeypatch.setitem(sys.modules,'geosaga.vector_evaluation_writer',
-                        types.SimpleNamespace(_publish_set=publish))
+    patcher = patch.dict(sys.modules, {
+        'osgeo': types.SimpleNamespace(gdal=gdal, osr=osr),
+        'geosaga.vector_evaluation_writer': types.SimpleNamespace(_publish_set=publish),
+    })
+    patcher.start()
+    test.addCleanup(patcher.stop)
 
 
 def newtif(path,values,nodata=255,gt=None):
@@ -94,8 +106,8 @@ def newtif(path,values,nodata=255,gt=None):
         ds.write(values,1)
 
 
-def test_raster_real_tiff_readwrite(tmp_path,monkeypatch):
-    install_fake_gdal(monkeypatch)
+def _raster_real_tiff_readwrite(test, tmp_path):
+    install_fake_gdal(test)
     a=tmp_path/'a.tif'; b=tmp_path/'b.tif'; output=tmp_path/'resultado.tif'
     ar1=np.array([[1,1,2],[2,0,255]],dtype=np.uint8)
     ar2=np.array([[4,4,5],[4,5,255]],dtype=np.uint8)
@@ -111,7 +123,7 @@ def test_raster_real_tiff_readwrite(tmp_path,monkeypatch):
             raise AssertionError(f'Máscara ou código zero indevidamente descartado: {values}')
         if not (values[0,0]==values[0,1]):
             raise AssertionError('Pixels com a mesma combinação receberam códigos distintos')
-    if result['area_ha']!=pytest.approx(.05):
+    if abs(result['area_ha'] - .05) > 1e-9:
         raise AssertionError('Área raster incorreta')
     if len(result['rows'])!=4:
         raise AssertionError('CSV incompleto')
@@ -120,22 +132,41 @@ def test_raster_real_tiff_readwrite(tmp_path,monkeypatch):
             raise AssertionError('Entrada original foi alterada')
 
 
-def test_reject_incompatible_grids(tmp_path,monkeypatch):
-    install_fake_gdal(monkeypatch)
+def _reject_incompatible_grids(test, tmp_path):
+    install_fake_gdal(test)
     a=tmp_path/'a.tif';b=tmp_path/'b.tif'
     newtif(a,np.array([[1,2]],dtype=np.uint8))
     newtif(b,np.array([[1,2]],dtype=np.uint8),gt=from_origin(1005,2000,10,10))
-    with pytest.raises(ValueError,match='Grades'):
+    with test.assertRaisesRegex(ValueError, 'Grades'):
         run_raster_combination([a,b],tmp_path/'out.tif')
 
 
-def test_preserves_preexisting_on_cancel(tmp_path,monkeypatch):
-    install_fake_gdal(monkeypatch)
+def _preserves_preexisting_on_cancel(test, tmp_path):
+    install_fake_gdal(test)
     a=tmp_path/'a.tif';b=tmp_path/'b.tif';out=tmp_path/'out.tif'
     newtif(a,np.array([[1,2]],dtype=np.uint8))
     newtif(b,np.array([[3,4]],dtype=np.uint8))
     out.write_bytes(b'original')
-    with pytest.raises(InterruptedError):
+    with test.assertRaises(InterruptedError):
         run_raster_combination([a,b],out,cancelled=lambda:True)
     if out.read_bytes()!=b'original':
         raise AssertionError('Cancelamento modificou destino')
+
+
+class CombinationRasterIntegration(unittest.TestCase):
+    def _run(self, case):
+        with tempfile.TemporaryDirectory() as folder:
+            case(self, Path(folder))
+
+    def test_raster_real_tiff_readwrite(self):
+        self._run(_raster_real_tiff_readwrite)
+
+    def test_reject_incompatible_grids(self):
+        self._run(_reject_incompatible_grids)
+
+    def test_preserves_preexisting_on_cancel(self):
+        self._run(_preserves_preexisting_on_cancel)
+
+
+if __name__ == '__main__':
+    unittest.main()

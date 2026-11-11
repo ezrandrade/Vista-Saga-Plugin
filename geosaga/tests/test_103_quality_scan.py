@@ -2,6 +2,7 @@
 import ast
 from pathlib import Path
 import unittest
+from geosaga.tests._support import check_release_metadata
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,4 +31,4 @@ class StyleScanRegressionTests(unittest.TestCase):
         self.assertEqual(aliases.count('QAbstractItemView'), 1)
 
     def test_release_version(self):
-        self.assertEqual((ROOT / 'metadata.txt').read_text(encoding='utf-8').count('version=1.0.3'), 1)
+        check_release_metadata(self)

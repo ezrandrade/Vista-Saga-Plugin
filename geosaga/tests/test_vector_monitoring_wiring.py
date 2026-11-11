@@ -2,6 +2,8 @@
 import unittest
 from pathlib import Path
 
+from geosaga.tests._support import check_release_metadata
+
 
 class WiringTests(unittest.TestCase):
     def test_menu_opens_vector_dialog(self):
@@ -19,9 +21,7 @@ class WiringTests(unittest.TestCase):
         self.assertIn('validate_vector_monitoring', engine)
 
     def test_metadata_version(self):
-        root = Path(__file__).resolve().parents[1]
-        meta = (root / 'metadata.txt').read_text(encoding='utf-8')
-        self.assertIn('version=1.0.3', meta)
+        check_release_metadata(self)
 
 
 if __name__ == '__main__':

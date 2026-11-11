@@ -7,7 +7,11 @@ import unittest
 from unittest.mock import patch
 
 import numpy as np
-import rasterio
+
+try:
+    import rasterio
+except ImportError as exc:  # o QGIS não traz rasterio; o teste é opcional
+    raise unittest.SkipTest('rasterio não instalado: teste de integração opcional') from exc
 from rasterio.transform import from_origin
 
 from geosaga.monitoring_engine import run_monitoring

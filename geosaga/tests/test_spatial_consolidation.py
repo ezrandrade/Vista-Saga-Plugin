@@ -1,16 +1,18 @@
 """Verifica invariante de consolidação sem executar PyQGIS."""
 from pathlib import Path
+
+from geosaga.tests._support import check_release_metadata, menu_modules
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 
 class SpatialConsolidationTests(unittest.TestCase):
     def test_menu_has_spatial_assessment_without_processing_duplicate(self):
-        source = (ROOT / 'plugin.py').read_text(encoding='utf8')
-        self.assertIn("self._add_menu_action('Avaliação', self.open_interactive)", source)
-        self.assertNotIn("self._add_menu_action('Avaliação Ambiental — Processing'", source)
-        self.assertIn("self._add_menu_action('Monitoria', self.open_monitoring)", source)
-        self.assertIn("self._add_menu_action('Assinatura', self.open_signature)", source)
+        modules = menu_modules()
+        self.assertIn(('Avaliação', 'open_interactive'), modules)
+        self.assertNotIn('Avaliação Ambiental — Processing', [title for title, _ in modules])
+        self.assertIn(('Monitoria', 'open_monitoring'), modules)
+        self.assertIn(('Assinatura', 'open_signature'), modules)
 
     def test_home_dialog_uses_new_name_and_panel(self):
         source = (ROOT / 'home_dialog.py').read_text(encoding='utf8')
@@ -40,5 +42,4 @@ class SpatialConsolidationTests(unittest.TestCase):
         self.assertIn("QLabel('Vista Saga Plugin')", panel)
 
     def test_version(self):
-        source = (ROOT / 'metadata.txt').read_text(encoding='utf8')
-        self.assertIn('version=1.0.3', source)
+        check_release_metadata(self)

@@ -1,6 +1,8 @@
 import unittest
 from pathlib import Path
 
+from geosaga.tests._support import check_release_metadata
+
 ROOT = Path(__file__).resolve().parents[1]
 
 class TaskStabilityTests(unittest.TestCase):
@@ -17,7 +19,6 @@ class TaskStabilityTests(unittest.TestCase):
         p=(ROOT/'plugin.py').read_text(encoding='utf-8')
         self.assertIn('self.voronoi_dialog.shutdown()', p)
     def test_version(self):
-        m=(ROOT/'metadata.txt').read_text(encoding='utf-8')
-        self.assertIn('version=1.0.3',m)
+        check_release_metadata(self)
 
 if __name__=='__main__':unittest.main()
