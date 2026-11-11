@@ -44,7 +44,7 @@ class TabsUX062(unittest.TestCase):
     def test_monitoring_contains_embedded_vector_and_shared_results(self):
         code = source('monitoring_dialog.py')
         self.assertIn('self.vector_tab.setWidget(dialog)', code)
-        self.assertIn("self.results_tab.addTab(results_page, 'Vetorial')", code)
+        self.assertIn("self.results_tab.addTab(results_page, tr('Vetorial'))", code)
         self.assertIn('dialog.tabs.removeTab(1)', code)
         self.assertIn('self.tabs.currentChanged.connect(self._on_mode_changed)', code)
         self.assertIn('control.setVisible(is_raster)', code)

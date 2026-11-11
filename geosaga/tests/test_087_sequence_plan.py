@@ -2,6 +2,9 @@
 import unittest
 from pathlib import Path
 from geosaga.sequence_plan import extract_year, temporal_key, temporal_frames, safe_png_name
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -57,7 +60,7 @@ class SequencePlan087(unittest.TestCase):
     def test_names_public(self):
         self.assertIn('Sequenciador de Mapas', (ROOT / 'plugin.py').read_text())
         self.assertIn('Sequenciador de Mapas', (ROOT / 'home_dialog.py').read_text())
-        self.assertIn('version=1.0.3', (ROOT / 'metadata.txt').read_text())
+        _support.assert_release_version(self)
         self.assertIn('name=Vista Saga Plugin', (ROOT / 'metadata.txt').read_text())
 
 

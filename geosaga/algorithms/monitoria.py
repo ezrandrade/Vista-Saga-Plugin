@@ -57,15 +57,15 @@ class MonitoriaAlgorithm(QgsProcessingAlgorithm):
         # 1ª passagem: conta os pares únicos, sem ler todos os pixels na RAM.
         for x, y, w, h in window_iterator(before):
             if feedback.isCanceled():
-                raise QgsProcessingException('Operação cancelada.')
+                raise QgsProcessingException(tr('Operação cancelada.'))
             a, b = band_a.ReadAsArray(x, y, w, h), band_b.ReadAsArray(x, y, w, h)
             block_counts, _ = transition_counts(a, b, nd_a, nd_b)
             counts.update(block_counts)
             feedback.setProgress(50 * (y + h) / total)
         if not counts:
-            raise QgsProcessingException('Não há pixels válidos comuns nos dois períodos.')
+            raise QgsProcessingException(tr('Não há pixels válidos comuns nos dois períodos.'))
         if len(counts) > 2_000_000:
-            raise QgsProcessingException('Número de transições ultrapassa o limite de IDs inteiros.')
+            raise QgsProcessingException(tr('Número de transições ultrapassa o limite de IDs inteiros.'))
         transitions = sorted(counts)
         ids = {pair: i for i, pair in enumerate(transitions, 1)}
         output = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
@@ -77,7 +77,7 @@ class MonitoriaAlgorithm(QgsProcessingAlgorithm):
             # 2ª passagem: codifica cada par com ID da tabela.
             for x, y, w, h in window_iterator(before):
                 if feedback.isCanceled():
-                    raise QgsProcessingException('Operação cancelada.')
+                    raise QgsProcessingException(tr('Operação cancelada.'))
                 a, b = band_a.ReadAsArray(x, y, w, h), band_b.ReadAsArray(x, y, w, h)
                 _, valid = transition_counts(a, b, nd_a, nd_b)
                 encoded = np.full((h, w), int(NODATA_OUT), dtype=np.int32)
@@ -104,7 +104,7 @@ class MonitoriaAlgorithm(QgsProcessingAlgorithm):
         ]
         write_csv(table, ['id', 'classe_inicial', 'classe_final', 'pixels', 'percentual_validos', 'area_ha'], rows)
         if ha_per_pixel is None:
-            feedback.pushWarning('SRC não projetado: não foi calculada área em hectares.')
+            feedback.pushWarning(tr('SRC não projetado: não foi calculada área em hectares.'))
         return {self.OUTPUT: output, self.TABELA: table}
 
     def createInstance(self):

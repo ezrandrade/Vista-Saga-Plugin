@@ -1,4 +1,9 @@
 """Integração com GeoTIFF reais e adaptador GDAL para validar a série."""
+import importlib.util as _ilu
+import unittest as _ut
+for _dep in ('rasterio',):
+    if _ilu.find_spec(_dep) is None:
+        raise _ut.SkipTest(f'dependência opcional ausente: {_dep} (não incluída no QGIS)')
 import csv
 from pathlib import Path
 import sys

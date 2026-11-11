@@ -26,6 +26,7 @@ from qgis.gui import QgsMapLayerComboBox
 from .gif_codec import encode_gif
 from .sequence_plan import extract_year, temporal_frames, safe_png_name
 from .ui_shared import choose_project_layers
+from .errors import log_exception
 
 
 class ImageSequenceDialog(QDialog):
@@ -281,14 +282,14 @@ class ImageSequenceDialog(QDialog):
     def _add_files(self):
         paths, _ = QFileDialog.getOpenFileNames(
             self, tr('Selecionar mapas raster'), '',
-            'Rasters (*.tif *.tiff *.vrt *.png *.jpg *.jpeg);;Todos (*.*)')
+            tr('Rasters (*.tif *.tiff *.vrt *.png *.jpg *.jpeg);;Todos (*.*)'))
         for path in paths:
             layer = QgsRasterLayer(path, Path(path).stem, 'gdal')
             if layer.isValid():
                 self.imported_layers.append(layer)
                 self._add(layer)
             else:
-                QMessageBox.warning(self, tr('Arquivo raster inválido'), path)
+                QMessageBox.warning(self, tr('Arquivo raster inválido'), tr(path))
 
     def _add_vector(self, layer):
         if not isinstance(layer, QgsVectorLayer) or not layer.isValid():
@@ -310,14 +311,14 @@ class ImageSequenceDialog(QDialog):
     def _add_vector_files(self):
         paths, _ = QFileDialog.getOpenFileNames(
             self, tr('Selecionar dados vetoriais'), '',
-            'Vetores (*.gpkg *.geojson *.json *.shp *.kml);;Todos (*.*)')
+            tr('Vetores (*.gpkg *.geojson *.json *.shp *.kml);;Todos (*.*)'))
         for path in paths:
             layer = QgsVectorLayer(path, Path(path).stem, 'ogr')
             if layer.isValid():
                 self.imported_layers.append(layer)
                 self._add_vector(layer)
             else:
-                QMessageBox.warning(self, tr('Arquivo vetorial inválido'), path)
+                QMessageBox.warning(self, tr('Arquivo vetorial inválido'), tr(path))
 
     @staticmethod
     def _update_fields(layer_combo, field_combo):
@@ -364,7 +365,8 @@ class ImageSequenceDialog(QDialog):
             self.entries.extend(frames)
             self._refresh()
         except Exception as exc:
-            QMessageBox.warning(self, tr('Sequenciador — campo temporal'), str(exc))
+            log_exception()
+            QMessageBox.warning(self, tr('Sequenciador — campo temporal'), tr(str(exc)))
 
     def _add_vector_temporal(self):
         self._add_temporal(self.vector_selected.currentLayer(), self.vector_field,
@@ -641,7 +643,7 @@ class ImageSequenceDialog(QDialog):
                     target = png_folder / safe_png_name(i+1, entry['date'])
                     staging = target.with_name(target.name + '.part')
                     if not image.save(str(staging), 'PNG'):
-                        raise OSError('Não foi possível gravar o quadro PNG: '+str(target))
+                        raise OSError(f'Não foi possível gravar o quadro PNG: {target}')
                     staging.replace(target)
                     png_paths.append(target)
                 progress.setValue(i+1)
@@ -658,19 +660,20 @@ class ImageSequenceDialog(QDialog):
             self.preview.setMovie(self._movie)
             self._movie.start()
             note = 'com quantização GIF' if result['palette_quantized'] else 'com cores preservadas'
-            self.status.setText(f'GIF criado com {len(frames)} quadros ({note}); '
-                                f'{len(png_paths)} PNGs individuais.')
+            self.status.setText(tr(f'GIF criado com {len(frames)} quadros ({note}); '
+                                f'{len(png_paths)} PNGs individuais.'))
             QMessageBox.information(self, tr('Sequenciador de Mapas'),
-                'GIF salvo em:\n'+str(result['path'])+'\n'+
+                tr('GIF salvo em:\n'+str(result['path'])+'\n'+
                 (f'Quadros PNG: {png_folder}\n' if png_folder is not None else '')+
                 ('GIF quantizado para 256 cores.' if result['palette_quantized']
-                 else 'Paleta GIF preservada.'))
+                 else 'Paleta GIF preservada.')))
         except InterruptedError:
-            self.status.setText(f'Exportação cancelada. {len(png_paths)} PNGs podem permanecer '
-                                'na pasta de destino; dados do projeto preservados.')
+            self.status.setText(tr(f'Exportação cancelada. {len(png_paths)} PNGs podem permanecer '
+                                'na pasta de destino; dados do projeto preservados.'))
         except Exception as exc:
+            log_exception()
             self.status.setText(tr('Falha na exportação; dados do projeto preservados.'))
-            QMessageBox.critical(self, tr('Sequenciador de Mapas — erro'), str(exc))
+            QMessageBox.critical(self, tr('Sequenciador de Mapas — erro'), tr(str(exc)))
         finally:
             progress.close()
             self._busy = False

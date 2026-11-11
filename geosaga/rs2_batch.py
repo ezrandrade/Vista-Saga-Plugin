@@ -4,6 +4,7 @@ Independente do QGIS para permitir testes de regressão.
 """
 from dataclasses import dataclass
 from pathlib import Path
+from .gdal_scope import with_gdal_exceptions
 import math
 
 from .rs2_format import RS2Reader, RS2Error
@@ -27,6 +28,7 @@ def source_mode(filename):
     raise RS2Error(f'Entrada não suportada: {Path(filename).name}. Use RS2 ou TIFF.')
 
 
+@with_gdal_exceptions
 def inspect_grid(filename, manual_bounds=None):
     path = Path(filename)
     if not path.is_file():
@@ -114,10 +116,10 @@ def prepare_batch(sources, folder, manual_bounds=None, operation=None, vector_ex
         dest = output_folder / name
         key = str(dest.resolve()).casefold()
         if key in used_targets:
-            raise RS2Error('Dois arquivos de origem possuem o mesmo nome de saída: ' + name)
+            raise RS2Error(f'Dois arquivos de origem possuem o mesmo nome de saída: {name}')
         used_targets.add(key)
         if path.resolve() == dest.resolve():
-            raise RS2Error('A saída não pode sobrescrever o arquivo de entrada: ' + name)
+            raise RS2Error(f'A saída não pode sobrescrever o arquivo de entrada: {name}')
         plans.append((path, dest))
     return mode, plans, base_grid
 

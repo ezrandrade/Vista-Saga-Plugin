@@ -11,15 +11,17 @@ import zlib
 
 import numpy as np
 
+from .gdal_scope import with_gdal_exceptions
 from .rs2_format import RS2Error, RS2Header, RS2Reader, write_rs2
 from .rs2_rgb import RS2RGBMapper, discover_rgb_palette
-from .rs2_outputs import publish_geotiff, output_conflicts, write_worldfile
+from .rs2_outputs import publish_geotiff, write_worldfile
 
 
 def _gdal():
     # GDAL de QGIS (não requer pip nem rasterio no ambiente do plugin).
+    # As exceções são ligadas apenas no escopo das funções públicas
+    # (decorador with_gdal_exceptions), nunca de forma global no QGIS.
     from osgeo import gdal, osr
-    gdal.UseExceptions()
     return gdal, osr
 
 
@@ -51,6 +53,7 @@ def _sidecar_path(path):
     return Path(str(path) + '.rs2.json')
 
 
+@with_gdal_exceptions
 def convert_rs2_to_tif(rs2_path, tiff_path, epsg='', progress=None,
                        mark_background_nodata=True):
     """GeoTIFF de uma banda com códigos e colormap originais + JSON de metadados.
@@ -199,6 +202,7 @@ def _category_legend_from_raster(band, max_category):
     return labels, colors
 
 
+@with_gdal_exceptions
 def _convert_rgb_to_rs2(ds, tiff_path, rs2_path, reference_rs2, progress, manual_bounds=None):
     """Reconstrói RS2 a partir de RGB e paleta/grade do RS2 original.
 
@@ -235,7 +239,7 @@ def _convert_rgb_to_rs2(ds, tiff_path, rs2_path, reference_rs2, progress, manual
         try:
             coords = _validated_grid(ds)
         except RS2Error as exc:
-            raise RS2Error('O GeoTIFF RGB informa georreferenciamento incompatível: ' + str(exc)) from exc
+            raise RS2Error(f'O GeoTIFF RGB informa georreferenciamento incompatível: {exc}') from exc
         expected = (h.xmin, h.ymin, h.xmax, h.ymax)
         if coords != expected:
             raise RS2Error(
@@ -264,6 +268,7 @@ def _convert_rgb_to_rs2(ds, tiff_path, rs2_path, reference_rs2, progress, manual
     return out
 
 
+@with_gdal_exceptions
 def _convert_rgb_standalone(ds, tiff_path, rs2_path, progress, manual_bounds):
     """Converte TIFF RGB sem RS2 auxiliar, criando NOVOS códigos por cor.
 
@@ -302,13 +307,13 @@ def _convert_rgb_standalone(ds, tiff_path, rs2_path, progress, manual_bounds):
     return out
 
 
+@with_gdal_exceptions
 def convert_tif_to_rs2(tiff_path, rs2_path, progress=None, reference_rs2=None,
                        manual_bounds=None):
     """Gravação experimental de TIFF categórico ou RGB; referência é opcional."""
     if Path(tiff_path).suffix.lower() not in ('.tif', '.tiff'):
         raise RS2Error(
-            'Entrada incompatível com TIFF → RS2. Você selecionou um arquivo '
-            '"' + Path(tiff_path).suffix + '"; escolha RS2 → GeoTIFF para ler RS2.')
+            f'Entrada incompatível com TIFF → RS2. Você selecionou um arquivo "{Path(tiff_path).suffix}"; escolha RS2 → GeoTIFF para ler RS2.')
     gdal, _osr = _gdal()
     ds = gdal.Open(str(tiff_path), gdal.GA_ReadOnly)
     if ds is None:

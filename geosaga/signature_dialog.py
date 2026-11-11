@@ -18,6 +18,7 @@ from qgis.gui import QgsMapLayerComboBox
 
 from .ui_shared import temporary_destination, choose_project_layers
 from .signature_engine import run_signature, validate_signature, _outpaths
+from .errors import log_exception
 
 
 class SignatureDialog(QDialog):
@@ -228,7 +229,7 @@ class SignatureDialog(QDialog):
                 continue
             if layer.geometryType() != Qgis.GeometryType.Polygon:
                 QMessageBox.warning(self, tr('Área não poligonal'),
-                                    'Ignorando camada que não contém polígonos: ' + layer.name())
+                                    tr('Ignorando camada que não contém polígonos: ' + layer.name()))
                 continue
             self._area_stack.append(layer)
             existing.add(layer.id())
@@ -256,7 +257,7 @@ class SignatureDialog(QDialog):
     def _combine_area_layers(self):
         """Compor AOIs na memória sem mesclar feições nem somar áreas sobrepostas."""
         from qgis.core import Qgis, QgsVectorLayer, QgsFeature, QgsField, QgsGeometry
-        from qgis.PyQt.QtCore import QVariant
+        from qgis.PyQt.QtCore import QMetaType
         layers = self._area_stack
         if not layers:
             return None
@@ -265,14 +266,14 @@ class SignatureDialog(QDialog):
             raise ValueError('A primeira camada de áreas não possui SRC válido.')
         for layer in layers:
             if not layer.isValid() or layer.isEditable():
-                raise ValueError('Camada de áreas inválida ou com edição pendente: ' + layer.name())
+                raise ValueError(f'Camada de áreas inválida ou com edição pendente: {layer.name()}')
             if layer.geometryType() != Qgis.GeometryType.Polygon or layer.crs() != first.crs():
                 raise ValueError('As camadas de áreas devem ser poligonais e possuir o mesmo SRC.')
         merged = QgsVectorLayer('MultiPolygon', 'Áreas de análise — múltiplas camadas', 'memory')
         merged.setCrs(first.crs())
         provider = merged.dataProvider()
-        provider.addAttributes([QgsField('VS_ORIGEM', QVariant.String),
-                                QgsField('VS_NOME', QVariant.String)])
+        provider.addAttributes([QgsField('VS_ORIGEM', QMetaType.Type.QString),
+                                QgsField('VS_NOME', QMetaType.Type.QString)])
         merged.updateFields()
         batch = []
         for layer in layers:
@@ -284,7 +285,7 @@ class SignatureDialog(QDialog):
                 if geom.isNull() or geom.isEmpty():
                     continue
                 if not geom.isGeosValid():
-                    raise ValueError('Área com geometria inválida em ' + layer.name())
+                    raise ValueError(f'Área com geometria inválida em {layer.name()}')
                 geom.convertToMultiType()
                 out = QgsFeature(merged.fields())
                 out.setGeometry(geom)
@@ -353,7 +354,7 @@ class SignatureDialog(QDialog):
 
     def _choose_areas(self):
         path, _ = QFileDialog.getOpenFileName(self, tr('Áreas de análise'), '',
-            'Vetores (*.gpkg *.shp *.geojson *.fgb);;Todos os arquivos (*)')
+            tr('Vetores (*.gpkg *.shp *.geojson *.fgb);;Todos os arquivos (*)'))
         if path:
             self.areas_file.setText(path)
             self._refresh_area_fields()
@@ -370,7 +371,7 @@ class SignatureDialog(QDialog):
         try:
             thematic, areas = self._thematic(), self._areas()
         except ValueError as exc:
-            QMessageBox.warning(self, tr('Áreas de análise'), str(exc))
+            QMessageBox.warning(self, tr('Áreas de análise'), tr(str(exc)))
             return
         mode = self.mode.currentData()
         field = self.class_field.currentText() if mode == 'vector' else ''
@@ -381,14 +382,14 @@ class SignatureDialog(QDialog):
         try:
             validate_signature(thematic, areas, mode, field, path, label_field, area_name)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Assinatura — Verificar entrada'), str(exc))
+            QMessageBox.warning(self, tr('Assinatura — Verificar entrada'), tr(str(exc)))
             return
         existing = [p for p in _outpaths(path) if Path(p).exists()]
         if existing:
             answer = QMessageBox.question(
                 self, tr('Substituir saídas'),
-                'Os seguintes resultados já existem:\n' + '\n'.join(existing) +
-                '\n\nDeseja substituí-los? Os anteriores serão restaurados em caso de falha.',
+                tr('Os seguintes resultados já existem:\n' + '\n'.join(existing) +
+                '\n\nDeseja substituí-los? Os anteriores serão restaurados em caso de falha.'),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No)
             if answer != QMessageBox.StandardButton.Yes:
@@ -413,9 +414,9 @@ class SignatureDialog(QDialog):
                 title=self.title.text().strip(), progress=update, cancelled=cancelled,
                 overlap_policy=self.overlap_policy.currentData())
             self.summary.setText(
-                f"Concluído. {len(result['areas'])} áreas e {len(result['rows'])} "
+                tr(f"Concluído. {len(result['areas'])} áreas e {len(result['rows'])} "
                 f"ocorrências de classes.\nCSV: {result['csv']}\nTXT: {result['txt']}\n"
-                f"GeoPackage: {result['gpkg']}\n{result['note']}")
+                f"GeoPackage: {result['gpkg']}\n{result['note']}"))
             self.table.setRowCount(min(len(result['rows']), 2000))
             for i, record in enumerate(result['rows'][:2000]):
                 for j, value in enumerate((record['area_name'], record['label'],
@@ -425,7 +426,7 @@ class SignatureDialog(QDialog):
                     self.table.setItem(i, j, QTableWidgetItem(str(value)))
             self.tabs.setCurrentIndex(1)
             if result['note'].startswith('ATENÇÃO:'):
-                QMessageBox.warning(self, tr('Assinatura — Áreas conflitantes'), result['note'])
+                QMessageBox.warning(self, tr('Assinatura — Áreas conflitantes'), tr(result['note']))
             self.status.setText(tr('Assinatura calculada. Relatórios disponíveis na pasta escolhida.'))
             if self.add_project.isChecked() or self.temporary_check.isChecked():
                 from qgis.core import QgsVectorLayer
@@ -439,8 +440,9 @@ class SignatureDialog(QDialog):
         except InterruptedError:
             self.status.setText(tr('Operação cancelada; arquivos anteriores preservados.'))
         except Exception as exc:
+            log_exception()
             self.status.setText(tr('A assinatura não foi concluída.'))
-            QMessageBox.critical(self, tr('Assinatura — Falha'), str(exc))
+            QMessageBox.critical(self, tr('Assinatura — Falha'), tr(str(exc)))
         finally:
             popup.close()
             self._busy = False

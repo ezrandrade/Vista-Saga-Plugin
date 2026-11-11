@@ -1,6 +1,9 @@
 from pathlib import Path
 import configparser
 import unittest
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 ROOT=Path(__file__).resolve().parents[1]
 class VoronoiWiring(unittest.TestCase):
@@ -9,9 +12,10 @@ class VoronoiWiring(unittest.TestCase):
         plugin=(ROOT/'plugin.py').read_text(encoding='utf-8')
         self.assertIn("'Análises Voronoi'",home)
         self.assertIn('self.plugin.open_voronoi',home)
-        self.assertIn("self._add_menu_action('Análises Voronoi', self.open_voronoi)",plugin)
-        self.assertIn('def open_voronoi(self, checked=False):',plugin)
-        self.assertIn('self.voronoi_dialog.deleteLater()',plugin)
+        self.assertIn(('Análises Voronoi', 'open_voronoi'), _support.menu_entries())
+        self.assertIn('open_voronoi', _support.plugin_methods())
+        self.assertIn('voronoi_dialog', _support.module_attributes())
+        self.assertIn('dialog.deleteLater()', plugin)  # descarga genérica em _dispose_dialog
 
     def test_four_modalities_two_available(self):
         dialog=(ROOT/'voronoi_dialog.py').read_text(encoding='utf-8')
@@ -34,7 +38,7 @@ class VoronoiWiring(unittest.TestCase):
     def test_metadata(self):
         cfg=configparser.ConfigParser(interpolation=None)
         cfg.read(ROOT/'metadata.txt',encoding='utf-8')
-        self.assertEqual(cfg['general']['version'],'1.0.3')
+        _support.assert_release_version(self)
         self.assertEqual(cfg['general']['qgisMinimumVersion'],'4.0')
 
 if __name__=='__main__':unittest.main()

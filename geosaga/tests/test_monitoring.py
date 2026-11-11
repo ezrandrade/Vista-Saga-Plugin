@@ -12,6 +12,9 @@ import numpy as np
 from geosaga.monitoring_core import (combine_block, transitions_summary,
                                       write_monitoring_reports)
 from geosaga.monitoring_engine import (_same_grid, _install_outputs)
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 
 class TestMonitoringCore(unittest.TestCase):
@@ -127,12 +130,17 @@ class TestMonitoringWiring(unittest.TestCase):
         self.assertIn('self.addAlgorithm(MonitoriaAlgorithm())', provider)
         self.assertIn('def open_monitoring', plugin)
         self.assertIn('def open_algorithm', plugin)
-        self.assertIn('self.monitoring_dialog = None', plugin)
+        self.assertIn('monitoring_dialog', _support.module_attributes())
 
     def test_ui_cancels_task_on_unload(self):
+        # A descarga chama shutdown() de cada diálogo; o diálogo cancela a tarefa.
         plugin = (self.ROOT / 'plugin.py').read_text(encoding='utf8')
-        self.assertIn('task.callback = None', plugin)
-        self.assertIn('task.cancel()', plugin)
+        self.assertIn("getattr(dialog, 'shutdown', None)", plugin)
+        for name in ('monitoring_dialog.py', 'evaluation_dialog.py'):
+            dialog = (self.ROOT / name).read_text(encoding='utf8')
+            self.assertIn('def shutdown(self):', dialog)
+            self.assertIn('task.callback = None', dialog)
+            self.assertIn('task.cancel()', dialog)
 
 
 if __name__ == '__main__':

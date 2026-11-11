@@ -18,8 +18,8 @@ from qgis.core import (Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer,
                        QgsRendererCategory, QgsFillSymbol)
 from qgis.gui import QgsMapLayerComboBox
 
-from .combination_core import normalized_code
 from .ui_shared import choose_project_layers, temporary_destination
+from .errors import log_exception
 
 
 class CombinationDialog(QDialog):
@@ -204,13 +204,13 @@ class CombinationDialog(QDialog):
             layer = (QgsRasterLayer(path,Path(path).stem,'gdal') if mode == 0 else
                      QgsVectorLayer(path,Path(path).stem,'ogr'))
             if not layer.isValid():
-                QMessageBox.warning(self,tr('Arquivo inválido'),f'Não foi possível abrir: {path}')
+                QMessageBox.warning(self,tr('Arquivo inválido'),tr(f'Não foi possível abrir: {path}'))
                 continue
             if mode == 1:
                 # Para arquivos escolhidos no disco, oferecer escolha de campos.
                 names = layer.fields().names()
                 if not names:
-                    QMessageBox.warning(self,tr('Arquivo inválido'),f'Camada sem campos: {path}')
+                    QMessageBox.warning(self,tr('Arquivo inválido'),tr(f'Camada sem campos: {path}'))
                     continue
                 field, ok = self._choose_field(names, f'Classe temática — {Path(path).name}')
                 if not ok:
@@ -360,12 +360,13 @@ class CombinationDialog(QDialog):
             self.status.setText(f"Concluído: {result['combinations']} combinações. "
                                 + ('Resultado temporário no QGIS.' if temporary else f'Arquivo: {dest}'))
             QMessageBox.information(self,tr('Combinação concluída'),
-                f"Combinações observadas: {result['combinations']}\n"
-                f"Relatórios: {result['csv']} e {result['txt']}")
+                tr(f"Combinações observadas: {result['combinations']}\n"
+                f"Relatórios: {result['csv']} e {result['txt']}"))
         except InterruptedError:
             self.status.setText(tr('Processamento cancelado, sem alterar as entradas.'))
         except Exception as exc:
-            QMessageBox.critical(self,tr('Falha na combinação'),str(exc))
+            log_exception()
+            QMessageBox.critical(self,tr('Falha na combinação'),tr(str(exc)))
             self.status.setText(tr('Falha na combinação; revise os parâmetros.'))
         finally:
             pg.close()

@@ -1,8 +1,8 @@
-# Vista Saga Plugin — versão 1.0.4
+# Vista Saga Plugin — versão 1.0.5
 
 Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O programa moderniza procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, sem incorporar o código deste. Não há vínculo institucional com os desenvolvedores do Vista SAGA/UFRJ original.
 
-> **Versão 1.0.4:** os sete módulos estão homologados funcionalmente em português e inglês na rc4. A compatibilidade com Windows 11 e Linux/Flatpak foi testada e aprovada pelo responsável. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin**, com ícone limitado a 24 px; se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**. No **QRibbonSkin**, utilize **Complementos → Vista Saga Plugin**: o botão visual com ícone e menu é criado a partir da mesma ação nativa do QGIS. Se o QRibbonSkin já estava ativado durante a instalação/atualização, volte à interface clássica e ative a Ribbon novamente para que ela reconstruia a guia de complementos.
+> **Versão 1.0.5 (estável):** sete módulos em português e inglês, inclusive nas mensagens de erro. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin** (ícone de 24 px); se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**. No **QRibbonSkin**, utilize **Complementos → Vista Saga Plugin**; após instalar ou atualizar, volte à interface clássica e reative a Ribbon para que ela reconstrua a guia de complementos.
 
 ## Sete módulos
 
@@ -42,35 +42,19 @@ O diretório interno `geosaga` e identificadores Processing `geosaga:*` são **i
 
 ## Licença e atribuição
 
-O código deste complemento é distribuído sob **GNU GPL-3.0-or-later**; o texto integral está no arquivo [`LICENSE`](LICENSE). Autoria do complemento: **Esdras Andrade**. Documentação e resultados desta implementação não representam certificação pelo Vista SAGA/UFRJ ou pela Universidade Federal do Rio de Janeiro.
+O código deste complemento é distribuído sob **GNU GPL-3.0-or-later**; o texto integral está no arquivo [`LICENSE`](LICENSE); a nota de independência do projeto está em [`NOTICE.md`](NOTICE.md). Autoria do complemento: **Esdras Andrade**. Documentação e resultados desta implementação não representam certificação pelo Vista SAGA/UFRJ ou pela Universidade Federal do Rio de Janeiro.
 
 Para histórico completo de evolução, ensaios e testes de desenvolvimento, consulte o **pacote de código-fonte**, distribuído separadamente.
 
 
-### Integração QRibbonSkin (rc9)
 
-A guia Raster e o menu nativo de Complementos apresentam **uma única ação**
-com ícone próprio e submenu com os sete módulos. Na interface Ribbon, abra
-**Raster → Vista Saga Plugin** ou **Complementos → Vista Saga Plugin**; não
-há mais sete botões distribuídos em três comandos e “Outras ferramentas”.
-Na interface padrão, a barra exclusiva mantém o mesmo botão com ícone de
-24 pixels. Ao atualizar o ZIP, reinicie o QGIS e reative a Ribbon, pois o
-QRibbonSkin monta os controles a partir dos menus nativos ao ser ativado.
+## Integração com QRibbonSkin
 
+Os menus Raster e Complementos apresentam **uma única ação** com ícone e submenu dos sete módulos. O QMenu permanece sob controle do QGIS/Qt; o QRibbonSkin o renderiza em seu próprio padrão visual. Há versões do ícone em 19 × 19 px (botões principais do QRibbonSkin) e 24 × 24 px (interface clássica). Não há dependência de importação do QRibbonSkin nem personalização global de tema.
 
-### Integração visual com QRibbonSkin (rc10)
+## Diagnóstico de falhas
 
-A ação principal aparece somente como **Vista Saga Plugin** (português e inglês),
-com o menu suspenso nativo dos sete módulos. O QMenu continua sob o controle
-do QGIS/Qt, e o QRibbonSkin utiliza seus próprios controles para renderizá-lo
-em seu padrão visual. A imagem do ícone tem uma versão otimizada em 19 × 19 px,
-resolução usada pelo QRibbonSkin v1.1.44 nos botões principais. Na interface
-clássica, conserva-se o ícone de 24 × 24 px.
-
-Não há dependência de importação do QRibbonSkin, personalização global de tema
-nem mudança no processamento. Após a instalação, reinicie o QGIS e reative a
-Ribbon para garantir a reconstrução dos menus.
-
+Falhas inesperadas exibem uma mensagem curta e registram o traceback completo em **Exibir → Painéis → Mensagens de log**, aba **Vista Saga Plugin**. Anexe esse texto ao relatar problemas no [rastreador do projeto](https://github.com/ezrandrade/Vista-Saga-Plugin/issues).
 
 ## Site oficial
 

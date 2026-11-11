@@ -10,7 +10,6 @@ import shutil
 import time
 import tempfile
 from collections import Counter
-from pathlib import Path
 
 import numpy as np
 from .voronoi_friction import (validate_friction, assign_friction_window,

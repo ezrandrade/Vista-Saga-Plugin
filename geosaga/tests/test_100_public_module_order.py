@@ -2,6 +2,9 @@
 import ast
 from pathlib import Path
 import unittest
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _support  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 NAMES = ["Assinatura", "Monitoria", "Avaliação", "Análises Voronoi",
@@ -11,15 +14,9 @@ CALLBACKS = ["open_signature", "open_monitoring", "open_interactive", "open_voro
 
 class PublicModuleOrderTests(unittest.TestCase):
     def test_menu_labels_and_callbacks_order(self):
-        tree=ast.parse((ROOT/'plugin.py').read_text(encoding='utf-8'))
-        cls=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name=='VistaSagaPlugin')
-        meth=next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name=='initGui')
-        entries=[]
-        for node in ast.walk(meth):
-            if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute) and node.func.attr=='_add_menu_action':
-                entries.append((node.lineno, node.args[0].value, node.args[1].attr))
-        entries=[(t,c) for _,t,c in sorted(entries)]
-        self.assertEqual(entries, [('Painel de módulos','open_home')]+list(zip(NAMES,CALLBACKS)))
+        # Desde a 1.0.4-rc5 o painel intermediário foi substituído por menu suspenso direto.
+        self.assertEqual(_support.menu_entries(), list(zip(NAMES, CALLBACKS)))
+        self.assertTrue(set(CALLBACKS) <= _support.plugin_methods())
 
     def test_panel_labels_and_callbacks_order(self):
         tree=ast.parse((ROOT/'home_dialog.py').read_text(encoding='utf-8'))

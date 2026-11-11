@@ -7,7 +7,7 @@ from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
-    QApplication, QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
+    QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QProgressDialog,
     QPushButton, QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget,
     QHeaderView, QAbstractItemView,
@@ -17,6 +17,7 @@ from qgis.gui import QgsMapLayerComboBox
 from .ui_shared import temporary_destination
 
 from .vector_monitoring_engine import run_vector_monitoring, validate_vector_monitoring
+from .errors import log_exception
 
 
 class VectorMonitoringDialog(QWidget):
@@ -137,7 +138,7 @@ class VectorMonitoringDialog(QWidget):
 
     def _input(self, edit):
         path, _ = QFileDialog.getOpenFileName(self, tr('Selecionar mapa vetorial'), '',
-                                              'Vetores (*.gpkg *.shp *.geojson *.json *.fgb);;Todos (*)')
+                                              tr('Vetores (*.gpkg *.shp *.geojson *.json *.fgb);;Todos (*)'))
         if path:
             edit.setText(path)
             self._refresh_fields(self.before_select if edit is self.before_select[1]
@@ -209,7 +210,7 @@ class VectorMonitoringDialog(QWidget):
         try:
             validate_vector_monitoring(a, b, fa, fb, path, na, nb)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Monitoria vetorial — entrada'), str(exc))
+            QMessageBox.warning(self, tr('Monitoria vetorial — entrada'), tr(str(exc)))
             return
         from pathlib import Path
         stem = str(Path(path).with_suffix(''))
@@ -217,8 +218,8 @@ class VectorMonitoringDialog(QWidget):
                     if Path(p).exists()]
         if existing:
             answer = QMessageBox.question(self, tr('Substituir saídas'),
-                f'{len(existing)} arquivos já existem. Deseja substituí-los?\n'
-                'Os arquivos anteriores serão restaurados em caso de falha.',
+                tr(f'{len(existing)} arquivos já existem. Deseja substituí-los?\n'
+                'Os arquivos anteriores serão restaurados em caso de falha.'),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No)
             if answer != QMessageBox.StandardButton.Yes:
@@ -256,11 +257,12 @@ class VectorMonitoringDialog(QWidget):
                                         tr('Os arquivos foram gravados, mas a camada não pôde ser carregada.'))
         except (ValueError, OSError, RuntimeError, InterruptedError) as exc:
             self.status.setText(tr('Monitoria vetorial não concluída.'))
-            QMessageBox.warning(self, tr('Monitoria vetorial'), str(exc))
+            QMessageBox.warning(self, tr('Monitoria vetorial'), tr(str(exc)))
         except Exception as exc:
+            log_exception()
             self.status.setText(tr('Erro inesperado na Monitoria vetorial.'))
             QMessageBox.critical(self, tr('Monitoria vetorial'),
-                                 f'{type(exc).__name__}: {exc}')
+                                 tr(f'{type(exc).__name__}: {exc}'))
         finally:
             dialog.close()
             self._busy = False
@@ -275,11 +277,11 @@ class VectorMonitoringDialog(QWidget):
             result_tabs.setCurrentIndex(1)
             main_tabs.setCurrentIndex(2)
         self.summary_label.setText(
-            f"Área comum: {summary['area_total_ha']:.3f} ha | "
+            tr(f"Área comum: {summary['area_total_ha']:.3f} ha | "
             f"Permanência: {summary['area_permanencia_ha']:.3f} ha "
             f"({summary['pct_permanencia']:.2f}%) | "
             f"Mudança: {summary['area_mudanca_ha']:.3f} ha "
-            f"({summary['pct_mudanca']:.2f}%)")
+            f"({summary['pct_mudanca']:.2f}%)"))
         self.table.setRowCount(0)
         for row in summary['linhas'][:500]:
             line = self.table.rowCount()

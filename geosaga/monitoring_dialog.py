@@ -19,6 +19,7 @@ from .ui_shared import temporary_destination
 
 from .raster_engine import file_source
 from .monitoring_task import MonitoringTask
+from .errors import log_exception
 
 
 class MonitoringDialog(QDialog):
@@ -211,6 +212,7 @@ class MonitoringDialog(QDialog):
                 self.vector_tab.setWidget(dialog)
                 self._vector_dialog = dialog
             except Exception:
+                log_exception()
                 details = traceback.format_exc()
                 QgsMessageLog.logMessage(details, 'Vista Saga Plugin', Qgis.MessageLevel.Critical)
                 if self.vector_tab.widget() is not None:
@@ -248,14 +250,14 @@ class MonitoringDialog(QDialog):
 
     def _choose_legend_lookup(self):
         path, _ = QFileDialog.getOpenFileName(self, tr('Tabela de nomes das classes'), '',
-                                              'CSV (*.csv);;Todos os arquivos (*)')
+                                              tr('CSV (*.csv);;Todos os arquivos (*)'))
         if path:
             self.legend_lookup.setText(path)
 
     def _add_temporal(self):
         paths, _ = QFileDialog.getOpenFileNames(
             self, tr('Selecionar mapas adicionais da série temporal'), '',
-            'Mapas raster (*.tif *.tiff *.img *.vrt);;Todos os arquivos (*)')
+            tr('Mapas raster (*.tif *.tiff *.img *.vrt);;Todos os arquivos (*)'))
         for path in paths:
             row = self.series_table.rowCount()
             self.series_table.insertRow(row)
@@ -284,7 +286,7 @@ class MonitoringDialog(QDialog):
     def _choose_input(self, target):
         path, _ = QFileDialog.getOpenFileName(
             self, tr('Selecionar raster categórico'), '',
-            'Mapas raster (*.tif *.tiff *.img *.vrt *.asc);;Todos os arquivos (*)')
+            tr('Mapas raster (*.tif *.tiff *.img *.vrt *.asc);;Todos os arquivos (*)'))
         if path:
             target.setText(path)
 
@@ -326,8 +328,8 @@ class MonitoringDialog(QDialog):
             if existing:
                 choice = QMessageBox.question(
                     self, tr('Sobrescrever resultados'),
-                    f'Já existem {len(existing)} arquivos de saída. Deseja substituí-los?\n'
-                    'Os arquivos anteriores serão preservados se a análise falhar.',
+                    tr(f'Já existem {len(existing)} arquivos de saída. Deseja substituí-los?\n'
+                    'Os arquivos anteriores serão preservados se a análise falhar.'),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No)
                 if choice != QMessageBox.StandardButton.Yes:
@@ -347,7 +349,7 @@ class MonitoringDialog(QDialog):
             self.status.setText(tr('Monitoria em execução. Contando e classificando transições…'))
             QgsApplication.taskManager().addTask(self._task)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Vista Saga — Monitoria'), str(exc))
+            QMessageBox.warning(self, tr('Vista Saga — Monitoria'), tr(str(exc)))
 
     def _progress_changed(self, percent):
         self.progress.setValue(int(percent))
@@ -365,7 +367,7 @@ class MonitoringDialog(QDialog):
         if not success:
             self.status.setText(tr('Monitoria cancelada.' if task.isCanceled() else 'Falha na monitoria.'))
             if task.error:
-                QMessageBox.warning(self, tr('Monitoria não concluída'), task.error)
+                QMessageBox.warning(self, tr('Monitoria não concluída'), tr(task.error))
             return
         summary = task.result
         self.progress.setValue(100)
@@ -373,10 +375,10 @@ class MonitoringDialog(QDialog):
         self.results_tab.setCurrentIndex(0)
         self.tabs.setCurrentWidget(self.results_tab)
         self.summary.setText(
-            f'Pixels válidos: {summary["validos"]:,} | '
+            tr(f'Pixels válidos: {summary["validos"]:,} | '
             f'Permanências: {summary["permanencias"]:,} ({summary["pct_permanencia"]:.2f}%) | '
             f'Mudanças: {summary["mudancas"]:,} ({summary["pct_mudanca"]:.2f}%) | '
-            f'Excluídos (NoData): {summary["invalidos"]:,}')
+            f'Excluídos (NoData): {summary["invalidos"]:,}'))
         self.table.setRowCount(0)
         for row in summary['linhas'][:500]:
             line = self.table.rowCount()
@@ -412,6 +414,17 @@ class MonitoringDialog(QDialog):
             else:
                 QMessageBox.warning(self, tr('Monitoria concluída'),
                                     tr('Os arquivos foram gravados, mas não foi possível adicionar o mapa ao QGIS.'))
+
+    def shutdown(self):
+        """Descarga do plugin: cancela a tarefa e impede callbacks em janela destruída."""
+        task, self._task = self._task, None
+        if task is not None:
+            task.callback = None
+            try:
+                task.progressChanged.disconnect()
+            except (TypeError, RuntimeError):
+                pass  # sem conexões ou objeto C++ já liberado
+            task.cancel()
 
     def closeEvent(self, event):
         if getattr(self._vector_dialog, '_busy', False):

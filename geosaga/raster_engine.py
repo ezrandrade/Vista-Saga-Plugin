@@ -1,10 +1,10 @@
-"""Operações GDAL puras (sem Qt/QGIS), usadas pela interface do GeoSAGA.
+"""Operações GDAL puras (sem Qt/QGIS), usadas pela interface do Vista Saga Plugin.
 
 A versão visual oferece avaliação por classes discretas. Entradas são caminhos
 locais para arquivos raster, não objetos QgsRasterLayer (segurança de threads).
 """
-import csv
 import math
+import json
 import os
 from collections import Counter
 
@@ -110,6 +110,12 @@ def run_evaluation(paths, config, output, report='', title='', author='',
             raise ValueError('O arquivo de saída não pode substituir nenhum mapa de entrada.')
     if (report and os.path.realpath(report) == os.path.realpath(output)) or (report_txt and os.path.realpath(report_txt) == os.path.realpath(output)):
         raise ValueError('O relatório não pode substituir o raster de saída.')
+    if isinstance(config, str):
+        # Aceita JSON em texto, como parse_config; o relatório usa o dicionário.
+        try:
+            config = json.loads(config)
+        except ValueError as exc:
+            raise ValueError('Configuração inválida: informe JSON válido.') from exc
     rules = parse_config(config, len(paths))
     datasets = [open_raster(p) for p in paths]
     same_grid(datasets)

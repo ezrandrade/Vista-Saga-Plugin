@@ -2,6 +2,11 @@
 
 A homologação do driver GDAL fornecido pelo QGIS será feita no QGIS 4.x.
 """
+import importlib.util as _ilu
+import unittest as _ut
+for _dep in ('rasterio',):
+    if _ilu.find_spec(_dep) is None:
+        raise _ut.SkipTest(f'dependência opcional ausente: {_dep} (não incluída no QGIS)')
 import os
 import sys
 import types
