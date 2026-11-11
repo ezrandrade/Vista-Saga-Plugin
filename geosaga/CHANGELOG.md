@@ -15,6 +15,11 @@
   leitor recusava esses arquivos. Leitura por código, e não por posição, também em RS2 → GeoTIFF,
   GeoTIFF → RS2, RGB, RS2 → Vetor, GeoTIFF → Vetor, Monitoria e Combinação de Mapas. Legendas
   consecutivas continuam idênticas byte a byte.
+- **Correção do cabeçalho RS2 (avaliação do Vista SAGA):** a quantidade de classes ocupa 2 bytes
+  e é seguida do código de cada classe, inclusive a primeira. RS2 de avaliação (notas 1–10 e
+  FUNDO com código 11, sem código 0) eram recusados com "Quantidade de classes RS2 inválida".
+  O FUNDO passa a ser o código 0 ou a classe chamada FUNDO, usado como NoData e omitido na
+  vetorização. GeoTIFF → RS2 sem metadados deixa de acrescentar um código 0 vazio.
 - **Exceções GDAL:** a nova operação usa o escopo local da 1.0.5; sem GDAL instalado, o escopo
   deixa de importá-lo antes das validações de entrada.
 - Mensagens novas traduzidas para o inglês.

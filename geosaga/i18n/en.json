@@ -1402,10 +1402,7 @@
   "Falha de leitura da grade temporária na linha {0}.": "Failed to read the temporary grid at row {0}.",
   "Arquivo menor que a matriz RLE e a tabela de cores RS2.": "File is smaller than the RLE matrix and the RS2 colour table.",
   "A lista de códigos não corresponde à legenda.": "The code list does not match the legend.",
-  "O primeiro código da legenda RS2 deve ser 0 (FUNDO).": "The first RS2 legend code must be 0 (BACKGROUND).",
-  "Códigos da legenda RS2 devem ser crescentes, únicos e até 32768.": "RS2 legend codes must be increasing, unique and at most 32768.",
   "Metadados .rs2.json com códigos e legendas inconsistentes.": ".rs2.json metadata with inconsistent codes and legend.",
-  "Código de legenda inesperado: {0} (após o código {1}).": "Unexpected legend code: {0} (after code {1}).",
   "Linha {0}: extensão RLE inválida (0).": "Row {0}: invalid RLE run length (0).",
   "O RS2 admite códigos de categoria de 0 a 32768.": "RS2 allows category codes from 0 to 32768.",
   "Códigos e cores da legenda RS2 não correspondem.": "RS2 legend codes and colours do not match.",
@@ -1415,5 +1412,7 @@
   "{0} classe(s) sem nenhuma célula na resolução escolhida, omitida(s) da legenda RS2 (por exemplo: {1}). Reduza o pixel ou use ALL_TOUCHED.": "{0} class(es) without any cell at the chosen resolution, left out of the RS2 legend (e.g. {1}). Reduce the pixel size or use ALL_TOUCHED.",
   "Esta rasterização deve produzir um arquivo {0}.": "This rasterization must produce a {0} file.",
   "O RS2 de referência não foi encontrado.": "The reference RS2 was not found.",
-  "Atenção:": "Note:"
+  "Atenção:": "Note:",
+  "Código de legenda inesperado: {0} (classe {1}).": "Unexpected legend code: {0} (class {1}).",
+  "Códigos da legenda RS2 devem ser únicos, de 0 a 32768.": "RS2 legend codes must be unique, from 0 to 32768."
 }

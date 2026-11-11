@@ -47,7 +47,8 @@ def _metadata(header: RS2Header, epsg: str = ''):
         'colors': [list(c[:3]) for c in header.colors],
         # Códigos alinhados a labels/colors; o RS2 admite códigos não consecutivos.
         'codes': header.legend_codes,
-        'background_code': 0,
+        # Código do FUNDO: 0 nas amostras; na avaliação do Vista SAGA pode ser outro.
+        'background_code': header.background_code,
     }
 
 
@@ -96,8 +97,9 @@ def convert_rs2_to_tif(rs2_path, tiff_path, epsg='', progress=None,
         if wkt:
             dst.SetProjection(wkt)
         band = dst.GetRasterBand(1)
-        if mark_background_nodata:
-            band.SetNoDataValue(0)
+        background = h.background_code
+        if mark_background_nodata and background is not None:
+            band.SetNoDataValue(background)
         # GDAL indexa nomes e cores pelo valor do pixel; códigos ausentes da legenda
         # (lacunas entre códigos não consecutivos) ficam sem nome.
         names = [''] * (h.max_code + 1)
@@ -109,7 +111,7 @@ def convert_rs2_to_tif(rs2_path, tiff_path, epsg='', progress=None,
         band.SetRasterColorTable(color_table)
         band.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
         band.SetMetadataItem('RS2_FORMAT', 'Vista SAGA (legacy)')
-        band.SetMetadataItem('RS2_BACKGROUND', '0')
+        band.SetMetadataItem('RS2_BACKGROUND', '' if background is None else str(background))
         for y, row in enumerate(reader.rows()):
             band.WriteArray(row.reshape(1, h.width).astype('uint8' if kind == gdal.GDT_Byte else 'uint16'),
                             xoff=0, yoff=y)
@@ -193,12 +195,14 @@ def _read_sidecar(path):
 
 
 def _category_legend_from_raster(band, present):
-    """Legenda só com os códigos presentes (mais o 0), como o Vista SAGA grava."""
+    """Legenda só com os códigos presentes, como o Vista SAGA grava."""
     existing = band.GetCategoryNames() or []
     ct = band.GetRasterColorTable()
     labels = []
     colors = []
-    codes = sorted(set(int(v) for v in present) | {0})
+    # Só os códigos presentes: o RS2 não exige o código 0 (a avaliação do Vista SAGA
+    # grava notas 1..10 e FUNDO 11). Um 0 ausente seria uma classe vazia a mais.
+    codes = sorted(set(int(v) for v in present))
     for i in codes:
         labels.append(existing[i] if i < len(existing) and existing[i] else
                       ('FUNDO' if i == 0 else f'Classe {i}'))

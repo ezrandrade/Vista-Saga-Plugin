@@ -668,7 +668,7 @@ class RS2ConverterDialog(QDialog):
             categories = []
             header = RS2Reader(rs2_source).header
             for code, label, color in class_attributes(header):
-                if omit_background and code == 0:
+                if omit_background and code == header.background_code:
                     continue
                 symbol = QgsFillSymbol.createSimple({
                     'color': QColor(color).name(),

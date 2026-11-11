@@ -122,11 +122,57 @@ class SparseLegendTests(unittest.TestCase):
                       [np.array([1, 0, 0, 0], dtype=np.uint16)] * 2)
 
     def test_invalid_legend_codes_are_rejected(self):
-        for codes in ([1, 125, 158], [0, 158, 125], [0, 125, 125], [0, 125, 40000]):
+        for codes in ([0, 125, 125], [0, 125, 40000]):
             header = RS2Header(4, 2, 100, 200, 140, 220, ['FUNDO', 'A', 'B'],
                                [(0, 0, 0, 0)] * 3, codes=codes)
             with self.subTest(codes=codes), self.assertRaises(RS2Error):
                 write_rs2(self.path.with_name('y.rs2'), header, self.rows)
+
+
+class EvaluationLegendTests(unittest.TestCase):
+    """Correção 1.0.6: estrutura de um RS2 gerado pelo módulo de avaliação do Vista SAGA.
+
+    n = 11 em 2 bytes, seguido do código de CADA classe, inclusive a primeira:
+    Nota 1..10 com códigos 1..10 e FUNDO com código 11, por último; sem código 0.
+    """
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / 'avaliacao.rs2'
+        labels = [f'Nota {i}' for i in range(1, 11)] + ['FUNDO']
+        colors = [(i * 20, 0, 0, 0) for i in range(1, 12)]
+        self.header = RS2Header(3, 2, 100, 200, 130, 220, labels, colors,
+                                codes=list(range(1, 12)))
+        self.rows = [np.array([11, 1, 10], dtype=np.uint16),
+                     np.array([5, 11, 11], dtype=np.uint16)]
+        write_rs2(self.path, self.header, self.rows)
+
+    def test_count_and_first_code_are_two_uint16(self):
+        data = self.path.read_bytes()
+        # Após 11 bytes de prefixo e 20 de bordas e dimensões: n = 11, código 1, "Nota 1".
+        self.assertEqual(data[31:35], bytes.fromhex('0b 00 01 00'))
+        self.assertEqual(data[35:42], b'Nota 1\0')
+
+    def test_read_without_code_zero_and_background_last(self):
+        reader = RS2Reader(self.path)
+        h = reader.header
+        self.assertEqual(h.legend_codes, list(range(1, 12)))
+        self.assertEqual(h.labels[-1], 'FUNDO')
+        self.assertEqual(h.background_code, 11)
+        np.testing.assert_array_equal(np.vstack(list(reader.rows())), np.vstack(self.rows))
+        self.assertEqual(reader.validate()[11], 3)
+
+    def test_rewrite_is_byte_identical(self):
+        copy = self.path.with_name('copia.rs2')
+        write_rs2(copy, RS2Reader(self.path).header, RS2Reader(self.path).rows())
+        self.assertEqual(copy.read_bytes(), self.path.read_bytes())
+
+    def test_background_code_rules(self):
+        self.assertEqual(RS2Header(1, 1, 0, 0, 1, 1, ['FUNDO', 'A'], [(0, 0, 0, 0)] * 2)
+                         .background_code, 0)
+        self.assertIsNone(RS2Header(1, 1, 0, 0, 1, 1, ['A', 'B'], [(0, 0, 0, 0)] * 2,
+                                    codes=[3, 4]).background_code)
 
 
 class SidecarCodesTests(unittest.TestCase):

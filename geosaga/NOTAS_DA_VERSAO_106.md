@@ -16,6 +16,9 @@ Inclui todas as correções de estabilidade da 1.0.5 ([notas](NOTAS_DA_VERSAO_10
   passam a ser lidas e gravadas corretamente (antes eram recusadas). A paleta é localizada pelo
   fim da matriz, e bytes residuais no fim do arquivo são tolerados. Afeta todas as operações RS2,
   a Monitoria e a Combinação de Mapas, que agora associam nomes e cores pelo código.
+- **RS2 do módulo de avaliação do Vista SAGA:** deixam de ser recusados ("Quantidade de classes
+  RS2 inválida"). O cabeçalho guarda o código de cada classe, inclusive a primeira, e o FUNDO pode
+  ter código diferente de 0 (por exemplo, 11, após as notas 1–10); ele é tratado como NoData.
 
 ## Verificação
 

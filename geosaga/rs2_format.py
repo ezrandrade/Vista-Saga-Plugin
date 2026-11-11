@@ -7,9 +7,8 @@ Layout observado (little endian):
 - 11 bytes de metadados legados (sem semântica inteiramente identificada);
 - ymin, xmin, ymax, xmax: quatro uint32 (coordenadas em unidades projetadas);
 - height, width: uint16;
-- number_of_labels: uint32;
-- label 0: cadeia em CP1252 terminada por NUL;
-- labels 1..n-1: código uint16, cadeia CP1252 terminada por NUL;
+- number_of_labels: uint16;
+- n pares (código uint16, nome CP1252 terminado por NUL), inclusive o primeiro;
 - cada linha: índice 1-based uint32; sucessivos pares
   (run_length:uint16, category:uint16) até preencher width; byte NUL;
 - tabela fixa de 32769 cores RGBA (quatro bytes), indexada pelo CÓDIGO,
@@ -24,6 +23,13 @@ Correção 1.0.5 (comparação com arquivo regravado pelo próprio Vista SAGA):
   pelo fim do arquivo;
 - hipótese ainda não confirmada: bytes 3–5 do prefixo = data de gravação
   (dia, mês, ano-2000).
+
+Correção 1.0.6 (RS2 gerado pelo módulo de avaliação do Vista SAGA):
+- a quantidade de classes ocupa 2 bytes e é seguida do CÓDIGO da primeira
+  classe; antes, os 4 bytes eram lidos como um único número, o que só
+  funcionava porque a primeira classe era o FUNDO com código 0;
+- o FUNDO não é necessariamente o código 0: na avaliação, as notas 1..10
+  usam os códigos 1..10 e o FUNDO é o código 11, gravado por último.
 
 Observado: componente alpha sempre zero; as três primeiras componentes são RGB.
 O RS2 não armazena explicitamente identificação inequívoca de datum ou zona UTM.
@@ -41,7 +47,7 @@ import numpy as np
 UINT16 = struct.Struct('<H')
 PAIR = struct.Struct('<HH')
 UINT32 = struct.Struct('<I')
-BOUNDS = struct.Struct('<IIIIHHI')
+BOUNDS = struct.Struct('<IIIIHHH')  # bordas, linhas, colunas, n
 HEADER_BYTES = 11
 MAX_CODE = 32768
 PALETTE_SIZE = (MAX_CODE + 1) * 4
@@ -69,7 +75,7 @@ class RS2Header:
     # Paleta original: permite regravar integralmente a tabela de cores.
     raw_palette: Optional[bytes] = None
     # Códigos da legenda, alinhados a ``labels`` e ``colors``. ``None`` equivale
-    # a 0..n-1 (caso das amostras originais). O primeiro código é sempre 0 (FUNDO).
+    # a 0..n-1 (caso das amostras originais). Os códigos são únicos, em qualquer valor.
     codes: Optional[list[int]] = None
     # Bytes após a paleta, ignorados na leitura (resíduo de regravação).
     trailing_bytes: int = 0
@@ -93,6 +99,17 @@ class RS2Header:
     @property
     def max_code(self) -> int:
         return max(self.legend_codes)
+
+    @property
+    def background_code(self) -> Optional[int]:
+        """Código do FUNDO: 0, se declarado; senão, a classe chamada FUNDO; senão, None."""
+        codes = self.legend_codes
+        if 0 in codes:
+            return 0
+        for code, label in zip(codes, self.labels):
+            if label.strip().casefold() == 'fundo':
+                return code
+        return None
 
     def legend(self):
         """Tuplas ``(código, nome, cor)`` na ordem gravada no cabeçalho."""
@@ -126,18 +143,16 @@ def _read_header(data: bytes) -> RS2Header:
     pos = HEADER_BYTES + BOUNDS.size
     limit = len(data) - PALETTE_SIZE
     labels = []
-    codes = [0]
+    codes = []
     for i in range(n):
-        if i:
-            if pos + 2 > limit:
-                raise RS2Error('Legenda RS2 truncada.')
-            code = UINT16.unpack_from(data, pos)[0]
-            pos += 2
-            # Códigos crescentes, mas não necessariamente consecutivos.
-            if not codes[-1] < code <= MAX_CODE:
-                raise RS2Error(f'Código de legenda inesperado: {code} '
-                               f'(após o código {codes[-1]}).')
-            codes.append(code)
+        if pos + 2 > limit:
+            raise RS2Error('Legenda RS2 truncada.')
+        code = UINT16.unpack_from(data, pos)[0]
+        pos += 2
+        # Códigos únicos, não necessariamente consecutivos nem iniciados em 0.
+        if code > MAX_CODE or code in codes:
+            raise RS2Error(f'Código de legenda inesperado: {code} (classe {i + 1}).')
+        codes.append(code)
         end = data.find(b'\0', pos, min(pos + 8193, limit))
         if end < 0:
             raise RS2Error('Nome de categoria truncado ou excessivamente longo.')
@@ -232,10 +247,8 @@ class RS2Reader:
 def _check_codes(codes, count):
     if len(codes) != count:
         raise RS2Error('A lista de códigos não corresponde à legenda.')
-    if not codes or codes[0] != 0:
-        raise RS2Error('O primeiro código da legenda RS2 deve ser 0 (FUNDO).')
-    if any(not a < b for a, b in zip(codes, codes[1:])) or codes[-1] > MAX_CODE:
-        raise RS2Error('Códigos da legenda RS2 devem ser crescentes, únicos e até 32768.')
+    if len(set(codes)) != len(codes) or any(not 0 <= c <= MAX_CODE for c in codes):
+        raise RS2Error('Códigos da legenda RS2 devem ser únicos, de 0 a 32768.')
 
 
 def _pack_legend(labels: list[str], codes=None) -> bytes:
@@ -247,8 +260,9 @@ def _pack_legend(labels: list[str], codes=None) -> bytes:
     for i, name in enumerate(labels):
         if not isinstance(name, str) or '\0' in name:
             raise RS2Error(f'Nome da classe {i} inválido.')
-        if i:
-            out.extend(UINT16.pack(codes[i]))
+        # Cada classe, inclusive a primeira, é precedida do seu código. Com o
+        # primeiro código 0, o resultado é idêntico ao das amostras originais.
+        out.extend(UINT16.pack(codes[i]))
         try:
             encoded = name.encode('cp1252')
         except UnicodeEncodeError as exc:
