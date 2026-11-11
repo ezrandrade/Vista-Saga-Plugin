@@ -12,7 +12,18 @@ Layout observado (little endian):
 - labels 1..n-1: código uint16, cadeia CP1252 terminada por NUL;
 - cada linha: índice 1-based uint32; sucessivos pares
   (run_length:uint16, category:uint16) até preencher width; byte NUL;
-- tabela final fixa de 32769 cores RGBA (quatro bytes por entrada).
+- tabela fixa de 32769 cores RGBA (quatro bytes), indexada pelo CÓDIGO,
+  imediatamente após a matriz.
+
+Correção 1.0.5 (comparação com arquivo regravado pelo próprio Vista SAGA):
+- os códigos da legenda NÃO precisam ser consecutivos: o Vista SAGA grava
+  apenas as classes presentes (por exemplo, 0, 125 e 158, com n = 3), e os
+  pares RLE usam esses mesmos códigos;
+- o Vista SAGA pode deixar bytes residuais após a paleta (regravação sem
+  truncar o arquivo); por isso a paleta é localizada ao fim da matriz, e não
+  pelo fim do arquivo;
+- hipótese ainda não confirmada: bytes 3–5 do prefixo = data de gravação
+  (dia, mês, ano-2000).
 
 Observado: componente alpha sempre zero; as três primeiras componentes são RGB.
 O RS2 não armazena explicitamente identificação inequívoca de datum ou zona UTM.
@@ -32,7 +43,8 @@ PAIR = struct.Struct('<HH')
 UINT32 = struct.Struct('<I')
 BOUNDS = struct.Struct('<IIIIHHI')
 HEADER_BYTES = 11
-PALETTE_SIZE = 32769 * 4
+MAX_CODE = 32768
+PALETTE_SIZE = (MAX_CODE + 1) * 4
 MAX_PIXELS = 250_000_000
 DEFAULT_PREFIX = bytes.fromhex('10 00 00 12 0c 13 0a 00 19 00 01')
 
@@ -56,6 +68,11 @@ class RS2Header:
     raster_end: int = 0
     # Paleta original: permite regravar integralmente a tabela de cores.
     raw_palette: Optional[bytes] = None
+    # Códigos da legenda, alinhados a ``labels`` e ``colors``. ``None`` equivale
+    # a 0..n-1 (caso das amostras originais). O primeiro código é sempre 0 (FUNDO).
+    codes: Optional[list[int]] = None
+    # Bytes após a paleta, ignorados na leitura (resíduo de regravação).
+    trailing_bytes: int = 0
 
     @property
     def pixel_x(self) -> float:
@@ -68,6 +85,24 @@ class RS2Header:
     @property
     def num_classes(self) -> int:
         return len(self.labels)
+
+    @property
+    def legend_codes(self) -> list[int]:
+        return list(self.codes) if self.codes is not None else list(range(len(self.labels)))
+
+    @property
+    def max_code(self) -> int:
+        return max(self.legend_codes)
+
+    def legend(self):
+        """Tuplas ``(código, nome, cor)`` na ordem gravada no cabeçalho."""
+        return list(zip(self.legend_codes, self.labels, self.colors))
+
+    def allowed_codes(self) -> np.ndarray:
+        """Máscara booleana 0..32768 dos códigos declarados na legenda."""
+        mask = np.zeros(MAX_CODE + 1, dtype=bool)
+        mask[self.legend_codes] = True
+        return mask
 
 
 def _read_header(data: bytes) -> RS2Header:
@@ -91,23 +126,55 @@ def _read_header(data: bytes) -> RS2Header:
     pos = HEADER_BYTES + BOUNDS.size
     limit = len(data) - PALETTE_SIZE
     labels = []
+    codes = [0]
     for i in range(n):
         if i:
             if pos + 2 > limit:
                 raise RS2Error('Legenda RS2 truncada.')
             code = UINT16.unpack_from(data, pos)[0]
             pos += 2
-            if code != i:
-                raise RS2Error(f'Código de legenda inesperado: {code}, esperado: {i}.')
+            # Códigos crescentes, mas não necessariamente consecutivos.
+            if not codes[-1] < code <= MAX_CODE:
+                raise RS2Error(f'Código de legenda inesperado: {code} '
+                               f'(após o código {codes[-1]}).')
+            codes.append(code)
         end = data.find(b'\0', pos, min(pos + 8193, limit))
         if end < 0:
             raise RS2Error('Nome de categoria truncado ou excessivamente longo.')
         labels.append(data[pos:end].decode('cp1252'))
         pos = end + 1
-    pal = data[-PALETTE_SIZE:]
-    colors = [tuple(pal[i*4:(i+1)*4]) for i in range(n)]
+    raster_end = _raster_end(data, pos, width, height, limit)
+    pal = data[raster_end:raster_end + PALETTE_SIZE]
+    colors = [tuple(pal[c*4:(c+1)*4]) for c in codes]
+    sequential = codes == list(range(n))
     return RS2Header(width, height, xmin, ymin, xmax, ymax, labels,
-                     colors, prefix, pos, len(data) - PALETTE_SIZE, pal)
+                     colors, prefix, pos, raster_end, pal,
+                     None if sequential else codes,
+                     len(data) - raster_end - PALETTE_SIZE)
+
+
+def _raster_end(data: bytes, pos: int, width: int, height: int, limit: int) -> int:
+    """Percorre a estrutura RLE (sem decodificar) para localizar a paleta.
+
+    A validação detalhada de cada linha é feita em ``RS2Reader.rows()``.
+    """
+    for y in range(height):
+        pos += 4
+        x = 0
+        while x < width:
+            if pos + 4 > limit:
+                raise RS2Error(f'Linha {y + 1}: fluxo RLE truncado.')
+            length = UINT16.unpack_from(data, pos)[0]
+            if length == 0:
+                raise RS2Error(f'Linha {y + 1}: extensão RLE inválida (0).')
+            x += length
+            pos += 4
+        if x != width or pos >= limit + 1 or data[pos] != 0:
+            raise RS2Error(f'Linha {y + 1}: terminador RLE inválido.')
+        pos += 1
+    if pos > limit:
+        raise RS2Error('Arquivo menor que a matriz RLE e a tabela de cores RS2.')
+    return pos
 
 
 class RS2Reader:
@@ -124,6 +191,7 @@ class RS2Reader:
         """Fornece uma linha uint16 por vez; valida a estrutura inteira."""
         d = self._data
         h = self.header
+        allowed = h.allowed_codes()
         pos = h.data_offset
         for y in range(h.height):
             if pos + 9 > h.raster_end:
@@ -141,7 +209,7 @@ class RS2Reader:
                 pos += 4
                 if not 0 < length <= h.width - x:
                     raise RS2Error(f'Linha {y + 1}: extensão RLE inválida ({length}).')
-                if cat >= h.num_classes:
+                if cat > MAX_CODE or not allowed[cat]:
                     raise RS2Error(f'Linha {y + 1}: classe {cat} ausente da legenda.')
                 line[x:x + length] = cat
                 x += length
@@ -153,22 +221,34 @@ class RS2Reader:
             raise RS2Error('Há bytes inesperados entre a matriz RLE e a paleta.')
 
     def validate(self) -> dict[int, int]:
-        """Percorre todas as linhas e devolve as contagens por categoria."""
-        counts = np.zeros(self.header.num_classes, dtype=np.int64)
+        """Percorre todas as linhas e devolve as contagens por código da legenda."""
+        size = self.header.max_code + 1
+        counts = np.zeros(size, dtype=np.int64)
         for row in self.rows():
-            counts += np.bincount(row, minlength=len(counts))
-        return {i: int(c) for i, c in enumerate(counts)}
+            counts += np.bincount(row, minlength=size)
+        return {code: int(counts[code]) for code in self.header.legend_codes}
 
 
-def _pack_legend(labels: list[str]) -> bytes:
+def _check_codes(codes, count):
+    if len(codes) != count:
+        raise RS2Error('A lista de códigos não corresponde à legenda.')
+    if not codes or codes[0] != 0:
+        raise RS2Error('O primeiro código da legenda RS2 deve ser 0 (FUNDO).')
+    if any(not a < b for a, b in zip(codes, codes[1:])) or codes[-1] > MAX_CODE:
+        raise RS2Error('Códigos da legenda RS2 devem ser crescentes, únicos e até 32768.')
+
+
+def _pack_legend(labels: list[str], codes=None) -> bytes:
     if not 1 <= len(labels) <= 32769:
         raise RS2Error('Número de categorias fora do intervalo suportado.')
+    codes = list(range(len(labels))) if codes is None else list(codes)
+    _check_codes(codes, len(labels))
     out = bytearray()
     for i, name in enumerate(labels):
         if not isinstance(name, str) or '\0' in name:
             raise RS2Error(f'Nome da classe {i} inválido.')
         if i:
-            out.extend(UINT16.pack(i))
+            out.extend(UINT16.pack(codes[i]))
         try:
             encoded = name.encode('cp1252')
         except UnicodeEncodeError as exc:
@@ -190,20 +270,20 @@ def _palette_bytes(header: RS2Header) -> bytes:
             pal[4*i:4*i+4] = b'\xff\xff\xff\x00'
     if len(header.colors) < len(header.labels):
         raise RS2Error('Tabela de cores menor que a legenda.')
-    for code, entry in enumerate(header.colors[:len(header.labels)]):
+    for code, entry in zip(header.legend_codes, header.colors[:len(header.labels)]):
         if len(entry) not in (3, 4) or any(not 0 <= int(c) <= 255 for c in entry):
             raise RS2Error(f'Cor RGB inválida para categoria {code}.')
         pal[4*code:4*code+4] = bytes(entry[:3]) + b'\0'
     return bytes(pal)
 
 
-def _normalized_row(row, width, category_count):
+def _normalized_row(row, width, allowed):
     a = np.asarray(row)
     if a.ndim != 1 or len(a) != width:
         raise RS2Error('Linha de pixels não corresponde à largura da matriz.')
     if a.dtype.kind not in 'iu':
         raise RS2Error('RS2 aceita somente códigos inteiros não negativos.')
-    if np.any(a < 0) or np.any(a >= category_count):
+    if np.any(a < 0) or np.any(a > MAX_CODE) or not np.all(allowed[a]):
         raise RS2Error('Há valores de pixel não previstos nas categorias RS2.')
     return a.astype(np.uint16, copy=False)
 
@@ -224,7 +304,8 @@ def write_rs2(filename, header: RS2Header, rows: Iterable,
         raise RS2Error('Coordenadas RS2 devem ser inteiros positivos de 32 bits.')
     if len(h.prefix) != HEADER_BYTES:
         raise RS2Error('Prefixo do cabeçalho RS2 inválido.')
-    legend = _pack_legend(h.labels)
+    legend = _pack_legend(h.labels, h.legend_codes)
+    allowed = h.allowed_codes()
     palette = _palette_bytes(h)
     out_path = Path(filename)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -238,7 +319,7 @@ def write_rs2(filename, header: RS2Header, rows: Iterable,
             it = iter(rows)
             for y in range(h.height):
                 try:
-                    row = _normalized_row(next(it), h.width, h.num_classes)
+                    row = _normalized_row(next(it), h.width, allowed)
                 except StopIteration as exc:
                     raise RS2Error('Faltam linhas para completar o raster.') from exc
                 indices = np.flatnonzero(row[1:] != row[:-1]) + 1
@@ -260,3 +341,18 @@ def write_rs2(filename, header: RS2Header, rows: Iterable,
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)
+
+
+def sidecar_codes(info) -> list[int]:
+    """Códigos alinhados a ``labels``/``colors`` de um ``.rs2.json``.
+
+    Metadados anteriores à 1.0.5 não têm ``codes``: nesse caso a posição é o código.
+    """
+    labels = info.get('labels') or []
+    codes = info.get('codes')
+    if codes is None:
+        return list(range(len(labels)))
+    codes = [int(c) for c in codes]
+    if len(codes) != len(labels):
+        raise RS2Error('Metadados .rs2.json com códigos e legendas inconsistentes.')
+    return codes

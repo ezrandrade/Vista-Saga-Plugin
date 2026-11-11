@@ -26,15 +26,6 @@ class VoronoiWiring(unittest.TestCase):
         self.assertIn('QgsMapLayerComboBox',dialog)
         self.assertIn('temporary_destination',dialog)
 
-    def test_unchanged_algorithms(self):
-        import zipfile
-        base=Path('/mnt/data/Vista_Saga_Plugin_QGIS4_v0.6.5_ABAS_PADRONIZADAS.zip')
-        if not base.exists(): self.skipTest('Base ausente')
-        with zipfile.ZipFile(base) as archive:
-            for filename in ('core.py','raster_engine.py','monitoring_engine.py','signature_engine.py',
-                             'combination_raster.py','combination_vector.py','rs2_converter.py'):
-                self.assertEqual((ROOT/filename).read_bytes(), archive.read('geosaga/'+filename))
-
     def test_metadata(self):
         cfg=configparser.ConfigParser(interpolation=None)
         cfg.read(ROOT/'metadata.txt',encoding='utf-8')

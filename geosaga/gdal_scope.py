@@ -12,7 +12,13 @@ from functools import wraps
 
 @contextmanager
 def gdal_exceptions():
-    from osgeo import gdal, ogr, osr
+    try:
+        from osgeo import gdal, ogr, osr
+    except ImportError:
+        # Sem GDAL não há estado global a ajustar. A função decorada valida as
+        # entradas primeiro e só então importa o GDAL, que levanta o erro ali.
+        yield
+        return
     modules = (gdal, ogr, osr)
     previous = [module.GetUseExceptions() for module in modules]
     for module in modules:

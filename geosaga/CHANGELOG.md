@@ -1,3 +1,27 @@
+## 1.0.6 — conversão Vetor → RS2 e correção do formato RS2 (2026-11-11)
+
+- **Nova operação Vetor → RS2 (rasterização Vista SAGA)** no Conversor de formatos, sem a etapa
+  manual Vetor → GeoTIFF → RS2. As cinco operações anteriores não foram alteradas.
+  - Grade copiada de um RS2 de referência (para cruzamento célula a célula) ou alinhada a
+    múltiplos inteiros do pixel; exige SRC projetado e não reprojeta.
+  - Códigos inteiros preservados (inclusive não consecutivos, como 125 e 158) ou renumerados;
+    campos textuais em ordem alfabética; campos decimais recusados.
+  - A legenda gravada contém apenas o FUNDO e as classes com células, como o Vista SAGA grava.
+  - `.rs2.json` com SRC, correspondência de códigos e células por classe; relatório de
+    sobreposições, feições ignoradas e classes sem células.
+- **Correção do formato RS2**, a partir de um arquivo regravado pelo próprio Vista SAGA: a legenda
+  admite códigos não consecutivos (por exemplo, 0, 125 e 158 com n = 3), a paleta é indexada pelo
+  código e fica logo após a matriz, e bytes residuais no fim do arquivo são tolerados. Antes, o
+  leitor recusava esses arquivos. Leitura por código, e não por posição, também em RS2 → GeoTIFF,
+  GeoTIFF → RS2, RGB, RS2 → Vetor, GeoTIFF → Vetor, Monitoria e Combinação de Mapas. Legendas
+  consecutivas continuam idênticas byte a byte.
+- **Exceções GDAL:** a nova operação usa o escopo local da 1.0.5; sem GDAL instalado, o escopo
+  deixa de importá-lo antes das validações de entrada.
+- Mensagens novas traduzidas para o inglês.
+- **Validação:** builds de teste 1.0.5-dev1 a dev3 avaliados no Vista SAGA original (Windows); o
+  caso de pluviometria com códigos não consecutivos foi corrigido no dev3 e validado. O pacote
+  1.0.6 completo (incluindo a 1.0.5) ainda precisa ser homologado no QGIS e no Vista SAGA.
+
 ## 1.0.5 — versão de estabilidade (2026-11-07)
 
 Nenhum algoritmo numérico foi alterado; os identificadores `geosaga:*` foram preservados.

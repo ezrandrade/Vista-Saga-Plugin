@@ -97,7 +97,8 @@ def _band_labels(path, band):
         try:
             with open(sidecar, encoding='utf-8') as source:
                 data = json.load(source)
-            for code, name in enumerate(data.get('labels') or []):
+            from .rs2_format import sidecar_codes
+            for code, name in zip(sidecar_codes(data), data.get('labels') or []):
                 if name and str(name).strip():
                     labels[float(code)] = str(name).strip()
         except (OSError, ValueError, TypeError):

@@ -56,7 +56,9 @@ def _get_names(path, band, codes):
             with sidecar.open(encoding='utf-8') as fp:
                 info = json.load(fp)
             if info.get('format') == 'Vista SAGA RS2':
-                mapped.update({str(i): str(label) for i,label in enumerate(info.get('labels', [])) if label})
+                from .rs2_format import sidecar_codes
+                mapped.update({str(code): str(label) for code, label in
+                               zip(sidecar_codes(info), info.get('labels', [])) if label})
         except (OSError, ValueError, TypeError):
             pass
     return {str(code): mapped.get(str(code), f'Classe {code}') for code in codes}

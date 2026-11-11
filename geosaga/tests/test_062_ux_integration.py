@@ -1,7 +1,6 @@
 """Teste de regressão estrutural: execução Qt/PyQGIS deve ser homologada no QGIS."""
 from pathlib import Path
 import unittest
-from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -55,17 +54,6 @@ class TabsUX062(unittest.TestCase):
         vector = source('vector_monitoring_dialog.py')
         self.assertIn('result_tabs.setCurrentIndex(1)', vector)
         self.assertIn('main_tabs.setCurrentIndex(2)', vector)
-
-    def test_previous_engines_unchanged(self):
-        baseline = Path('/mnt/data/Vista_Saga_Plugin_QGIS4_v0.6.1_INTERFACE_TEMPORARIOS.zip')
-        if not baseline.exists():
-            self.skipTest('Base de referência ausente')
-        engines = ('raster_engine.py', 'monitoring_engine.py', 'vector_overlay_engine.py',
-                   'vector_monitoring_engine.py', 'signature_engine.py',
-                   'combination_raster.py', 'combination_vector.py', 'rs2_format.py')
-        with ZipFile(baseline) as z:
-            for filename in engines:
-                self.assertEqual((ROOT / filename).read_bytes(), z.read('geosaga/' + filename), filename)
 
 if __name__ == '__main__':
     unittest.main()
