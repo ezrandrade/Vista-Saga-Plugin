@@ -17,7 +17,8 @@
 - Vetor → RS2 preserva os códigos originais e grava apenas as classes com células
   (substitui a renumeração automática do dev2).
 - Testes com GDAL real e roteiro de homologação no QGIS (`integration_vector_rs2_qgis.py`).
-- Abertura no Vista SAGA original ainda não validada. Detalhes em `VETOR_RS2.md`.
+- Validação relatada no Vista SAGA original com o build 1.0.5-dev3, inclusive no caso
+  de pluviometria com códigos não consecutivos. Detalhes em `VETOR_RS2.md`.
 
 ## 1.0.4 — versão estável para publicação (2026-10-31)
 

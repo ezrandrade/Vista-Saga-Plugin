@@ -1,4 +1,4 @@
-# Vetor → RS2 (rasterização Vista SAGA) — em desenvolvimento
+# Vetor → RS2 (rasterização Vista SAGA) — validado no Vista SAGA (1.0.5-dev3)
 
 Sexta operação do **Conversor de formatos**. Converte uma camada vetorial
 (GeoPackage, Shapefile, GeoJSON ou FlatGeobuf) diretamente para o formato RS2
@@ -66,5 +66,12 @@ from geosaga.tests.integration_vector_rs2_qgis import run
 run()
 ```
 
-- **Pendente e indispensável:** abrir no **Vista SAGA original** um RS2 gerado por esta operação
-  e conferir classes, cores e posição. Os testes automatizados não substituem essa validação.
+- **Validação no Vista SAGA original (QGIS 4.2.2, Windows), relatada pelo responsável:**
+  1. *1.0.5-dev1:* conversões abertas no Vista SAGA; o mapa de pluviometria (códigos 125 e 158)
+     apresentou 2 classes no módulo de visualização, mas 159 no módulo de avaliação, por causa
+     das classes de preenchimento então gravadas.
+  2. A cópia regravada pelo próprio Vista SAGA revelou a legenda com códigos não consecutivos
+     (ver `FORMATO_RS2.md`, correção 1.0.5).
+  3. *1.0.5-dev3:* conversão relatada como funcionando perfeitamente no Vista SAGA original.
+- Ainda não validado: outros mapas e outras instalações do Vista SAGA, legendas com muitas
+  classes e a hipótese de data nos bytes 3–5 do prefixo.
