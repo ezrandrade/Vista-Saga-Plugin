@@ -28,7 +28,7 @@ anteriores não foram alteradas.
 | SRC | Exige SRC **projetado**; SRC geográfico é recusado. **Não há reprojeção.** | O RS2 grava bordas como inteiros não negativos de 32 bits; graus perderiam a geometria. |
 | Grade sem referência | Bordas alinhadas para fora a **múltiplos inteiros do pixel**; o pixel deve ser inteiro. | Garante coordenadas inteiras e que vetores rasterizados com a mesma resolução compartilhem a mesma malha. |
 | Grade com referência | Cópia exata da grade do RS2 indicado; recusa se o vetor não intersectar a grade. | Permite cruzamento célula a célula com mapas existentes (por exemplo, GEOM, USO). O RS2 não registra SRC: a coerência de SRC é responsabilidade do usuário. |
-| Campo inteiro — *Automático* | Preserva os códigos se todos estiverem entre 1 e 255; caso contrário, renumera para 1..n. | O RS2 exige categorias consecutivas 0..n; códigos esparsos inflariam a legenda com classes vazias. |
+| Campo inteiro — *Automático* | Preserva os códigos se estiverem entre 1 e 255 **e** ocuparem ao menos metade da numeração 1..máximo; caso contrário, renumera para 1..n. | O RS2 exige categorias consecutivas 0..n; códigos esparsos inflariam a legenda com classes vazias (caso real: pluviometria com códigos 125 e 158 gerava 159 classes, 156 vazias). |
 | Campo inteiro — *Preservar* | Mantém os códigos (até 32.768); recusa o código 0. | 0 é reservado ao FUNDO; uma classe 0 se confundiria com a ausência de dados. |
 | Campo inteiro — *Renumerar* | Ordem crescente dos valores originais → 1..n. | Legenda compacta; a correspondência fica no `.rs2.json`. |
 | Campo textual | Códigos 1..n em **ordem alfabética** do texto. | Resultado reprodutível, independente da ordem das feições no arquivo. |
@@ -36,7 +36,7 @@ anteriores não foram alteradas.
 | Nomes e cores | `CLASSE` (campo inteiro) ou o próprio texto (campo textual) como nome; `COR_HEX` como cor; demais cores geradas de forma determinística. Nomes devem caber em CP1252. | Codificação do cabeçalho RS2 observado. |
 | Sobreposição | Prevalece a última feição processada; o número de células sobrepostas é **contado e relatado**. | Evita um viés silencioso: corrija a topologia se as classes conflitarem. |
 | Feições inválidas | Geometria vazia ou atributo nulo são ignorados e contados. | Transparência do processamento. |
-| Classes sem células | Relatadas no final (feições menores que o pixel). | Alerta de perda de informação pela resolução. |
+| Classes sem células | Relatadas no final (feições menores que o pixel), assim como as classes vazias criadas só para preservar a numeração. | Alerta de perda de informação pela resolução e de legenda inflada. |
 
 ## Arquivo lateral `.rs2.json`
 

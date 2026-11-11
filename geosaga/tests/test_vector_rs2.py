@@ -91,6 +91,20 @@ class CodePlanTests(unittest.TestCase):
         self.assertEqual(mapping, {101: 1, 3000: 2})
         self.assertEqual(labels, ['FUNDO', 'Mata', 'Classe 3000'])
 
+    def test_sparse_small_codes_are_renumbered_automatically(self):
+        # Caso real (pluviometria): códigos 125 e 158 geravam 159 classes, 156 vazias.
+        mapping, labels, _, mode = plan_codes('int', {125: ('', ''), 158: ('', '')})
+        self.assertEqual(mode, 'renumber')
+        self.assertEqual(mapping, {125: 1, 158: 2})
+        self.assertEqual(labels, ['FUNDO', 'Classe 125', 'Classe 158'])
+
+    def test_dense_codes_with_small_gap_are_preserved(self):
+        mapping, labels, _, mode = plan_codes('int', {1: ('', ''), 2: ('', ''), 4: ('', '')})
+        self.assertEqual((mode, mapping), ('preserve', {1: 1, 2: 2, 4: 4}))
+        self.assertEqual(len(labels), 5)
+        _, labels, _, mode = plan_codes('int', {125: ('', ''), 158: ('', '')}, 'preserve')
+        self.assertEqual((mode, len(labels)), ('preserve', 159))
+
     def test_code_zero_is_never_merged_with_background(self):
         mapping, _, _, mode = plan_codes('int', {0: ('Água', ''), 1: ('Mata', '')})
         self.assertEqual(mode, 'renumber')
@@ -220,9 +234,9 @@ class VectorToRS2ConversionTests(unittest.TestCase):
         self.assertEqual((header.xmin, header.ymin, header.xmax, header.ymax),
                          (100, 200, 130, 220))
         # Centros das células: x=105,115,125; y=215,205 — todos dentro do polígono.
-        np.testing.assert_array_equal(cells, [[5, 5, 5], [5, 5, 5]])
-        self.assertEqual(len(header.labels), 6)
-        self.assertEqual(header.labels[5], 'Mata')
+        np.testing.assert_array_equal(cells, [[1, 1, 1], [1, 1, 1]])
+        # Código único 5: renumerado para 1, sem quatro classes vazias de preenchimento.
+        self.assertEqual(header.labels, ['FUNDO', 'Mata'])
 
     def test_reference_grid_is_copied_exactly(self):
         reference = self.folder / 'geom.rs2'
@@ -264,6 +278,7 @@ class VectorToRS2ConversionTests(unittest.TestCase):
         np.testing.assert_array_equal(cells, [[2, 1]])
         self.assertEqual(header.labels, ['FUNDO', 'Latossolo', 'Argissolo'])
         self.assertEqual(result.summary['code_mode'], 'renumber')
+        self.assertEqual(result.summary['filler_classes'], 0)
         sidecar = json.loads(Path(str(output) + '.rs2.json').read_text(encoding='utf-8'))
         pairs = [(m['codigo_rs2'], m['valor_original'])
                  for m in sidecar['rasterization']['code_mapping']]
@@ -292,6 +307,21 @@ class VectorToRS2ConversionTests(unittest.TestCase):
         _, cells = _matrix(output)
         np.testing.assert_array_equal(cells, [[1, 2, 2]])
         self.assertEqual(result.summary['overlap_cells'], 1)
+
+    def test_pluviometry_case_two_sparse_codes_give_two_classes(self):
+        vector = _make_vector(self.folder / 'pluviometria.shp', [
+            (125, None, None, (197515, 8929745, 200000, 8940815)),
+            (158, None, None, (200000, 8929745, 202465, 8940815)),
+        ], driver='ESRI Shapefile')
+        output = self.folder / 'pluviometria.rs2'
+        result = convert_vector_to_rs2(vector, output, 'CODIGO', 5)
+        header = RS2Reader(output).header
+        self.assertEqual(header.labels, ['FUNDO', 'Classe 125', 'Classe 158'])
+        self.assertEqual((result.summary['code_mode'], result.summary['filler_classes']),
+                         ('renumber', 0))
+        forced = convert_vector_to_rs2(vector, self.folder / 'forcado.rs2', 'CODIGO', 5,
+                                       code_mode='preserve')
+        self.assertEqual(forced.summary['filler_classes'], 156)
 
     def test_methodological_rejections(self):
         geographic = _make_vector(self.folder / 'graus.gpkg',

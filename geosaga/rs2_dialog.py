@@ -738,6 +738,10 @@ class RS2ConverterDialog(QDialog):
         if summary.get('code_mode') == 'renumber':
             notes.append('Códigos renumerados para 1..n; a correspondência com os valores '
                          'originais está no arquivo .rs2.json.')
+        if summary.get('filler_classes'):
+            notes.append(f"{summary['filler_classes']} classe(s) vazia(s) criada(s) apenas para "
+                         'preservar a numeração original dos códigos. Se não precisar dos códigos '
+                         'originais, use a renumeração em Opções avançadas.')
         if summary.get('skipped_features'):
             notes.append(f"{summary['skipped_features']} feição(ões) ignorada(s) por geometria "
                          'vazia ou atributo nulo.')

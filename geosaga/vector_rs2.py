@@ -35,6 +35,7 @@ from .vector_raster import (MAX_PIXELS, _check_field, _open_ogr_layer,
 RS2_MAX_CODE = 32768          # 32.769 categorias, incluindo 0 = FUNDO
 RS2_MAX_SIDE = 65535          # linhas e colunas são uint16 no cabeçalho
 AUTO_PRESERVE_LIMIT = 255     # acima disso, a legenda RS2 inflaria com códigos vazios
+AUTO_MIN_OCCUPANCY = 0.5      # fração mínima de 1..máximo efetivamente usada para preservar
 CODE_MODES = ('auto', 'preserve', 'renumber')
 BACKGROUND_LABEL = 'FUNDO'
 BACKGROUND_COLOR = (255, 255, 255, 0)
@@ -193,7 +194,10 @@ def plan_codes(field_mode, values, code_mode='auto'):
         elif code_mode == 'renumber':
             effective = 'renumber'
         else:
-            effective = ('preserve' if preservable and keys[-1] <= AUTO_PRESERVE_LIMIT
+            # Preserva só legendas densas: códigos esparsos (por exemplo, 125 e 158)
+            # gerariam dezenas de classes RS2 vazias apenas para completar a numeração.
+            dense = len(keys) >= AUTO_MIN_OCCUPANCY * keys[-1]
+            effective = ('preserve' if preservable and dense and keys[-1] <= AUTO_PRESERVE_LIMIT
                          else 'renumber')
     else:
         raise RS2Error('O RS2 armazena apenas categorias: use um campo inteiro ou '
@@ -443,6 +447,8 @@ def convert_vector_to_rs2(vector_source, rs2_path, field_name, pixel_size=None,
         'classes': len(mapping),
         'empty_classes': [labels[code] for code in sorted(set(mapping.values()))
                           if counts[code] == 0],
+        # Classes criadas apenas para completar a numeração ao preservar códigos.
+        'filler_classes': len(labels) - 1 - len(mapping),
         'code_mode': effective,
     }
     manifest = {

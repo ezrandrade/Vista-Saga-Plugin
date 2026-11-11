@@ -7,6 +7,8 @@
 - Códigos inteiros preservados ou renumerados (automático, preservar, renumerar), com a
   correspondência e a contagem de células por classe registradas no `.rs2.json`.
 - Relatório de células sobrepostas, feições ignoradas e classes sem células.
+- Correção (dev2): o modo automático não preserva mais códigos esparsos (ex.: 125 e 158),
+  que geravam 159 classes RS2, 156 delas vazias; passa a renumerar e a avisar sobre classes de preenchimento.
 - Testes com GDAL real e roteiro de homologação no QGIS (`integration_vector_rs2_qgis.py`).
 - Abertura no Vista SAGA original ainda não validada. Detalhes em `VETOR_RS2.md`.
 
