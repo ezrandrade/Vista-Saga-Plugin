@@ -96,6 +96,16 @@ def _check_ui(gpkg):
         widget.mode.setCurrentIndex(4)
         if not widget.rs2_code_mode.isHidden():
             raise RuntimeError('Modo de códigos RS2 visível em Vetor → GeoTIFF.')
+        # 1.0.6: o SRC das operações com origem RS2 não vaza para GeoTIFF → Vetor.
+        from qgis.core import QgsCoordinateReferenceSystem
+        widget.mode.setCurrentIndex(0)
+        widget.crs_widget.setCrs(QgsCoordinateReferenceSystem('EPSG:31985'))
+        widget.mode.setCurrentIndex(3)
+        if widget.crs_widget.crs().isValid():
+            raise RuntimeError('SRC do RS2 apareceu em GeoTIFF → Vetor, onde substituiria o do TIFF.')
+        widget.mode.setCurrentIndex(2)
+        if widget.crs_widget.crs().authid() != 'EPSG:31985':
+            raise RuntimeError('SRC escolhido para RS2 não foi mantido entre as operações RS2.')
     finally:
         widget.close()
         widget.deleteLater()

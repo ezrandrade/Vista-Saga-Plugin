@@ -1414,5 +1414,11 @@
   "O RS2 de referência não foi encontrado.": "The reference RS2 was not found.",
   "Atenção:": "Note:",
   "Código de legenda inesperado: {0} (classe {1}).": "Unexpected legend code: {0} (class {1}).",
-  "Códigos da legenda RS2 devem ser únicos, de 0 a 32768.": "RS2 legend codes must be unique, from 0 to 32768."
+  "Códigos da legenda RS2 devem ser únicos, de 0 a 32768.": "RS2 legend codes must be unique, from 0 to 32768.",
+  "Saída sem SRC": "Output without CRS",
+  "SRC {0} obtido do arquivo .rs2.json do RS2 de entrada.": "CRS {0} taken from the .rs2.json file of the input RS2.",
+  "Continuar sem SRC?": "Continue without a CRS?",
+  "SRC obtido do arquivo .rs2.json: {0}.": "CRS taken from the .rs2.json file: {0}.",
+  "… e mais {count} arquivos.": "… and {count} more files.",
+  "O RS2 não registra o sistema de referência. Sem um SRC escolhido no campo \"SRC do RS2\", as saídas terão coordenadas, mas SRC desconhecido no QGIS:": "RS2 does not store the coordinate reference system. Without a CRS chosen in the \"RS2 CRS\" field, the outputs will have coordinates but an unknown CRS in QGIS:"
 }

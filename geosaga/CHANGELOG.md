@@ -20,6 +20,12 @@
   FUNDO com código 11, sem código 0) eram recusados com "Quantidade de classes RS2 inválida".
   O FUNDO passa a ser o código 0 ou a classe chamada FUNDO, usado como NoData e omitido na
   vetorização. GeoTIFF → RS2 sem metadados deixa de acrescentar um código 0 vazio.
+- **SRC nas conversões a partir de RS2** (RS2 → GeoTIFF e RS2 → Vetor): o RS2, inclusive o do
+  Vista SAGA original, não registra o SRC, e as saídas ficavam com SRC desconhecido quando o campo
+  "SRC do RS2" estava em "Não definido". Agora o último SRC escolhido é lembrado entre sessões
+  (separado do SRC opcional de GeoTIFF → Vetor); o SRC registrado no `.rs2.json` de RS2 criados
+  pelo plugin é usado automaticamente; e converter sem SRC exige confirmação. O SRC nunca é
+  deduzido das coordenadas.
 - **Exceções GDAL:** a nova operação usa o escopo local da 1.0.5; sem GDAL instalado, o escopo
   deixa de importá-lo antes das validações de entrada.
 - Mensagens novas traduzidas para o inglês.

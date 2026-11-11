@@ -20,6 +20,10 @@ Inclui todas as correções de estabilidade da 1.0.5 ([notas](NOTAS_DA_VERSAO_10
   RS2 inválida"). O cabeçalho guarda o código de cada classe, inclusive a primeira, e o FUNDO pode
   ter código diferente de 0 (por exemplo, 11, após as notas 1–10); ele é tratado como NoData.
 
+- **SRC nas saídas de RS2 → GeoTIFF e RS2 → Vetor:** como o RS2 não guarda SRC, o plugin passa a
+  lembrar o último SRC escolhido, usa o SRC do `.rs2.json` dos RS2 criados pelo plugin e pede
+  confirmação antes de gerar saídas sem SRC. O SRC nunca é deduzido das coordenadas.
+
 ## Verificação
 
 - Testes automatizados com GDAL real; ida e volta RS2 → GeoTIFF → RS2 idêntica byte a byte a um

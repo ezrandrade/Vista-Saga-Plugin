@@ -410,3 +410,40 @@ def convert_tif_to_rs2(tiff_path, rs2_path, progress=None, reference_rs2=None,
         return out
     finally:
         ds = None
+
+
+def sidecar_epsg(rs2_path):
+    """SRC registrado no ``.rs2.json`` ao lado de um RS2, como ``'EPSG:31985'``; ou ``''``.
+
+    O RS2 não guarda SRC. Os RS2 criados pelo plugin (Vetor → RS2, GeoTIFF → RS2)
+    registram o SRC de origem nesse arquivo lateral: é uma procedência conhecida,
+    e não uma dedução a partir das coordenadas. Só SRC projetado com código EPSG
+    é aceito, como na escolha manual.
+    """
+    try:
+        info = _read_sidecar(rs2_path)
+    except (OSError, ValueError, RS2Error):
+        return ''
+    if not info:
+        return ''
+    epsg = str(info.get('epsg') or '').strip().upper()
+    wkt = info.get('source_wkt') or ''
+    try:
+        from osgeo import osr
+    except ImportError:
+        return epsg if epsg.startswith('EPSG:') else ''
+    srs = osr.SpatialReference()
+    try:
+        if epsg.startswith('EPSG:'):
+            ok = srs.ImportFromEPSG(int(epsg[5:])) == 0
+        elif wkt:
+            ok = srs.ImportFromWkt(wkt) == 0
+            if ok and srs.GetAuthorityName(None) != 'EPSG':
+                srs.AutoIdentifyEPSG()
+        else:
+            return ''
+    except (RuntimeError, ValueError, TypeError):
+        return ''
+    if not ok or not srs.IsProjected() or srs.GetAuthorityName(None) != 'EPSG':
+        return ''
+    return 'EPSG:' + srs.GetAuthorityCode(None)

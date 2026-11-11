@@ -369,6 +369,18 @@ class VectorToRS2ConversionTests(unittest.TestCase):
                 if enabled:
                     m.UseExceptions()
 
+    def test_sidecar_crs_is_offered_back_for_rs2_conversions(self):
+        """1.0.6: o SRC de origem fica no .rs2.json e é reutilizado em RS2 → GeoTIFF/Vetor."""
+        from geosaga.rs2_converter import sidecar_epsg, convert_rs2_to_tif
+        vector = _make_vector(self.folder / 'uso.gpkg', [(1, 'A', None, (100, 200, 120, 220))])
+        rs2 = convert_vector_to_rs2(vector, self.folder / 'uso.rs2', 'CODIGO', 10).path
+        self.assertEqual(sidecar_epsg(rs2), 'EPSG:31985')
+        tif = convert_rs2_to_tif(rs2, self.folder / 'uso.tif', sidecar_epsg(rs2))
+        srs = osr.SpatialReference(gdal.Open(str(tif)).GetProjectionRef())
+        self.assertEqual(srs.GetAuthorityCode(None), '31985')
+        Path(str(rs2) + '.rs2.json').unlink()
+        self.assertEqual(sidecar_epsg(rs2), '')
+
     def test_cancellation_leaves_no_output(self):
         vector = _make_vector(self.folder / 'uso.gpkg', [(1, 'A', None, (100, 200, 140, 240))])
         output = self.folder / 'cancelado.rs2'
