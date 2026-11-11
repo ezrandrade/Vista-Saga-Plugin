@@ -21,18 +21,57 @@ A variante tem ordem de bytes little-endian e a seguinte organização:
 | Prefixo legado | 11 bytes | significado integral ainda não determinado; deve ser preservado |
 | ymin, xmin, ymax, xmax | 4 × uint32 | coordenadas de borda (unidade projetada, provavelmente metros) |
 | linhas, colunas | 2 × uint16 | todas as amostras 4.455 × 3.507 |
-| total de categorias | uint32 | inclui categoria 0 / FUNDO |
-| nome categoria zero | CP1252 + `0x00` | sem código precedente |
-| nome demais categorias | uint16 + CP1252 + `0x00` | códigos sequenciais começando em 1 |
+| total de categorias | **uint16** | correção 1.0.6: antes lido como uint32 |
+| categorias | n × (uint16 código + CP1252 + `0x00`) | **inclusive a primeira**; códigos únicos, não necessariamente consecutivos (1.0.5) nem iniciados em 0 (1.0.6) |
 | início de cada linha | uint32 | número da linha (inicia em 1) |
 | bloco RLE | repetidos `(uint16 comprimento, uint16 categoria)` | blocos somam a largura |
 | terminador da linha | byte `0x00` | depois do último bloco |
-| paleta no final | 32.769 × 4 bytes | vermelho, verde, azul e quarto byte reservado |
+| paleta | 32.769 × 4 bytes | indexada pelo **código**; vem logo após a matriz; vermelho, verde, azul e quarto byte reservado |
 
 A grade é norte-acima: transformada geográfica resultante = `(xmin, dx, 0, ymax, 0, -dy)`.
 Em todos os arquivos: `dx=dy=10`. Os campos de coordenadas não identificam
 inequivocamente datum, sistema geodésico ou zona UTM. **Nunca atribuir EPSG
 por inferência automática**. Confirmar com documentação/cartografia original.
+
+## Correção 1.0.5 — evidência de um RS2 gravado pelo próprio Vista SAGA
+
+Um mapa de pluviometria rasterizado pelo plugin com os códigos 125 e 158 declarava
+159 classes (0..158). O módulo de **visualização** do Vista SAGA mostrava as 2 classes,
+mas o módulo de **avaliação** listava todas as 159. O usuário salvou uma cópia pelo
+módulo de visualização, e a comparação byte a byte mostrou:
+
+1. **Legenda esparsa:** o Vista SAGA gravou `n = 3` e a legenda `0 FUNDO`, `125`, `158`.
+   Os códigos não precisam ser consecutivos; os pares RLE usam os próprios códigos
+   (matriz RLE idêntica à do plugin). A dedução anterior ("códigos sequenciais a partir
+   de 1") vinha apenas de amostras que, por acaso, eram consecutivas.
+2. **Paleta indexada pelo código**, gravada imediatamente após a matriz.
+3. **Bytes residuais:** a cópia terminava com 1.920 bytes nulos após a paleta, a mesma
+   quantidade que a legenda encolheu; o arquivo foi aparentemente regravado sem
+   truncamento. O leitor localiza a paleta pelo fim da matriz e ignora o resíduo.
+4. **Prefixo (hipótese, não confirmada):** os bytes 3–5 passaram de `12 0c 13` para
+   `0b 0b 1a`, compatível com a data de gravação (dia, mês, ano − 2000): 18/12/2019 nas
+   amostras e 11/11/2026 na cópia. O plugin continua gravando o prefixo das amostras.
+
+Regravado pelo plugin, o arquivo do Vista SAGA é reproduzido **byte a byte** (sem o
+resíduo). Arquivos com legenda consecutiva continuam idênticos aos de antes.
+
+## Correção 1.0.6 — RS2 gerado pelo módulo de avaliação do Vista SAGA
+
+Um RS2 de avaliação (notas 1 a 10) era recusado com "Quantidade de classes RS2 inválida":
+os 4 bytes lidos como quantidade valiam `0b 00 01 00` = 65.547. Na verdade são **dois campos
+uint16**: a quantidade (11) e o **código da primeira classe** (1). Cada classe, inclusive a
+primeira, é precedida do seu código. Nas amostras anteriores, a primeira classe era o FUNDO com
+código 0, e os bytes `00 00` passavam despercebidos como parte alta de um uint32.
+
+No arquivo da avaliação, as notas usam os códigos 1–10 e o **FUNDO é o código 11, gravado por
+último**; não há código 0. O plugin passa a tratar como FUNDO o código 0, quando existe, ou a
+classe chamada FUNDO; esse código vira NoData no GeoTIFF e é omitido na vetorização. Os bytes
+6–9 do prefixo diferem nesse arquivo (`05 00 17 00`, contra `0a 00 19 00` nos demais); seu
+significado continua desconhecido. Os bytes 3–5 voltaram a coincidir com a data de gravação.
+
+A gravação é idêntica byte a byte à anterior quando a primeira classe tem código 0; os três
+arquivos de teste (amostra regravada pelo Vista SAGA, saída do plugin e avaliação) são
+reproduzidos byte a byte.
 
 ## Convenções do conversor
 

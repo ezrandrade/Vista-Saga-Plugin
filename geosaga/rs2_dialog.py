@@ -12,7 +12,7 @@ from qgis.PyQt.QtWidgets import (
     QPushButton, QProgressDialog, QScrollArea, QToolButton, QVBoxLayout, QWidget,
     QDoubleSpinBox, QSpinBox, QAbstractItemView,
 )
-from qgis.core import (Qgis, QgsCoordinateReferenceSystem, QgsProject,
+from qgis.core import (Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsSettings,
                        QgsRasterLayer, QgsVectorLayer, QgsMessageLog)
 from qgis.gui import QgsMapLayerComboBox, QgsProjectionSelectionWidget
 
@@ -24,6 +24,11 @@ from .rs2_vector import (VECTOR_FORMATS, convert_rs2_to_vector, vector_conflicts
 from .tiff_vector import convert_tif_to_vector, _legend
 from .vector_raster import convert_vector_to_tif, split_vector_source
 from .errors import log_exception
+from .vector_rs2 import convert_vector_to_rs2
+
+
+RS2_CRS_SETTING = 'VistaSagaPlugin/rs2_crs'
+RS2_SOURCE_OPERATIONS = (0, 2)
 
 
 class RS2ConverterDialog(QDialog):
@@ -34,6 +39,13 @@ class RS2ConverterDialog(QDialog):
         self.setMinimumWidth(690)
         self.resize(750, 660)
         self.setModal(False)
+        # SRC das operações com origem RS2 (0 e 2), lembrado entre sessões. O RS2 não
+        # guarda SRC; a escolha é do usuário. Fica separado do SRC opcional de
+        # GeoTIFF → Vetor (3), que substitui o SRC do TIFF e não deve herdar este.
+        self._rs2_crs = QgsCoordinateReferenceSystem(
+            str(QgsSettings().value(RS2_CRS_SETTING, '', type=str) or ''))
+        self._other_crs = QgsCoordinateReferenceSystem()
+        self._crs_group = None
         self._create_ui()
 
     def _create_ui(self):
@@ -61,7 +73,8 @@ class RS2ConverterDialog(QDialog):
                             tr('GeoTIFF → RS2 (formato Vista SAGA)'),
                             tr('RS2 → Vetor (polígonos)'),
                             tr('GeoTIFF → Vetor (polígonos)'),
-                            tr('Vetor → GeoTIFF (rasterização)')])
+                            tr('Vetor → GeoTIFF (rasterização)'),
+                            tr('Vetor → RS2 (rasterização Vista SAGA)')])
         self.mode.currentIndexChanged.connect(self._mode_changed)
         operation_form.addRow(tr('Converter:'), self.mode)
         self.batch = QCheckBox(tr('Processar vários arquivos (lote)'))
@@ -228,6 +241,15 @@ class RS2ConverterDialog(QDialog):
         self.vector_all_touched = QCheckBox(tr('Rasterizar todas as células tocadas pelas feições (ALL_TOUCHED)'))
         self.vector_all_touched.setChecked(False)
         advanced.addRow('', self.vector_all_touched)
+        self.rs2_code_mode = QComboBox()
+        self.rs2_code_mode.addItem(tr('Automático (preservar os códigos; renumerar só 0 ou acima de 32768)'), 'auto')
+        self.rs2_code_mode.addItem(tr('Preservar os códigos originais'), 'preserve')
+        self.rs2_code_mode.addItem(tr('Renumerar sequencialmente (1..n)'), 'renumber')
+        self.rs2_code_mode.setToolTip(
+            tr('Campos inteiros: o RS2 exige códigos consecutivos a partir de 0 (FUNDO). '
+            'A correspondência entre códigos originais e RS2 fica no arquivo .rs2.json.'))
+        self.rs2_code_mode_label = QLabel(tr('Códigos RS2:'))
+        advanced.addRow(self.rs2_code_mode_label, self.rs2_code_mode)
         self.float_classes_label = QLabel(tr('Classes para TIFF contínuo:'))
         self.float_classes = QSpinBox()
         self.float_classes.setRange(2, 20)
@@ -280,14 +302,50 @@ class RS2ConverterDialog(QDialog):
         if self.temporary_check.isChecked():
             self.add_to_project.setChecked(True)
 
+    def _swap_crs_for_mode(self, operation):
+        """Mantém um SRC para as operações com origem RS2 e outro para as demais."""
+        group = 'rs2' if operation in RS2_SOURCE_OPERATIONS else 'other'
+        if group == self._crs_group:
+            return
+        if self._crs_group == 'rs2':
+            self._rs2_crs = self.crs_widget.crs()
+        elif self._crs_group == 'other':
+            self._other_crs = self.crs_widget.crs()
+        self.crs_widget.setCrs(self._rs2_crs if group == 'rs2' else self._other_crs)
+        self._crs_group = group
+
+    def _apply_sidecar_crs(self):
+        """Preenche o SRC registrado no .rs2.json do RS2 de entrada, quando existir."""
+        if self.mode.currentIndex() not in RS2_SOURCE_OPERATIONS:
+            return
+        from .rs2_converter import sidecar_epsg
+        epsg = sidecar_epsg(self.source.text().strip())
+        if not epsg:
+            return
+        crs = QgsCoordinateReferenceSystem(epsg)
+        if crs.isValid() and crs != self.crs_widget.crs():
+            self.crs_widget.setCrs(crs)
+            self.iface.messageBar().pushMessage(
+                'Vista Saga Plugin',
+                tr('SRC {0} obtido do arquivo .rs2.json do RS2 de entrada.').format(epsg),
+                Qgis.MessageLevel.Info, 6)
+
+    def _remember_rs2_crs(self):
+        crs = self.crs_widget.crs()
+        if self.mode.currentIndex() in RS2_SOURCE_OPERATIONS and crs.isValid():
+            QgsSettings().setValue(RS2_CRS_SETTING, crs.authid())
+
     def _mode_changed(self, *_):
         operation = self.mode.currentIndex()
-        if operation == 1 and self.temporary_check.isChecked():
+        self._swap_crs_for_mode(operation)
+        writes_rs2 = operation in (1, 5)
+        if writes_rs2 and self.temporary_check.isChecked():
             self.temporary_check.setChecked(False)
-        self.temporary_check.setEnabled(operation != 1)
+        self.temporary_check.setEnabled(not writes_rs2)
         self._temp_changed()
         to_tif, to_rs2, to_vector = operation == 0, operation == 1, operation in (2, 3)
-        from_vector = operation == 4
+        vector_to_rs2 = operation == 5
+        from_vector = operation in (4, 5)
         tif_source = operation in (1, 3)
         if from_vector and self.batch.isChecked():
             self.batch.setChecked(False)
@@ -301,20 +359,27 @@ class RS2ConverterDialog(QDialog):
         self.batch_loaded_layers.setFilters(Qgis.LayerFilter.RasterLayer)
         for widget in (self.crs_widget, self.crs_label):
             widget.setVisible(not to_rs2 and not from_vector)
-        self.add_to_project.setVisible(not to_rs2)
+        self.add_to_project.setVisible(not writes_rs2)
         for widget in (self.vector_field, self.vector_field_label, self.pixel_size, self.pixel_size_label):
             widget.setVisible(from_vector)
         self.vector_all_touched.setVisible(from_vector)
+        self.rs2_code_mode.setVisible(vector_to_rs2)
+        self.rs2_code_mode_label.setVisible(vector_to_rs2)
         self.crs_label.setText(tr('SRC da saída (opcional):' if operation == 3 else 'SRC do RS2:'))
         self.crs_widget.setDialogTitle(tr('SRC de saída (atribuição, sem reprojeção)'
                                        if operation == 3 else 'Selecione o SRC confirmado do RS2'))
-        self.options_box.setVisible(not to_rs2)
+        self.options_box.setVisible(not writes_rs2)
         self.inspect_button.setEnabled(operation in (0, 2) and not many)
         for widget in (self.layer_label, self.loaded_layers, self.use_loaded):
             widget.setVisible((tif_source or from_vector) and not many)
         self.batch_layer_widget.setVisible(tif_source)
         for widget in (self.reference_label, self.reference_row):
-            widget.setVisible(to_rs2 and not many)
+            widget.setVisible(writes_rs2 and not many)
+        self.reference_label.setText(tr('RS2 de referência (grade):' if vector_to_rs2
+                                        else 'RS2 de referência (RGB):'))
+        self.reference.setPlaceholderText(
+            tr('Opcional: copia origem, resolução e dimensões de um RS2 da mesma área'
+               if vector_to_rs2 else 'Opcional: recupera classes de TIFF RGB legado'))
         for widget in (self.manual_bounds, self.bounds_label):
             widget.setVisible(tif_source)
         self.background_nodata.setVisible(to_tif)
@@ -328,6 +393,7 @@ class RS2ConverterDialog(QDialog):
         self.description.setText((
             tr('Converte os códigos e legendas RS2 para um raster categórico de uma banda.' if to_tif else
             'Cria um RS2 a partir dos valores de um TIFF categórico ou das cores de um TIFF RGB.' if to_rs2 else
+            'Rasteriza uma camada vetorial por atributo diretamente no formato RS2 do Vista SAGA.' if vector_to_rs2 else
             'Rasteriza uma camada vetorial por atributo, mantendo o SRC e os nomes das categorias.' if from_vector else
             'Gera polígonos contíguos por classe, com atributos CODIGO, CLASSE e COR_HEX.')
         ))
@@ -344,15 +410,20 @@ class RS2ConverterDialog(QDialog):
             '(quantidade em Opções avançadas), sem alterar o raster original. '
             'Valores NoData são excluídos; os limites constam nos campos VALOR_MIN e VALOR_MAX. '
             'O SRC vem do TIFF, salvo escolha explícita.' if operation == 3 else
+            'Exige SRC projetado (por exemplo, UTM), sem reprojeção. Sem RS2 de referência, o pixel '
+            'deve ser inteiro e a grade é alinhada a múltiplos dele; com referência (Opções avançadas), '
+            'a grade do RS2 indicado é copiada para permitir cruzamentos célula a célula. '
+            'Use campo inteiro ou textual; fundo = 0. O SRC fica apenas no arquivo .rs2.json.' if vector_to_rs2 else
             'Informe o campo e a resolução nas unidades do SRC de origem (metros se projetado em metros). '
             'SRC geográfico: resolução em graus. Área pela extensão do vetor; fundo = 0. '
             'SRC original preservado, sem reprojeção.')
         ))
         for widget in (self.reference, self.reference_button):
-            widget.setEnabled(to_rs2 and not many)
+            widget.setEnabled(writes_rs2 and not many)
         self.manual_bounds.setEnabled(tif_source)
         if not many and self.source.text().strip():
-            desired = '.tif' if (to_tif or from_vector) else '.rs2' if to_rs2 else self.vector_format.currentData()
+            desired = ('.rs2' if writes_rs2 else '.tif' if (to_tif or from_vector)
+                       else self.vector_format.currentData())
             output = self.destination.text().strip()
             if not output or Path(output).suffix.lower() != desired:
                 self.destination.setText(
@@ -379,11 +450,11 @@ class RS2ConverterDialog(QDialog):
         raw = self.source.text().strip()
         filename = Path(raw.split('|', 1)[0])
         if filename.suffix.lower() in ('.gpkg', '.shp', '.geojson', '.json', '.fgb'):
-            if self.mode.currentIndex() != 4:
+            if self.mode.currentIndex() not in (4, 5):
                 self.mode.setCurrentIndex(4)
             self._update_vector_fields()
             if not self.destination.text().strip():
-                self.destination.setText(self._suggest_output(filename, 4))
+                self.destination.setText(self._suggest_output(filename, self.mode.currentIndex()))
             return
         try:
             input_type = source_mode(filename)
@@ -404,6 +475,8 @@ class RS2ConverterDialog(QDialog):
             return str(file.with_name(file.stem + '_convertido.rs2'))
         if operation == 4:
             return str(file.with_name(file.stem + '_raster.tif'))
+        if operation == 5:
+            return str(file.with_name(file.stem + '_vetor.rs2'))
         return str(file.with_name(file.stem + '_poligonos' + self.vector_format.currentData()))
 
     def _set_source(self, filename):
@@ -411,9 +484,10 @@ class RS2ConverterDialog(QDialog):
         self.reference.clear()
         self._sync_mode_with_source()
         self.destination.setText(self._suggest_output(Path(filename.split('|', 1)[0]), self.mode.currentIndex()))
+        self._apply_sidecar_crs()
 
     def _update_vector_fields(self):
-        if self.mode.currentIndex() != 4:
+        if self.mode.currentIndex() not in (4, 5):
             return
         previous = self.vector_field.currentText()
         self.vector_field.clear()
@@ -423,7 +497,8 @@ class RS2ConverterDialog(QDialog):
         layer = QgsVectorLayer(text, 'Fonte vetorial', 'ogr')
         if not layer.isValid():
             return
-        if layer.crs().isGeographic() and self.pixel_size.value() == 10.0:
+        if (self.mode.currentIndex() == 4 and layer.crs().isGeographic()
+                and self.pixel_size.value() == 10.0):
             self.pixel_size.setValue(0.0001)  # exemplo de resolução em graus, editável
         fields = [field.name() for field in layer.fields()]
         self.vector_field.addItems(fields)
@@ -450,7 +525,7 @@ class RS2ConverterDialog(QDialog):
 
     def _use_layer(self):
         try:
-            if self.mode.currentIndex() == 4:
+            if self.mode.currentIndex() in (4, 5):
                 layer = self.loaded_layers.currentLayer()
                 if layer is None or not isinstance(layer, QgsVectorLayer) or not layer.isValid():
                     raise ValueError('Selecione uma camada vetorial válida do projeto.')
@@ -479,7 +554,7 @@ class RS2ConverterDialog(QDialog):
             QMessageBox.warning(self, tr('Camada raster'), tr(str(exc)))
 
     def _browse_source(self):
-        pattern = ('Vetores (*.gpkg *.shp *.geojson *.json *.fgb)' if self.mode.currentIndex() == 4 else
+        pattern = ('Vetores (*.gpkg *.shp *.geojson *.json *.fgb)' if self.mode.currentIndex() in (4, 5) else
                    'GeoTIFF (*.tif *.tiff)' if self.mode.currentIndex() in (1, 3) else
                    'Vista SAGA (*.rs2)')
         filename, _ = QFileDialog.getOpenFileName(self, tr('Selecionar arquivo de entrada'), '', pattern)
@@ -518,10 +593,10 @@ class RS2ConverterDialog(QDialog):
 
     def _browse_destination(self):
         operation = self.mode.currentIndex()
-        ext = '.rs2' if operation == 1 else '.tif' if operation in (0, 4) else self.vector_format.currentData()
+        ext = '.rs2' if operation in (1, 5) else '.tif' if operation in (0, 4) else self.vector_format.currentData()
         if operation in (0, 4):
             filt = 'GeoTIFF (*.tif)'
-        elif operation == 1:
+        elif operation in (1, 5):
             filt = 'Vista SAGA (*.rs2)'
         else:
             filt = f'{self.vector_format.currentText()}'
@@ -542,7 +617,7 @@ class RS2ConverterDialog(QDialog):
     def _inspect(self):
         try:
             h = RS2Reader(self.source.text().strip()).header
-            classes = '\n'.join(f'  {i}: {label}' for i, label in enumerate(h.labels[:16]))
+            classes = '\n'.join(f'  {code}: {label}' for code, label, _ in h.legend()[:16])
             if len(h.labels) > 16:
                 classes += '\n  ...'
             QMessageBox.information(self, tr('Propriedades do RS2'),
@@ -556,7 +631,7 @@ class RS2ConverterDialog(QDialog):
             QMessageBox.critical(self, tr('Falha na leitura do RS2'), tr(str(exc)))
 
     def _epsg(self):
-        if self.mode.currentIndex() in (1, 4):
+        if self.mode.currentIndex() in (1, 4, 5):
             return ''
         crs = self.crs_widget.crs()
         if not crs.isValid():
@@ -582,24 +657,31 @@ class RS2ConverterDialog(QDialog):
                 self.manual_bounds.text().strip() or None,
                 operation=operation, vector_extension=self.vector_format.currentData())
             return operation, plans
-        ext = ('.tif' if operation in (0, 4) else '.rs2' if operation == 1
+        ext = ('.tif' if operation in (0, 4) else '.rs2' if operation in (1, 5)
                else self.vector_format.currentData())
         output_file = (temporary_destination('conversao', ext)
-                       if self.temporary_check.isChecked() and operation != 1
+                       if self.temporary_check.isChecked() and operation not in (1, 5)
                        else self.destination.text().strip())
-        if operation == 4:
+        if operation in (4, 5):
             source_uri = self.source.text().strip()
             source_file, _, _ = split_vector_source(source_uri)
             field = self.vector_field.currentText().strip()
             if not field:
                 raise ValueError('Selecione o campo do vetor que fornecerá os valores dos pixels.')
             if not output_file:
-                raise ValueError('Informe o GeoTIFF de saída.')
+                raise ValueError('Informe o RS2 de saída.' if operation == 5
+                                 else 'Informe o GeoTIFF de saída.')
             target = Path(output_file)
-            if target.suffix.lower() != '.tif':
-                raise ValueError('A rasterização deve produzir um arquivo .tif.')
+            if target.suffix.lower() != ext:
+                raise ValueError(f'Esta rasterização deve produzir um arquivo {ext}.')
             if source_file.resolve() == target.resolve():
                 raise ValueError('A saída não pode sobrescrever a entrada.')
+            reference = self.reference.text().strip()
+            if operation == 5 and reference:
+                if not Path(reference).is_file():
+                    raise ValueError('O RS2 de referência não foi encontrado.')
+                if Path(reference).resolve() == target.resolve():
+                    raise ValueError('A saída não pode substituir o RS2 de referência.')
             return operation, [(source_uri, target)]
         source = Path(self.source.text().strip())
         if not source.is_file():
@@ -632,7 +714,7 @@ class RS2ConverterDialog(QDialog):
             categories = []
             header = RS2Reader(rs2_source).header
             for code, label, color in class_attributes(header):
-                if omit_background and code == 0:
+                if omit_background and code == header.background_code:
                     continue
                 symbol = QgsFillSymbol.createSimple({
                     'color': QColor(color).name(),
@@ -695,6 +777,27 @@ class RS2ConverterDialog(QDialog):
                 'Vista Saga Plugin', Qgis.MessageLevel.Warning,
             )
 
+    @staticmethod
+    def _vector_rs2_notes(summary):
+        """Avisos metodológicos da rasterização Vetor → RS2 para o relatório final."""
+        notes = []
+        if summary.get('overlap_cells'):
+            notes.append(tr(f"{summary['overlap_cells']} célula(s) cobertas por mais de uma feição; "
+                         'prevaleceu a última feição processada. Corrija sobreposições se '
+                         'as classes conflitarem.'))
+        if summary.get('code_mode') == 'renumber':
+            notes.append(tr('Códigos renumerados para 1..n; a correspondência com os valores '
+                         'originais está no arquivo .rs2.json.'))
+        if summary.get('skipped_features'):
+            notes.append(tr(f"{summary['skipped_features']} feição(ões) ignorada(s) por geometria "
+                         'vazia ou atributo nulo.'))
+        empty = summary.get('empty_classes') or []
+        if empty:
+            notes.append(tr(f'{len(empty)} classe(s) sem nenhuma célula na resolução escolhida, '
+                         f"omitida(s) da legenda RS2 (por exemplo: {', '.join(empty[:3])}). "
+                         'Reduza o pixel ou use ALL_TOUCHED.'))
+        return notes
+
     def _convert(self):
         try:
             operation, plans = self._plans()
@@ -704,6 +807,26 @@ class RS2ConverterDialog(QDialog):
             QMessageBox.warning(self, tr('Conferir parâmetros'), tr(str(exc)))
             return
         total = len(plans)
+        crs_by_source = {}
+        if operation in RS2_SOURCE_OPERATIONS:
+            # SRC escolhido no campo; sem ele, o SRC registrado no .rs2.json de cada RS2.
+            from .rs2_converter import sidecar_epsg
+            crs_by_source = {str(source): epsg or sidecar_epsg(source) for source, _ in plans}
+            missing = [Path(str(source)).name for source, _ in plans if not crs_by_source[str(source)]]
+            if missing:
+                listed = '\n'.join('• ' + name for name in missing[:8])
+                if len(missing) > 8:
+                    listed += '\n' + tr('… e mais {count} arquivos.').format(count=len(missing) - 8)
+                answer = QMessageBox.question(
+                    self, tr('Saída sem SRC'),
+                    tr('O RS2 não registra o sistema de referência. Sem um SRC escolhido no campo '
+                       '"SRC do RS2", as saídas terão coordenadas, mas SRC desconhecido no QGIS:')
+                    + '\n\n' + listed + '\n\n' + tr('Continuar sem SRC?'),
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No)
+                if answer != QMessageBox.StandardButton.Yes:
+                    return
+            from_sidecar = sorted({crs for source, crs in crs_by_source.items() if crs and not epsg})
         if self.batch.isChecked() and total > 1:
             warnings = alignment_warnings(
                 [source for source, _ in plans],
@@ -789,7 +912,11 @@ class RS2ConverterDialog(QDialog):
         progress.setMinimumDuration(0)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.show()
-        completed, failures = [], []
+        completed, failures, notes = [], [], []
+        if operation in RS2_SOURCE_OPERATIONS:
+            self._remember_rs2_crs()
+            if from_sidecar:
+                notes.append(tr('SRC obtido do arquivo .rs2.json: {0}.').format(', '.join(from_sidecar)))
         try:
             from .rs2_converter import convert_rs2_to_tif, convert_tif_to_rs2
             for i, (source, dest) in enumerate(plans):
@@ -804,7 +931,7 @@ class RS2ConverterDialog(QDialog):
 
                 try:
                     if operation == 0:
-                        result = convert_rs2_to_tif(source, dest, epsg, on_progress,
+                        result = convert_rs2_to_tif(source, dest, crs_by_source[str(source)], on_progress,
                                                     self.background_nodata.isChecked())
                         if self.add_to_project.isChecked() or self.temporary_check.isChecked():
                             layer = QgsRasterLayer(str(result), Path(result).stem)
@@ -816,7 +943,7 @@ class RS2ConverterDialog(QDialog):
                                                     self.manual_bounds.text().strip() or None)
                     elif operation == 2:
                         result = convert_rs2_to_vector(
-                            source, dest, epsg, on_progress,
+                            source, dest, crs_by_source[str(source)], on_progress,
                             self.vector_skip_background.isChecked(),
                             self.vector_connectivity.currentIndex() == 1)
                         if self.add_to_project.isChecked() or self.temporary_check.isChecked():
@@ -837,6 +964,14 @@ class RS2ConverterDialog(QDialog):
                             if layer.isValid():
                                 self._style_tiff_vector(layer, source, self.vector_skip_background.isChecked())
                                 QgsProject.instance().addMapLayer(layer)
+                    elif operation == 5:
+                        result = convert_vector_to_rs2(
+                            source, dest, self.vector_field.currentText(),
+                            self.pixel_size.value(), on_progress,
+                            self.vector_all_touched.isChecked(),
+                            self.reference.text().strip() or None,
+                            self.rs2_code_mode.currentData())
+                        notes.extend(self._vector_rs2_notes(result.summary))
                     else:
                         result = convert_vector_to_tif(
                             source, dest, self.vector_field.currentText(),
@@ -861,6 +996,8 @@ class RS2ConverterDialog(QDialog):
                 report += '\n' + tr('… e mais {count} falhas.').format(count=len(failures) - 12)
         if len(completed) < total and not failures:
             report += '\n\n' + tr('Processamento cancelado antes do término.')
+        if notes:
+            report += '\n\n' + tr('Atenção:') + '\n' + '\n'.join('• ' + note for note in notes)
         if completed:
             report += '\n\n' + tr('Saída: {path}').format(path=Path(completed[0]).parent)
         if failures:

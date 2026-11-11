@@ -21,10 +21,13 @@ class RS2RGBMapper:
     compartilhadas por classes distintas tornam a operação impossível.
     """
 
-    def __init__(self, colors):
+    def __init__(self, colors, codes=None):
         if not colors or len(colors) > 32769:
             raise RS2Error('Paleta de referência ausente ou excessivamente grande.')
-        pairs = sorted((_key(color), code) for code, color in enumerate(colors))
+        codes = list(range(len(colors))) if codes is None else list(codes)
+        if len(codes) != len(colors):
+            raise RS2Error('Códigos e cores da legenda RS2 não correspondem.')
+        pairs = sorted((_key(color), code) for code, color in zip(codes, colors))
         for (previous_color, _), (next_color, _) in zip(pairs, pairs[1:]):
             if previous_color == next_color:
                 raise RS2Error(

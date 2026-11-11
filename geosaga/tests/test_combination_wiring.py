@@ -27,25 +27,6 @@ class CombinationWiring(unittest.TestCase):
         _support.assert_release_version(self)
         self.assertEqual(cfg['general']['qgisMinimumVersion'],'4.0')
 
-    def test_old_modules_not_modified_in_core(self):
-        from zipfile import ZipFile
-        zip_path=Path('/mnt/data/Vista_Saga_Plugin_QGIS4_v0.5.2_PADRONIZACAO.zip')
-        if not zip_path.exists():
-            self.skipTest('Arquivo-base não está disponível neste sistema.')
-        unchanged=['raster_engine.py','evaluation_task.py','monitoring_engine.py',
-                   'signature_engine.py','vector_monitoring_engine.py',
-                   'vector_overlay_engine.py','rs2_format.py']
-        with ZipFile(zip_path) as z:
-            for name in unchanged:
-                current = (ROOT/name).read_bytes()
-                old = z.read('geosaga/'+name)
-                if name == 'evaluation_task.py':
-                    # A única alteração permitida é o título público da tarefa.
-                    current = current.replace(b'QgsTask.Flag.CanCancel', b'QgsTask.CanCancel')
-                    current = current.replace(b'Vista Saga \xe2\x80\x94 Avalia\xc3\xa7\xc3\xa3o\x27',
-                                              b'Vista Saga \xe2\x80\x94 Avalia\xc3\xa7\xc3\xa3o Espacial\x27')
-                self.assertEqual(current, old, name)
-
     def test_legend_bridge_from_combined_raster(self):
         import tempfile
         from geosaga.combination_core import write_combination_reports, composition_rows

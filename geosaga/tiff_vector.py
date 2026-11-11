@@ -56,10 +56,11 @@ def _legend(path, band):
             labels, colors = obj['labels'], obj['colors']
             if len(labels) != len(colors) or len(labels) > 32769:
                 raise ValueError('quantidade de cores e classes inconsistente')
-            for i, (label, color) in enumerate(zip(labels, colors)):
+            from .rs2_format import sidecar_codes
+            for code, label, color in zip(sidecar_codes(obj), labels, colors):
                 if len(color) < 3 or any(not (0 <= int(c) <= 255) for c in color[:3]):
                     raise ValueError('cor inválida')
-                mapping[i] = (str(label), '#' + ''.join(f'{int(v):02X}' for v in color[:3]))
+                mapping[code] = (str(label), '#' + ''.join(f'{int(v):02X}' for v in color[:3]))
         except (ValueError, TypeError, KeyError, AttributeError) as exc:
             raise RS2Error('Metadados .rs2.json do GeoTIFF inválidos.') from exc
         return mapping

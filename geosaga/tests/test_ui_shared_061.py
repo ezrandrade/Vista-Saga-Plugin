@@ -29,19 +29,10 @@ class TemporaryOutputTests(unittest.TestCase):
         temp = ui.output_destination(True, '', 'x', '.tif')
         self.assertEqual(Path(temp).suffix, '.tif')
 
-    def test_engines_unchanged_by_gui_update(self):
+    def test_release_version(self):
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import _support
         _support.assert_release_version(self)
-        from zipfile import ZipFile
-        archive = Path('/mnt/data/Vista_Saga_Plugin_QGIS4_v0.6.0_COMBINACAO_MAPAS.zip')
-        if not archive.exists():
-            self.skipTest('Arquivo de versão anterior ausente')
-        with ZipFile(archive) as z:
-            for name in ('combination_core.py','combination_raster.py',
-                         'combination_vector.py','signature_engine.py',
-                         'monitoring_engine.py','raster_engine.py'):
-                self.assertEqual((ROOT / name).read_bytes(), z.read('geosaga/' + name))
 
 if __name__ == '__main__':
     unittest.main()

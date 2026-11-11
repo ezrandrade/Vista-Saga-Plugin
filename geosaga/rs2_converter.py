@@ -45,7 +45,10 @@ def _metadata(header: RS2Header, epsg: str = ''):
         'ymax': header.ymax,
         'labels': list(header.labels),
         'colors': [list(c[:3]) for c in header.colors],
-        'background_code': 0,
+        # Códigos alinhados a labels/colors; o RS2 admite códigos não consecutivos.
+        'codes': header.legend_codes,
+        # Código do FUNDO: 0 nas amostras; na avaliação do Vista SAGA pode ser outro.
+        'background_code': header.background_code,
     }
 
 
@@ -84,7 +87,7 @@ def convert_rs2_to_tif(rs2_path, tiff_path, epsg='', progress=None,
         driver = gdal.GetDriverByName('GTiff')
         if driver is None:
             raise RS2Error('Driver GDAL GeoTIFF indisponível.')
-        kind = gdal.GDT_Byte if h.num_classes <= 256 else gdal.GDT_UInt16
+        kind = gdal.GDT_Byte if h.max_code <= 255 else gdal.GDT_UInt16
         dst = driver.Create(temp, h.width, h.height, 1, kind,
                             options=['TILED=YES', 'COMPRESS=DEFLATE',
                                      'BIGTIFF=IF_SAFER', 'NUM_THREADS=2'])
@@ -94,16 +97,21 @@ def convert_rs2_to_tif(rs2_path, tiff_path, epsg='', progress=None,
         if wkt:
             dst.SetProjection(wkt)
         band = dst.GetRasterBand(1)
-        if mark_background_nodata:
-            band.SetNoDataValue(0)
-        band.SetCategoryNames(h.labels)
+        background = h.background_code
+        if mark_background_nodata and background is not None:
+            band.SetNoDataValue(background)
+        # GDAL indexa nomes e cores pelo valor do pixel; códigos ausentes da legenda
+        # (lacunas entre códigos não consecutivos) ficam sem nome.
+        names = [''] * (h.max_code + 1)
         color_table = gdal.ColorTable()
-        for i, color in enumerate(h.colors):
-            color_table.SetColorEntry(i, (int(color[0]), int(color[1]), int(color[2]), 255))
+        for code, label, color in h.legend():
+            names[code] = label
+            color_table.SetColorEntry(code, (int(color[0]), int(color[1]), int(color[2]), 255))
+        band.SetCategoryNames(names)
         band.SetRasterColorTable(color_table)
         band.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
         band.SetMetadataItem('RS2_FORMAT', 'Vista SAGA (legacy)')
-        band.SetMetadataItem('RS2_BACKGROUND', '0')
+        band.SetMetadataItem('RS2_BACKGROUND', '' if background is None else str(background))
         for y, row in enumerate(reader.rows()):
             band.WriteArray(row.reshape(1, h.width).astype('uint8' if kind == gdal.GDT_Byte else 'uint16'),
                             xoff=0, yoff=y)
@@ -186,12 +194,16 @@ def _read_sidecar(path):
     return data
 
 
-def _category_legend_from_raster(band, max_category):
+def _category_legend_from_raster(band, present):
+    """Legenda só com os códigos presentes, como o Vista SAGA grava."""
     existing = band.GetCategoryNames() or []
     ct = band.GetRasterColorTable()
     labels = []
     colors = []
-    for i in range(max_category + 1):
+    # Só os códigos presentes: o RS2 não exige o código 0 (a avaliação do Vista SAGA
+    # grava notas 1..10 e FUNDO 11). Um 0 ausente seria uma classe vazia a mais.
+    codes = sorted(set(int(v) for v in present))
+    for i in codes:
         labels.append(existing[i] if i < len(existing) and existing[i] else
                       ('FUNDO' if i == 0 else f'Classe {i}'))
         if ct is not None and i < ct.GetCount():
@@ -199,7 +211,7 @@ def _category_legend_from_raster(band, max_category):
             colors.append((int(rgb[0]), int(rgb[1]), int(rgb[2]), 0))
         else:
             colors.append((255, 255, 255, 0) if i == 0 else (128, 128, 128, 0))
-    return labels, colors
+    return labels, colors, codes
 
 
 @with_gdal_exceptions
@@ -245,7 +257,7 @@ def _convert_rgb_to_rs2(ds, tiff_path, rs2_path, reference_rs2, progress, manual
             raise RS2Error(
                 f'Extensão geográfica do TIFF {coords} é diferente '
                 f'do RS2 de referência {expected}.')
-    mapper = RS2RGBMapper(h.colors)
+    mapper = RS2RGBMapper(h.colors, h.legend_codes)
 
     def source_rows():
         for y in range(h.height):
@@ -341,6 +353,7 @@ def convert_tif_to_rs2(tiff_path, rs2_path, progress=None, reference_rs2=None,
                 raise RS2Error('A grade do GeoTIFF não coincide com os metadados RS2.')
             labels = sidecar.get('labels', [])
             colors = [tuple(color) + (0,) for color in sidecar.get('colors', [])]
+            codes = sidecar.get('codes')  # ausente em metadados anteriores à 1.0.5
             try:
                 prefix = bytes.fromhex(sidecar.get('source_header_hex', ''))
             except ValueError as exc:
@@ -359,24 +372,26 @@ def convert_tif_to_rs2(tiff_path, rs2_path, progress=None, reference_rs2=None,
                 except (ValueError, zlib.error) as exc:
                     raise RS2Error('Paleta original no JSON RS2 inválida.') from exc
         else:
-            # Primeira leitura encontra o maior código sem carregar a matriz inteira.
-            max_category = 0
+            # Primeira leitura identifica os códigos presentes sem carregar a matriz inteira.
+            present = set()
             for y in range(0, ds.RasterYSize, 128):
                 arr = band.ReadAsArray(0, y, ds.RasterXSize,
                                        min(128, ds.RasterYSize-y))
                 if arr is None or np.any(arr < 0):
                     raise RS2Error('Há células negativas ou não legíveis no TIFF.')
-                max_category = max(max_category, int(np.max(arr)))
-                if max_category > 32768:
-                    raise RS2Error('Máximo de 32769 categorias suportadas nesta variante RS2.')
-            labels, colors = _category_legend_from_raster(band, max_category)
+                if int(np.max(arr)) > 32768:
+                    raise RS2Error('O RS2 admite códigos de categoria de 0 a 32768.')
+                present.update(np.unique(arr).tolist())
+            labels, colors, codes = _category_legend_from_raster(band, present)
             from .rs2_format import DEFAULT_PREFIX
             prefix = DEFAULT_PREFIX
             raw_palette = None
         if not labels or len(labels) != len(colors):
             raise RS2Error('Legenda / paleta ausente ou inconsistente.')
+        if codes is not None and list(codes) == list(range(len(labels))):
+            codes = None  # legenda consecutiva: gravação idêntica à das amostras
         h = RS2Header(ds.RasterXSize, ds.RasterYSize, *coords,
-                      labels, colors, prefix, raw_palette=raw_palette)
+                      labels, colors, prefix, raw_palette=raw_palette, codes=codes)
         # Ordem do construtor: width, height, xmin, ymin, xmax, ymax
         def source_rows():
             for y in range(h.height):
@@ -395,3 +410,40 @@ def convert_tif_to_rs2(tiff_path, rs2_path, progress=None, reference_rs2=None,
         return out
     finally:
         ds = None
+
+
+def sidecar_epsg(rs2_path):
+    """SRC registrado no ``.rs2.json`` ao lado de um RS2, como ``'EPSG:31985'``; ou ``''``.
+
+    O RS2 não guarda SRC. Os RS2 criados pelo plugin (Vetor → RS2, GeoTIFF → RS2)
+    registram o SRC de origem nesse arquivo lateral: é uma procedência conhecida,
+    e não uma dedução a partir das coordenadas. Só SRC projetado com código EPSG
+    é aceito, como na escolha manual.
+    """
+    try:
+        info = _read_sidecar(rs2_path)
+    except (OSError, ValueError, RS2Error):
+        return ''
+    if not info:
+        return ''
+    epsg = str(info.get('epsg') or '').strip().upper()
+    wkt = info.get('source_wkt') or ''
+    try:
+        from osgeo import osr
+    except ImportError:
+        return epsg if epsg.startswith('EPSG:') else ''
+    srs = osr.SpatialReference()
+    try:
+        if epsg.startswith('EPSG:'):
+            ok = srs.ImportFromEPSG(int(epsg[5:])) == 0
+        elif wkt:
+            ok = srs.ImportFromWkt(wkt) == 0
+            if ok and srs.GetAuthorityName(None) != 'EPSG':
+                srs.AutoIdentifyEPSG()
+        else:
+            return ''
+    except (RuntimeError, ValueError, TypeError):
+        return ''
+    if not ok or not srs.IsProjected() or srs.GetAuthorityName(None) != 'EPSG':
+        return ''
+    return 'EPSG:' + srs.GetAuthorityCode(None)

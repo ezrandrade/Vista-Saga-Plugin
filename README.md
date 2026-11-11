@@ -6,9 +6,9 @@
 
 **Site oficial e apresentação do projeto:** [vistasagaplugin.wordpress.com](https://vistasagaplugin.wordpress.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
 
-**Versão do código-fonte: `1.0.5` (07/11/2026), versão de estabilidade.** Mensagens de erro traduzidas, exceções GDAL sem alteração do estado global do QGIS, limpeza segura de arquivos temporários e registro de falhas com traceback; os algoritmos numéricos não foram alterados. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
+**Versão do código-fonte: `1.0.6` (11/11/2026).** Nova conversão **Vetor → RS2** e correção do formato RS2 para legendas com códigos não consecutivos, como as gravadas pelo Vista SAGA original; inclui as correções de estabilidade da 1.0.5. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
 
-> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.5](geosaga/NOTAS_DA_VERSAO_105.md) · [Testes](tests/README.md).
+> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.6](geosaga/NOTAS_DA_VERSAO_106.md) · [Testes](tests/README.md).
 
 ## Módulos
 
@@ -19,7 +19,7 @@
 | Avaliação | Análises multicritério por pesos e notas, em raster e vetor |
 | Análises Voronoi | Simples, Massa, Atrito, Massa + Atrito e atrito integrado de várias superfícies ponderadas |
 | Combinação de Mapas | Cruzamento de mapas categóricos raster e vetoriais |
-| Conversão de Formatos | Interoperabilidade RS2 ↔ GeoTIFF e dados vetoriais; rasterização e vetorização |
+| Conversão de Formatos | Interoperabilidade RS2 ↔ GeoTIFF e dados vetoriais, incluindo Vetor → RS2; rasterização e vetorização |
 | Sequenciador de Mapas | Animações Raster, Vetorial e Mista; exportação GIF e quadros PNG |
 
 ## Requisitos e instalação
@@ -58,6 +58,7 @@ python scripts/build_release.py
 
 ## Histórico, suporte e licença
 
+- [Notas da versão 1.0.6 (Vetor → RS2 e formato RS2)](geosaga/NOTAS_DA_VERSAO_106.md)
 - [Notas da versão 1.0.5 (estabilidade)](geosaga/NOTAS_DA_VERSAO_105.md)
 - [Notas da versão 1.0.4 (pacote consolidado)](geosaga/NOTAS_DA_VERSAO_104.md)
 - [Notas da versão 1.0.3](geosaga/NOTAS_DA_VERSAO_103.md)

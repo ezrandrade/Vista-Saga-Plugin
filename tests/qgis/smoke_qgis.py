@@ -316,6 +316,7 @@ from geosaga import raster_engine, monitoring_engine, signature_engine  # noqa: 
 from geosaga import combination_raster, combination_vector, voronoi_engine  # noqa: E402
 from geosaga import voronoi_vector, rs2_converter, rs2_vector, tiff_vector  # noqa: E402
 from geosaga import vector_raster, vector_monitoring_engine, gif_codec  # noqa: E402
+from geosaga import vector_rs2, rs2_format  # noqa: E402
 from geosaga import vector_evaluation_writer, vector_overlay_engine  # noqa: E402
 from geosaga.voronoi_core import Generator  # noqa: E402
 
@@ -405,6 +406,15 @@ def eng_vector_tif():
     return vector_raster.convert_vector_to_tif(the_c, os.path.join(OUT, 'eng_vec2tif.tif'), 'solo', 30)
 
 
+def eng_vector_rs2():
+    # 1.0.6: Vetor → RS2 direto; confere legenda e códigos lidos de volta pelo leitor RS2.
+    result = vector_rs2.convert_vector_to_rs2(the_c, os.path.join(OUT, 'eng_vec2rs2.rs2'), 'solo', 30)
+    header = rs2_format.RS2Reader(result.path).header
+    assert header.legend_codes == [0, 1, 2], header.legend_codes
+    assert result.summary['classes'] == 2, result.summary
+    return result.path
+
+
 def eng_vector_monitoring():
     return vector_monitoring_engine.run_vector_monitoring(
         L['the_a'], L['the_b'], 'classe', 'uso', os.path.join(OUT, 'eng_vmon.gpkg'), title='T')
@@ -454,6 +464,7 @@ for name, fn in [
     ('motor: GeoTIFF→vetor (categórico)', eng_tif_vector),
     ('motor: GeoTIFF→vetor (contínuo)', eng_tif_vector_continuous),
     ('motor: vetor→GeoTIFF', eng_vector_tif),
+    ('motor: vetor→RS2', eng_vector_rs2),
     ('motor: monitoria vetorial', eng_vector_monitoring),
     ('motor: avaliação vetorial', eng_vector_eval),
     ('motor: sobreposição vetorial', eng_overlay),
