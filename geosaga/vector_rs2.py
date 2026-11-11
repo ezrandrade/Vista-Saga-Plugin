@@ -34,8 +34,6 @@ from .vector_raster import (MAX_PIXELS, _check_field, _open_ogr_layer,
 
 RS2_MAX_CODE = 32768          # 32.769 categorias, incluindo 0 = FUNDO
 RS2_MAX_SIDE = 65535          # linhas e colunas são uint16 no cabeçalho
-AUTO_PRESERVE_LIMIT = 255     # acima disso, a legenda RS2 inflaria com códigos vazios
-AUTO_MIN_OCCUPANCY = 0.5      # fração mínima de 1..máximo efetivamente usada para preservar
 CODE_MODES = ('auto', 'preserve', 'renumber')
 BACKGROUND_LABEL = 'FUNDO'
 BACKGROUND_COLOR = (255, 255, 255, 0)
@@ -164,9 +162,11 @@ def plan_codes(field_mode, values, code_mode='auto'):
     """Define o código RS2 de cada valor do atributo e a legenda correspondente.
 
     ``values`` associa cada valor original (int ou texto) a ``(rótulo, cor_hex)``;
-    rótulo ou cor podem ser vazios. Retorna ``(mapeamento, rótulos, cores, modo)``,
-    sendo ``modo`` o efetivamente aplicado: ``'preserve'``, ``'renumber'`` ou
-    ``'text'``.
+    rótulo ou cor podem ser vazios. Retorna ``(mapeamento, códigos, rótulos,
+    cores, modo)``: a legenda contém apenas o FUNDO (0) e os códigos usados,
+    em ordem crescente, como o próprio Vista SAGA grava (códigos não precisam ser
+    consecutivos). ``modo`` é o efetivamente aplicado: ``'preserve'``,
+    ``'renumber'`` ou ``'text'``.
     """
     if code_mode not in CODE_MODES:
         raise RS2Error(f'Modo de códigos desconhecido: {code_mode!r}.')
@@ -194,11 +194,9 @@ def plan_codes(field_mode, values, code_mode='auto'):
         elif code_mode == 'renumber':
             effective = 'renumber'
         else:
-            # Preserva só legendas densas: códigos esparsos (por exemplo, 125 e 158)
-            # gerariam dezenas de classes RS2 vazias apenas para completar a numeração.
-            dense = len(keys) >= AUTO_MIN_OCCUPANCY * keys[-1]
-            effective = ('preserve' if preservable and dense and keys[-1] <= AUTO_PRESERVE_LIMIT
-                         else 'renumber')
+            # Códigos esparsos (por exemplo, 125 e 158) são preservados sem classes
+            # vazias; só se renumera o que o RS2 não comporta (0 ou acima de 32768).
+            effective = 'preserve' if preservable else 'renumber'
     else:
         raise RS2Error('O RS2 armazena apenas categorias: use um campo inteiro ou '
                        'textual. Campos decimais devem ser classificados antes.')
@@ -208,13 +206,10 @@ def plan_codes(field_mode, values, code_mode='auto'):
 
     if effective == 'preserve':
         mapping = {k: k for k in keys}
-        size = keys[-1] + 1
     else:
         mapping = {k: i for i, k in enumerate(keys, start=1)}
-        size = len(keys) + 1
-    labels = [BACKGROUND_LABEL] + [f'Classe {i}' for i in range(1, size)]
-    colors = [BACKGROUND_COLOR] + [default_color(i) for i in range(1, size)]
-    for original, code in mapping.items():
+    codes, labels, colors = [0], [BACKGROUND_LABEL], [BACKGROUND_COLOR]
+    for original, code in sorted(mapping.items(), key=lambda item: item[1]):
         label, color = values[original]
         if field_mode == 'text':
             name = original
@@ -222,11 +217,11 @@ def plan_codes(field_mode, values, code_mode='auto'):
             name = label
         else:
             name = f'Classe {original}'
-        labels[code] = _cp1252_label(name, code)
         hex_color = normalize_color(color)
-        if hex_color:
-            colors[code] = _hex_to_rgba(hex_color)
-    return mapping, labels, colors, effective
+        codes.append(code)
+        labels.append(_cp1252_label(name, code))
+        colors.append(_hex_to_rgba(hex_color) if hex_color else default_color(code))
+    return mapping, codes, labels, colors, effective
 
 
 def _scaled(progress, start, end):
@@ -324,7 +319,7 @@ def convert_vector_to_rs2(vector_source, rs2_path, field_name, pixel_size=None,
         color = (feature.GetField(color_field) if color_field >= 0 and
                  feature.IsFieldSetAndNotNull(color_field) else '')
         values[key] = (label or '', color or '')
-    mapping, labels, colors, effective = plan_codes(mode, values, code_mode)
+    mapping, codes, labels, colors, effective = plan_codes(mode, values, code_mode)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     # ignore_cleanup_errors: no Windows, o GDAL pode reter temporários após uma falha.
@@ -420,35 +415,43 @@ def convert_vector_to_rs2(vector_source, rs2_path, field_name, pixel_size=None,
             overlap_cells += int(np.count_nonzero(block > 1))
         cover_band = cover_ds = None
 
-        # Etapa 4 (70–100 %): gravação RS2 linha a linha, com contagem por classe.
-        counts = np.zeros(len(labels), dtype=np.int64)
+        # Etapa 4 (70–100 %): contagem por classe; a legenda gravada contém apenas
+        # o FUNDO e as classes com células, como nos arquivos regravados pelo Vista SAGA.
         band = codes_ds.GetRasterBand(1)
+        tally = np.zeros(RS2_MAX_CODE + 1, dtype=np.int64)
+        for y in range(0, grid.height, 256):
+            block = band.ReadAsArray(0, y, grid.width, min(256, grid.height - y))
+            tally += np.bincount(block.ravel(), minlength=tally.size)[:tally.size]
+        empty = [label for code, label in zip(codes[1:], labels[1:]) if tally[code] == 0]
+        legend = [(c, n, k) for c, n, k in zip(codes, labels, colors) if c == 0 or tally[c]]
+        if len(legend) == 1:
+            raise RS2Error('Nenhuma feição ocupou células da grade. Reduza o tamanho do pixel, '
+                           'use ALL_TOUCHED ou confira o RS2 de referência.')
+        final_codes = [c for c, _, _ in legend]
+        header = RS2Header(grid.width, grid.height, grid.xmin, grid.ymin,
+                           grid.xmax, grid.ymax, [n for _, n, _ in legend],
+                           [k for _, _, k in legend], DEFAULT_PREFIX,
+                           codes=None if final_codes == list(range(len(legend))) else final_codes)
 
         def rows():
             for y in range(grid.height):
                 line = band.ReadAsArray(0, y, grid.width, 1)
                 if line is None:
                     raise RS2Error(f'Falha de leitura da grade temporária na linha {y + 1}.')
-                line = line.reshape(-1)
-                counts[:] += np.bincount(line, minlength=len(labels))[:len(labels)]
-                yield line
+                yield line.reshape(-1)
 
-        header = RS2Header(grid.width, grid.height, grid.xmin, grid.ymin,
-                           grid.xmax, grid.ymax, labels, colors, DEFAULT_PREFIX)
         write_rs2(output, header, rows(), progress=_scaled(progress, 700, 1000))
         band = codes_ds = None
 
     summary = {
         'cells': grid.width * grid.height,
-        'background_cells': int(counts[0]),
+        'background_cells': int(tally[0]),
         'overlap_cells': overlap_cells,
         'features': total_features,
         'skipped_features': skipped,
-        'classes': len(mapping),
-        'empty_classes': [labels[code] for code in sorted(set(mapping.values()))
-                          if counts[code] == 0],
-        # Classes criadas apenas para completar a numeração ao preservar códigos.
-        'filler_classes': len(labels) - 1 - len(mapping),
+        'classes': len(legend) - 1,
+        # Classes do vetor sem nenhuma célula: não entram na legenda do RS2.
+        'empty_classes': empty,
         'code_mode': effective,
     }
     manifest = {
@@ -467,8 +470,9 @@ def convert_vector_to_rs2(vector_source, rs2_path, field_name, pixel_size=None,
         'ymin': grid.ymin,
         'xmax': grid.xmax,
         'ymax': grid.ymax,
-        'labels': list(labels),
-        'colors': [list(c[:3]) for c in colors],
+        'labels': list(header.labels),
+        'colors': [list(c[:3]) for c in header.colors],
+        'codes': header.legend_codes,
         'background_code': 0,
         'rasterization': {
             'source_vector': str(vector_source),
@@ -480,9 +484,9 @@ def convert_vector_to_rs2(vector_source, rs2_path, field_name, pixel_size=None,
             'all_touched': bool(all_touched),
             'code_mode': effective,
             'code_mapping': [{'codigo_rs2': int(code), 'valor_original': original,
-                              'classe': labels[code], 'celulas': int(counts[code])}
-                             for original, code in sorted(mapping.items(),
-                                                          key=lambda item: item[1])],
+                              'classe': name, 'celulas': int(tally[code])}
+                             for (original, code), name in zip(
+                                 sorted(mapping.items(), key=lambda item: item[1]), labels[1:])],
             'overlap_cells': overlap_cells,
             'overlap_rule': 'Em sobreposição, prevalece a última feição processada.',
             'skipped_features': skipped,

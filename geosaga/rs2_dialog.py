@@ -230,7 +230,7 @@ class RS2ConverterDialog(QDialog):
         self.vector_all_touched.setChecked(False)
         advanced.addRow('', self.vector_all_touched)
         self.rs2_code_mode = QComboBox()
-        self.rs2_code_mode.addItem(tr('Automático (preservar códigos pequenos; renumerar os demais)'), 'auto')
+        self.rs2_code_mode.addItem(tr('Automático (preservar os códigos; renumerar só 0 ou acima de 32768)'), 'auto')
         self.rs2_code_mode.addItem(tr('Preservar os códigos originais'), 'preserve')
         self.rs2_code_mode.addItem(tr('Renumerar sequencialmente (1..n)'), 'renumber')
         self.rs2_code_mode.setToolTip(
@@ -570,7 +570,7 @@ class RS2ConverterDialog(QDialog):
     def _inspect(self):
         try:
             h = RS2Reader(self.source.text().strip()).header
-            classes = '\n'.join(f'  {i}: {label}' for i, label in enumerate(h.labels[:16]))
+            classes = '\n'.join(f'  {code}: {label}' for code, label, _ in h.legend()[:16])
             if len(h.labels) > 16:
                 classes += '\n  ...'
             QMessageBox.information(self, tr('Propriedades do RS2'),
@@ -738,17 +738,14 @@ class RS2ConverterDialog(QDialog):
         if summary.get('code_mode') == 'renumber':
             notes.append('Códigos renumerados para 1..n; a correspondência com os valores '
                          'originais está no arquivo .rs2.json.')
-        if summary.get('filler_classes'):
-            notes.append(f"{summary['filler_classes']} classe(s) vazia(s) criada(s) apenas para "
-                         'preservar a numeração original dos códigos. Se não precisar dos códigos '
-                         'originais, use a renumeração em Opções avançadas.')
         if summary.get('skipped_features'):
             notes.append(f"{summary['skipped_features']} feição(ões) ignorada(s) por geometria "
                          'vazia ou atributo nulo.')
         empty = summary.get('empty_classes') or []
         if empty:
-            notes.append(f'{len(empty)} classe(s) sem nenhuma célula na resolução escolhida '
-                         f"(por exemplo: {', '.join(empty[:3])}). Reduza o pixel ou use ALL_TOUCHED.")
+            notes.append(f'{len(empty)} classe(s) sem nenhuma célula na resolução escolhida, '
+                         f"omitida(s) da legenda RS2 (por exemplo: {', '.join(empty[:3])}). "
+                         'Reduza o pixel ou use ALL_TOUCHED.')
         return notes
 
     def _convert(self):

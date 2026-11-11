@@ -7,8 +7,15 @@
 - Códigos inteiros preservados ou renumerados (automático, preservar, renumerar), com a
   correspondência e a contagem de células por classe registradas no `.rs2.json`.
 - Relatório de células sobrepostas, feições ignoradas e classes sem células.
-- Correção (dev2): o modo automático não preserva mais códigos esparsos (ex.: 125 e 158),
-  que geravam 159 classes RS2, 156 delas vazias; passa a renumerar e a avisar sobre classes de preenchimento.
+- Correção do formato RS2 (dev3), a partir de um arquivo regravado pelo próprio Vista SAGA:
+  a legenda admite códigos não consecutivos (ex.: 0, 125, 158 com n = 3), a paleta é indexada
+  pelo código e fica logo após a matriz, e bytes residuais no fim do arquivo são tolerados.
+  Antes, o leitor recusava esses arquivos e o gravador criava classes vazias de preenchimento,
+  que o módulo de avaliação do Vista SAGA exibia. Leitura por código corrigida também em
+  RS2 → Vetor, GeoTIFF → Vetor, Monitoria e Combinação de Mapas. Legendas consecutivas
+  continuam idênticas byte a byte.
+- Vetor → RS2 preserva os códigos originais e grava apenas as classes com células
+  (substitui a renumeração automática do dev2).
 - Testes com GDAL real e roteiro de homologação no QGIS (`integration_vector_rs2_qgis.py`).
 - Abertura no Vista SAGA original ainda não validada. Detalhes em `VETOR_RS2.md`.
 

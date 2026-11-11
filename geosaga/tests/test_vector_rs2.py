@@ -70,60 +70,44 @@ class GridPlanTests(unittest.TestCase):
 
 class CodePlanTests(unittest.TestCase):
     def test_small_positive_codes_are_preserved(self):
-        mapping, labels, colors, mode = plan_codes(
+        mapping, codes, labels, colors, mode = plan_codes(
             'int', {2: ('Pastagem', '#FFFF00'), 1: ('Caatinga', '#008000')})
         self.assertEqual(mode, 'preserve')
         self.assertEqual(mapping, {1: 1, 2: 2})
+        self.assertEqual(codes, [0, 1, 2])
         self.assertEqual(labels, ['FUNDO', 'Caatinga', 'Pastagem'])
         self.assertEqual(colors[1], (0, 128, 0, 0))
         self.assertEqual(colors[2], (255, 255, 0, 0))
 
-    def test_gaps_are_filled_with_generic_classes(self):
-        _, labels, colors, mode = plan_codes('int', {1: ('', ''), 4: ('Água', '')})
-        self.assertEqual(mode, 'preserve')
-        self.assertEqual(labels, ['FUNDO', 'Classe 1', 'Classe 2', 'Classe 3', 'Água'])
-        self.assertEqual(len(colors), 5)
-        self.assertEqual(colors[4], default_color(4))
-
-    def test_sparse_codes_are_renumbered_automatically(self):
-        mapping, labels, _, mode = plan_codes('int', {3000: ('', ''), 101: ('Mata', '')})
-        self.assertEqual(mode, 'renumber')
-        self.assertEqual(mapping, {101: 1, 3000: 2})
-        self.assertEqual(labels, ['FUNDO', 'Mata', 'Classe 3000'])
-
-    def test_sparse_small_codes_are_renumbered_automatically(self):
-        # Caso real (pluviometria): códigos 125 e 158 geravam 159 classes, 156 vazias.
-        mapping, labels, _, mode = plan_codes('int', {125: ('', ''), 158: ('', '')})
-        self.assertEqual(mode, 'renumber')
-        self.assertEqual(mapping, {125: 1, 158: 2})
+    def test_sparse_codes_are_preserved_without_filler_classes(self):
+        # Caso real (pluviometria): o Vista SAGA grava a legenda 0, 125, 158 com n = 3.
+        mapping, codes, labels, colors, mode = plan_codes(
+            'int', {125: ('', ''), 158: ('', '')})
+        self.assertEqual((mode, mapping), ('preserve', {125: 125, 158: 158}))
+        self.assertEqual(codes, [0, 125, 158])
         self.assertEqual(labels, ['FUNDO', 'Classe 125', 'Classe 158'])
+        self.assertEqual(colors[1], default_color(125))
 
-    def test_dense_codes_with_small_gap_are_preserved(self):
-        mapping, labels, _, mode = plan_codes('int', {1: ('', ''), 2: ('', ''), 4: ('', '')})
-        self.assertEqual((mode, mapping), ('preserve', {1: 1, 2: 2, 4: 4}))
-        self.assertEqual(len(labels), 5)
-        _, labels, _, mode = plan_codes('int', {125: ('', ''), 158: ('', '')}, 'preserve')
-        self.assertEqual((mode, len(labels)), ('preserve', 159))
-
-    def test_code_zero_is_never_merged_with_background(self):
-        mapping, _, _, mode = plan_codes('int', {0: ('Água', ''), 1: ('Mata', '')})
-        self.assertEqual(mode, 'renumber')
-        self.assertEqual(mapping, {0: 1, 1: 2})
-        with self.assertRaisesRegex(RS2Error, 'reservado ao FUNDO'):
-            plan_codes('int', {0: ('', ''), 1: ('', '')}, 'preserve')
-
-    def test_preserve_can_be_forced_up_to_rs2_limit(self):
-        mapping, labels, _, mode = plan_codes('int', {300: ('', '')}, 'preserve')
-        self.assertEqual((mode, mapping, len(labels)), ('preserve', {300: 300}, 301))
+    def test_large_codes_are_preserved_up_to_rs2_limit(self):
+        _, codes, _, _, mode = plan_codes('int', {101: ('Mata', ''), 3000: ('', '')})
+        self.assertEqual((mode, codes), ('preserve', [0, 101, 3000]))
+        mapping, codes, _, _, mode = plan_codes('int', {5: ('', ''), 40000: ('', '')})
+        self.assertEqual((mode, mapping, codes), ('renumber', {5: 1, 40000: 2}, [0, 1, 2]))
         with self.assertRaisesRegex(RS2Error, 'excede o limite'):
             plan_codes('int', {40000: ('', '')}, 'preserve')
 
+    def test_code_zero_is_never_merged_with_background(self):
+        mapping, codes, _, _, mode = plan_codes('int', {0: ('Água', ''), 1: ('Mata', '')})
+        self.assertEqual((mode, mapping, codes), ('renumber', {0: 1, 1: 2}, [0, 1, 2]))
+        with self.assertRaisesRegex(RS2Error, 'reservado ao FUNDO'):
+            plan_codes('int', {0: ('', ''), 1: ('', '')}, 'preserve')
+
     def test_renumber_can_be_forced(self):
-        mapping, _, _, mode = plan_codes('int', {2: ('', ''), 7: ('', '')}, 'renumber')
-        self.assertEqual((mode, mapping), ('renumber', {2: 1, 7: 2}))
+        mapping, codes, _, _, mode = plan_codes('int', {2: ('', ''), 7: ('', '')}, 'renumber')
+        self.assertEqual((mode, mapping, codes), ('renumber', {2: 1, 7: 2}, [0, 1, 2]))
 
     def test_text_codes_are_alphabetical_and_reproducible(self):
-        mapping, labels, _, mode = plan_codes(
+        mapping, codes, labels, _, mode = plan_codes(
             'text', {'Pastagem': ('', ''), 'caatinga': ('', '#00FF00'), 'Água': ('', '')})
         self.assertEqual(mode, 'text')
         self.assertEqual(mapping, {'caatinga': 1, 'Pastagem': 2, 'Água': 3})
@@ -234,8 +218,9 @@ class VectorToRS2ConversionTests(unittest.TestCase):
         self.assertEqual((header.xmin, header.ymin, header.xmax, header.ymax),
                          (100, 200, 130, 220))
         # Centros das células: x=105,115,125; y=215,205 — todos dentro do polígono.
-        np.testing.assert_array_equal(cells, [[1, 1, 1], [1, 1, 1]])
-        # Código único 5: renumerado para 1, sem quatro classes vazias de preenchimento.
+        np.testing.assert_array_equal(cells, [[5, 5, 5], [5, 5, 5]])
+        # Código 5 preservado, sem classes vazias de preenchimento.
+        self.assertEqual(header.legend_codes, [0, 5])
         self.assertEqual(header.labels, ['FUNDO', 'Mata'])
 
     def test_reference_grid_is_copied_exactly(self):
@@ -267,7 +252,7 @@ class VectorToRS2ConversionTests(unittest.TestCase):
             convert_vector_to_rs2(vector, self.folder / 'x.rs2', 'CODIGO', 10,
                                   reference_rs2=reference)
 
-    def test_sparse_codes_are_renumbered_and_mapped_in_sidecar(self):
+    def test_sparse_codes_are_kept_and_mapped_in_sidecar(self):
         vector = _make_vector(self.folder / 'solo.shp', [
             (3000, 'Argissolo', None, (100, 200, 110, 210)),
             (101, 'Latossolo', None, (110, 200, 120, 210)),
@@ -275,11 +260,15 @@ class VectorToRS2ConversionTests(unittest.TestCase):
         output = self.folder / 'solo.rs2'
         result = convert_vector_to_rs2(vector, output, 'CODIGO', 10)
         header, cells = _matrix(output)
-        np.testing.assert_array_equal(cells, [[2, 1]])
+        np.testing.assert_array_equal(cells, [[3000, 101]])
+        self.assertEqual(header.legend_codes, [0, 101, 3000])
         self.assertEqual(header.labels, ['FUNDO', 'Latossolo', 'Argissolo'])
-        self.assertEqual(result.summary['code_mode'], 'renumber')
-        self.assertEqual(result.summary['filler_classes'], 0)
-        sidecar = json.loads(Path(str(output) + '.rs2.json').read_text(encoding='utf-8'))
+        self.assertEqual(result.summary['code_mode'], 'preserve')
+        forced = convert_vector_to_rs2(vector, self.folder / 'renum.rs2', 'CODIGO', 10,
+                                       code_mode='renumber')
+        self.assertEqual(forced.summary['code_mode'], 'renumber')
+        sidecar = json.loads(Path(str(self.folder / 'renum.rs2') + '.rs2.json')
+                             .read_text(encoding='utf-8'))
         pairs = [(m['codigo_rs2'], m['valor_original'])
                  for m in sidecar['rasterization']['code_mapping']]
         self.assertEqual(pairs, [(1, 101), (2, 3000)])
@@ -308,20 +297,51 @@ class VectorToRS2ConversionTests(unittest.TestCase):
         np.testing.assert_array_equal(cells, [[1, 2, 2]])
         self.assertEqual(result.summary['overlap_cells'], 1)
 
-    def test_pluviometry_case_two_sparse_codes_give_two_classes(self):
+    def test_pluviometry_case_matches_vista_saga_legend(self):
+        """Mesma legenda e mesma matriz RLE que o Vista SAGA gravou para este caso."""
         vector = _make_vector(self.folder / 'pluviometria.shp', [
             (125, None, None, (197515, 8929745, 200000, 8940815)),
             (158, None, None, (200000, 8929745, 202465, 8940815)),
         ], driver='ESRI Shapefile')
         output = self.folder / 'pluviometria.rs2'
         result = convert_vector_to_rs2(vector, output, 'CODIGO', 5)
-        header = RS2Reader(output).header
+        header, cells = _matrix(output)
+        self.assertEqual(header.num_classes, 3)
+        self.assertEqual(header.legend_codes, [0, 125, 158])
         self.assertEqual(header.labels, ['FUNDO', 'Classe 125', 'Classe 158'])
-        self.assertEqual((result.summary['code_mode'], result.summary['filler_classes']),
-                         ('renumber', 0))
-        forced = convert_vector_to_rs2(vector, self.folder / 'forcado.rs2', 'CODIGO', 5,
-                                       code_mode='preserve')
-        self.assertEqual(forced.summary['filler_classes'], 156)
+        self.assertEqual(set(np.unique(cells)), {125, 158})
+        self.assertEqual(result.summary['classes'], 2)
+
+    def test_sparse_rs2_feeds_existing_operations_by_code(self):
+        """RS2 com códigos 125/158 lido corretamente por RS2 → GeoTIFF → RS2 e RS2 → Vetor."""
+        from geosaga.rs2_converter import convert_rs2_to_tif, convert_tif_to_rs2
+        from geosaga.rs2_vector import convert_rs2_to_vector
+        vector = _make_vector(self.folder / 'pluv.gpkg', [
+            (125, 'Seco', '#A7EB6A', (100, 200, 120, 220)),
+            (158, 'Úmido', '#6A77EB', (120, 200, 140, 220)),
+        ])
+        rs2 = self.folder / 'pluv.rs2'
+        convert_vector_to_rs2(vector, rs2, 'CODIGO', 10)
+        tif = convert_rs2_to_tif(rs2, self.folder / 'pluv.tif', 'EPSG:31985')
+        again = convert_tif_to_rs2(tif, self.folder / 'pluv_volta.rs2')
+        self.assertEqual(Path(again).read_bytes(), rs2.read_bytes())
+        polygons = convert_rs2_to_vector(rs2, self.folder / 'pluv_poligonos.gpkg', 'EPSG:31985')
+        source = ogr.Open(str(polygons))
+        found = sorted((f.GetField('CODIGO'), f.GetField('CLASSE'), f.GetField('COR_HEX'))
+                       for f in source.GetLayer(0))
+        source = None
+        self.assertEqual(found, [(125, 'Seco', '#A7EB6A'), (158, 'Úmido', '#6A77EB')])
+
+    def test_classes_without_cells_are_left_out_of_legend(self):
+        vector = _make_vector(self.folder / 'pequeno.gpkg', [
+            (1, 'Grande', None, (100, 200, 140, 240)),
+            (2, 'Minúscula', None, (101, 201, 102, 202)),
+        ])
+        output = self.folder / 'pequeno.rs2'
+        result = convert_vector_to_rs2(vector, output, 'CODIGO', 10)
+        header = RS2Reader(output).header
+        self.assertEqual(header.labels, ['FUNDO', 'Grande'])
+        self.assertEqual(result.summary['empty_classes'], ['Minúscula'])
 
     def test_methodological_rejections(self):
         geographic = _make_vector(self.folder / 'graus.gpkg',

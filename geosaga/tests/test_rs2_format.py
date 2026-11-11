@@ -69,3 +69,74 @@ class RS2FormatTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class SparseLegendTests(unittest.TestCase):
+    """Correção 1.0.5: legenda com códigos não consecutivos, como o Vista SAGA grava.
+
+    Estrutura reproduzida de um RS2 regravado pelo próprio Vista SAGA (pluviometria):
+    n = 3, códigos 0, 125 e 158, pares RLE com esses códigos, paleta indexada pelo
+    código logo após a matriz e 1.920 bytes residuais no fim do arquivo.
+    """
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / 'esparso.rs2'
+        self.header = RS2Header(4, 2, 100, 200, 140, 220,
+                                ['FUNDO', 'Classe 125', 'Classe 158'],
+                                [(255, 255, 255, 0), (167, 235, 106, 0), (106, 119, 235, 0)],
+                                codes=[0, 125, 158])
+        self.rows = [np.array([125, 125, 158, 0], dtype=np.uint16),
+                     np.array([0, 158, 158, 158], dtype=np.uint16)]
+        write_rs2(self.path, self.header, self.rows)
+
+    def test_round_trip_keeps_sparse_codes_and_palette_by_code(self):
+        reader = RS2Reader(self.path)
+        h = reader.header
+        self.assertEqual(h.num_classes, 3)
+        self.assertEqual(h.legend_codes, [0, 125, 158])
+        self.assertEqual(h.colors[1][:3], (167, 235, 106))
+        self.assertEqual(h.colors[2][:3], (106, 119, 235))
+        self.assertEqual(h.raw_palette[125 * 4:125 * 4 + 3], bytes((167, 235, 106)))
+        np.testing.assert_array_equal(np.vstack(list(reader.rows())), np.vstack(self.rows))
+        self.assertEqual(reader.validate(), {0: 2, 125: 2, 158: 4})
+
+    def test_trailing_bytes_after_palette_are_tolerated(self):
+        data = self.path.read_bytes()
+        self.path.write_bytes(data + bytes(1920))
+        reader = RS2Reader(self.path)
+        self.assertEqual(reader.header.trailing_bytes, 1920)
+        self.assertEqual(reader.header.legend_codes, [0, 125, 158])
+        self.assertEqual(reader.validate(), {0: 2, 125: 2, 158: 4})
+        # Regravação produz o arquivo canônico, sem o resíduo.
+        copy = self.path.with_name('copia.rs2')
+        write_rs2(copy, reader.header, RS2Reader(self.path).rows())
+        self.assertEqual(copy.read_bytes(), data)
+
+    def test_undeclared_code_is_rejected(self):
+        with self.assertRaisesRegex(RS2Error, 'não previstos'):
+            write_rs2(self.path.with_name('x.rs2'), self.header,
+                      [np.array([1, 0, 0, 0], dtype=np.uint16)] * 2)
+
+    def test_invalid_legend_codes_are_rejected(self):
+        for codes in ([1, 125, 158], [0, 158, 125], [0, 125, 125], [0, 125, 40000]):
+            header = RS2Header(4, 2, 100, 200, 140, 220, ['FUNDO', 'A', 'B'],
+                               [(0, 0, 0, 0)] * 3, codes=codes)
+            with self.subTest(codes=codes), self.assertRaises(RS2Error):
+                write_rs2(self.path.with_name('y.rs2'), header, self.rows)
+
+
+class SidecarCodesTests(unittest.TestCase):
+    def test_legacy_sidecar_uses_position_as_code(self):
+        from geosaga.rs2_format import sidecar_codes
+        self.assertEqual(sidecar_codes({'labels': ['FUNDO', 'A', 'B']}), [0, 1, 2])
+
+    def test_sparse_sidecar_codes(self):
+        from geosaga.rs2_format import sidecar_codes
+        info = {'labels': ['FUNDO', 'Classe 125', 'Classe 158'], 'codes': [0, 125, 158]}
+        self.assertEqual(sidecar_codes(info), [0, 125, 158])
+        with self.assertRaises(RS2Error):
+            sidecar_codes({'labels': ['FUNDO'], 'codes': [0, 125]})

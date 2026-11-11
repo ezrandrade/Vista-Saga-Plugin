@@ -96,8 +96,8 @@ def _publish_vector(stage, target):
 def class_attributes(header):
     """Valores das três colunas, preservando o índice e os RGB originais."""
     values = []
-    for code, label in enumerate(header.labels):
-        rgb = header.colors[code][:3]
+    for code, label, color in header.legend():
+        rgb = color[:3]
         values.append((code, label, '#' + ''.join(f'{int(c):02X}' for c in rgb)))
     return values
 
@@ -130,6 +130,7 @@ def convert_rs2_to_vector(rs2_path, vector_path, epsg='', progress=None,
         raise RS2Error(f'Driver GDAL/OGR não disponível nesta instalação: {driver_name}.')
     h = RS2Reader(source).header
     codes = class_attributes(h)
+    by_code = {code: (label, color) for code, label, color in codes}
     gdal, _ = _gdal()
 
     def notify(value):
@@ -203,9 +204,11 @@ def convert_rs2_to_vector(rs2_path, vector_path, epsg='', progress=None,
             # Persistir texto/cor sem modificar o campo categórico do GDAL.
             for i, feat in enumerate(layer):
                 code = int(feat.GetField('CODIGO'))
-                if code < 0 or code >= len(codes):
+                # Busca pelo código (não pela posição): a legenda RS2 pode ter
+                # códigos não consecutivos, como 0, 125 e 158.
+                if code not in by_code:
                     raise RS2Error(f'Código inesperado na vetorização: {code}.')
-                _, label, color = codes[code]
+                label, color = by_code[code]
                 feat.SetField('CLASSE', label)
                 feat.SetField('COR_HEX', color)
                 if layer.SetFeature(feat) != 0:
