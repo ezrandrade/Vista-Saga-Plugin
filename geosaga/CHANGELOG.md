@@ -11,6 +11,9 @@ Versão dedicada ao módulo de conversão. Outras alterações serão acrescenta
   outra linha de contorno no Windows.
 - **Sem título no topo da tela:** como nos demais módulos, a janela começa pelo texto de
   apresentação; o nome do módulo fica na barra de título.
+- **Altura da janela ajustada ao conteúdo:** sem espaço vazio embaixo. A janela acompanha os
+  campos de cada operação, o lote e as opções avançadas, até 90% da altura útil da tela (acima
+  disso, aparece a rolagem). A largura escolhida pelo usuário é mantida.
 - Nenhum algoritmo de conversão foi alterado.
 
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)

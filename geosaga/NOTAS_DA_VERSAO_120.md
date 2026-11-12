@@ -13,6 +13,8 @@ Inclui tudo da 1.1.0.
   contorno, como no Sequenciador de Mapas).
 - O título grande no topo da tela foi retirado, como nos demais módulos; o nome do módulo continua
   na barra de título da janela.
+- A altura da janela acompanha o conteúdo de cada operação, sem espaço vazio na parte inferior;
+  ao abrir as opções avançadas ou ativar o lote, ela cresce (até 90% da altura da tela).
 
 ## Compatibilidade
 

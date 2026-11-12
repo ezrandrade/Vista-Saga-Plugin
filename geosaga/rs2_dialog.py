@@ -5,7 +5,7 @@ Suporte a arquivos locais, seleção de rasters do projeto, SRC nativo e lotes.
 from .i18n import tr
 from pathlib import Path
 
-from qgis.PyQt.QtCore import QCoreApplication, Qt
+from qgis.PyQt.QtCore import QCoreApplication, Qt, QTimer
 from qgis.PyQt.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox,
@@ -37,7 +37,7 @@ class RS2ConverterDialog(QDialog):
         self.iface = iface
         self.setWindowTitle(tr('Vista Saga Plugin - Conversor de formatos'))
         self.setMinimumWidth(690)
-        self.resize(750, 660)
+        self.resize(750, 480)  # altura final ajustada ao conteúdo em _fit_height()
         self.setModal(False)
         # SRC das operações com origem RS2 (0 e 2), lembrado entre sessões. O RS2 não
         # guarda SRC; a escolha é do usuário. Fica separado do SRC opcional de
@@ -272,6 +272,7 @@ class RS2ConverterDialog(QDialog):
         scroll.setWidget(holder)
         use_tab_background(scroll)
         outer.addWidget(scroll, 1)
+        self._scroll, self._holder = scroll, holder
 
         actions = QHBoxLayout()
         self.inspect_button = QPushButton(tr('Propriedades RS2…'))
@@ -294,6 +295,30 @@ class RS2ConverterDialog(QDialog):
             Qt.ArrowType.DownArrow if opened else Qt.ArrowType.RightArrow)
         self.advanced_toggle.setText(
             tr('Ocultar opções avançadas' if opened else 'Mostrar opções avançadas'))
+        self._schedule_fit()
+
+    def _schedule_fit(self):
+        if getattr(self, '_scroll', None) is not None:
+            QTimer.singleShot(0, self._fit_height)
+
+    def _fit_height(self):
+        """Ajusta a altura da janela ao conteúdo visível, sem espaço vazio embaixo.
+
+        Os campos mudam com a operação, o lote e as opções avançadas. A janela
+        acompanha, até 90% da altura útil da tela; acima disso, a rolagem assume.
+        A largura escolhida pelo usuário é mantida.
+        """
+        layout = self._holder.layout()
+        layout.activate()
+        content = layout.sizeHint().height()
+        chrome = self.height() - self._scroll.viewport().height()
+        target = content + chrome
+        screen = self.screen()
+        if screen is not None:
+            target = min(target, int(screen.availableGeometry().height() * 0.9))
+        target = max(target, self.minimumSizeHint().height())
+        if target != self.height():
+            self.resize(self.width(), target)
 
     def _temp_changed(self, *_):
         persistent = not self.temporary_check.isChecked()
@@ -428,6 +453,7 @@ class RS2ConverterDialog(QDialog):
             if not output or Path(output).suffix.lower() != desired:
                 self.destination.setText(
                     self._suggest_output(Path(self.source.text().strip()), operation))
+        self._schedule_fit()
 
     def _batch_changed(self, *_):
         many = self.batch.isChecked()
