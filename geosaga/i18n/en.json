@@ -1463,7 +1463,7 @@
   "{label}: {count} classe(s) novas sem nota.": "{label}: {count} new class(es) without a score.",
   "Relatório CSV: ": "CSV report: ",
   "Relatório TXT: ": "TXT report: ",
-  "Pesos: {total:.2f}% | Falta para 100%: {remaining:+.2f} ponto(s). Todos os critérios precisam ter peso maior que zero.": "Weights: {total:.2f}% | Remaining to 100%: {remaining:+.2f} point(s). Every criterion needs a weight greater than zero.",
+  "Pesos: {total:.2f}% | Falta para 100%: {remaining:+.2f} ponto(s). Todos os critérios precisam ter peso maior que zero.": "Weights: {total:.2f}% | Difference from 100%: {remaining:+.2f} percentage point(s). All criteria must have a positive weight.",
   "Camada não encontrada: {source}. Selecione-a e abra o projeto novamente.": "Layer not found: {source}. Select it and open the project again.",
   "{layer}: o campo {field} não existe.": "{layer}: field {field} does not exist.",
   "Camadas: {0}\nPolígonos resultantes: {1}\nCom nota: {2}\nSem nota: {3}\nÁrea total: {4} ha\n\nSaída: {5}\n\nApenas a área de interseção comum foi avaliada.": "Layers: {0}\nResulting polygons: {1}\nWith score: {2}\nWithout score: {3}\nTotal area: {4} ha\n\nOutput: {5}\n\nOnly the common intersection area was evaluated.",
