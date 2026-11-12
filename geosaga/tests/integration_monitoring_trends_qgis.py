@@ -41,5 +41,5 @@ def run():
             rows = list(csv.DictReader(stream, delimiter=';'))
         if len(rows) != 2 or not all(float(r['MK_P_BILATERAL']) < .05 for r in rows):
             raise RuntimeError('O resultado do teste de tendências sintéticas divergiu.')
-        print('Vista Saga 0.4.1 — teste QGIS/GDAL da Monitoria e Mann–Kendall: OK')
+        print('Vista Saga 0.4.1 - teste QGIS/GDAL da Monitoria e Mann–Kendall: OK')
         return True

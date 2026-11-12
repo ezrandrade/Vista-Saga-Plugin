@@ -75,5 +75,5 @@ def run():
             raise RuntimeError('Número de classes vetoriais incorreto.')
         if abs(sum(float(r['AREA_HA']) for r in vector_rows) - .08) >= 1e-6:
             raise RuntimeError('Área vetorial incorreta.')
-    print('Assinatura Ambiental: raster e vetor, CSV/TXT e GeoPackage — OK')
+    print('Assinatura Ambiental: raster e vetor, CSV/TXT e GeoPackage - OK')
     return True

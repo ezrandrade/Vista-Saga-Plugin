@@ -107,7 +107,7 @@ def write_signature_reports(csv_path, txt_path, summaries, rows, *, title='',
                                      _decimal(info.get('conflict_ha')),
                                      _decimal(info.get('conflict_pct'))])
     with open(txt_path, 'w', encoding='utf-8') as f:
-        f.write('VISTA SAGA PLUGIN — RELATÓRIO DE ASSINATURA ESPACIAL\n')
+        f.write('VISTA SAGA PLUGIN - RELATÓRIO DE ASSINATURA ESPACIAL\n')
         f.write(f'Título: {title}\nModalidade: {mode}\nMapa temático: {theme}\n')
         f.write(f'Áreas de análise: {area_source}\nSRC: {crs}\n')
         f.write('Método: distribuição de classes por área; pixels por centro (raster), '

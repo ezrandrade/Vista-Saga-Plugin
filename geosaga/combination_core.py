@@ -80,7 +80,7 @@ def write_combination_reports(csv_path, txt_path, rows, sources, *, mode, crs, a
                 line.extend((code, label))
             writer.writerow(line)
     with open(txt_path, 'w', encoding='utf-8') as stream:
-        stream.write('VISTA SAGA PLUGIN — COMBINAÇÃO DE MAPAS\n' + '='*54 + '\n')
+        stream.write('VISTA SAGA PLUGIN - COMBINAÇÃO DE MAPAS\n' + '='*54 + '\n')
         stream.write(f'Modalidade: {mode}\nSRC: {crs}\nCálculo de área: {area_method}\n')
         for i, source in enumerate(sources, 1):
             stream.write(f'Mapa {i:02d}: {source}\n')

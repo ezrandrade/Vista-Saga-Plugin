@@ -16,6 +16,10 @@ foi alterado: os resultados numéricos são os mesmos da versão anterior.
   (vetor) ou arquivo temporário (raster). Salve-o antes de fechar o QGIS.
 - **Ordenação pelo cabeçalho** das tabelas de classes (clique de novo para inverter).
 - **TAB salta entre os pesos e entre as notas**, já com o valor selecionado para digitar.
+- **Pesos em branco** para mapas e critérios novos; a divisão por igual só acontece no botão
+  “Distribuir pesos igualmente”.
+- **Mesmo fundo** nas guias de todos os módulos, e **traço simples (-)** no lugar do travessão nos
+  textos de interface e relatórios.
 - **Guia Raster sem Título e Autor**; o título dos relatórios passa a ser o nome do arquivo salvo.
 - **Pesos e notas reaproveitáveis:** cada execução grava `<resultado>_pesos_notas.geosaga.json`.
   Para repetir a configuração em outra avaliação, use “Abrir projeto…” na mesma guia.

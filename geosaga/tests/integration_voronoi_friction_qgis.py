@@ -36,5 +36,5 @@ def run():
         for key in ('output','csv','txt'):
             if not os.path.exists(result[key]):
                 raise AssertionError(f'Arquivo ausente: {key}')
-        print('Voronoi com Atrito — teste GDAL concluído:',arr.tolist())
+        print('Voronoi com Atrito - teste GDAL concluído:',arr.tolist())
         return True

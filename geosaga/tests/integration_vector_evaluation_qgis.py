@@ -42,5 +42,5 @@ def run():
         assert 'Excluída' in by_uso[3]['MOTIVO']
         for orig in layer.getFeatures():
             assert by_uso[int(orig['USO'])].geometry().equals(orig.geometry()), 'Geometria alterada'
-    print('Vista Saga — Avaliação Espacial vetorial: teste integrado aprovado.')
+    print('Vista Saga - Avaliação Espacial vetorial: teste integrado aprovado.')
     return True

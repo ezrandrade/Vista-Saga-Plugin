@@ -25,7 +25,7 @@ from qgis.gui import QgsMapLayerComboBox
 
 from .gif_codec import encode_gif
 from .sequence_plan import extract_year, temporal_frames, safe_png_name
-from .ui_shared import choose_project_layers
+from .ui_shared import use_tab_background, choose_project_layers
 from .errors import log_exception
 
 
@@ -42,7 +42,7 @@ class ImageSequenceDialog(QDialog):
         self.imported_layers = []
         self._busy = False
         self._movie = None
-        self.setWindowTitle(tr('Vista Saga Plugin — Sequenciador de Mapas'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Sequenciador de Mapas'))
         self.setModal(False)
         self.resize(850, 725)
         self.setMinimumWidth(700)
@@ -56,6 +56,7 @@ class ImageSequenceDialog(QDialog):
         outer.addWidget(scroll)
         panel = QWidget()
         scroll.setWidget(panel)
+        use_tab_background(scroll)
         root = QVBoxLayout(panel)
         root.setContentsMargins(10, 10, 10, 10)
         intro = QLabel(tr('Organize mapas cronologicamente e exporte quadros de mesma extensão e SRC. '
@@ -366,7 +367,7 @@ class ImageSequenceDialog(QDialog):
             self._refresh()
         except Exception as exc:
             log_exception()
-            QMessageBox.warning(self, tr('Sequenciador — campo temporal'), tr(str(exc)))
+            QMessageBox.warning(self, tr('Sequenciador - campo temporal'), tr(str(exc)))
 
     def _add_vector_temporal(self):
         self._add_temporal(self.vector_selected.currentLayer(), self.vector_field,
@@ -386,7 +387,7 @@ class ImageSequenceDialog(QDialog):
             names = ' sobre '.join(layer.name() for layer in entry.get('layers', (entry['layer'],)))
             period = entry['date'] or 'Sem data'
             suffix = ' [campo temporal]' if entry.get('temporal') else ''
-            self.listbox.addItem(f'{index:02d}.  {period} — {names}{suffix}')
+            self.listbox.addItem(f'{index:02d}.  {period} - {names}{suffix}')
         self.status.setText(tr('{count} quadros na aba {tab}.').format(count=len(self.entries), tab=self.tabs.tabText(self.tabs.currentIndex())))
 
     def _remove(self):
@@ -673,7 +674,7 @@ class ImageSequenceDialog(QDialog):
         except Exception as exc:
             log_exception()
             self.status.setText(tr('Falha na exportação; dados do projeto preservados.'))
-            QMessageBox.critical(self, tr('Sequenciador de Mapas — erro'), tr(str(exc)))
+            QMessageBox.critical(self, tr('Sequenciador de Mapas - erro'), tr(str(exc)))
         finally:
             progress.close()
             self._busy = False

@@ -115,5 +115,5 @@ def run():
     with tempfile.TemporaryDirectory(prefix='vistasaga_vetor_rs2_') as td:
         gpkg = _check_core(Path(td))
         _check_ui(gpkg)
-    print('Vista Saga — Vetor → RS2: núcleo GDAL e interface Qt6 aprovados.')
+    print('Vista Saga - Vetor → RS2: núcleo GDAL e interface Qt6 aprovados.')
     return True

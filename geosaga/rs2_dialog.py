@@ -17,7 +17,7 @@ from qgis.core import (Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsSettin
 from qgis.gui import QgsMapLayerComboBox, QgsProjectionSelectionWidget
 
 from .rs2_batch import prepare_batch, source_mode, alignment_warnings
-from .ui_shared import choose_project_layers, temporary_destination
+from .ui_shared import use_tab_background, choose_project_layers, temporary_destination
 from .rs2_format import RS2Reader
 from .rs2_outputs import output_conflicts
 from .rs2_vector import (VECTOR_FORMATS, convert_rs2_to_vector, vector_conflicts)
@@ -35,7 +35,7 @@ class RS2ConverterDialog(QDialog):
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
-        self.setWindowTitle(tr('Vista Saga Plugin — Conversão de formatos'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Conversão de formatos'))
         self.setMinimumWidth(690)
         self.resize(750, 660)
         self.setModal(False)
@@ -196,7 +196,7 @@ class RS2ConverterDialog(QDialog):
         options_form = QFormLayout(self.options_box)
         self.crs_widget = QgsProjectionSelectionWidget()
         self.crs_widget.setOptionVisible(QgsProjectionSelectionWidget.CrsOption.CrsNotSet, True)
-        self.crs_widget.setNotSetText(tr('Não definido — atribuir posteriormente'))
+        self.crs_widget.setNotSetText(tr('Não definido - atribuir posteriormente'))
         self.crs_widget.setCrs(QgsCoordinateReferenceSystem())
         self.crs_widget.setDialogTitle(tr('Selecione o SRC confirmado do RS2'))
         self.crs_label = QLabel(tr('SRC do RS2:'))
@@ -271,6 +271,7 @@ class RS2ConverterDialog(QDialog):
         root.addWidget(self.footer_hint)
         root.addStretch()
         scroll.setWidget(holder)
+        use_tab_background(scroll)
         outer.addWidget(scroll, 1)
 
         actions = QHBoxLayout()
@@ -623,7 +624,7 @@ class RS2ConverterDialog(QDialog):
             QMessageBox.information(self, tr('Propriedades do RS2'),
                 tr(f'Dimensões: {h.width} × {h.height}\n'
                 f'Resolução: {h.pixel_x:g} × {h.pixel_y:g}\n'
-                f'X: {h.xmin} — {h.xmax}\nY: {h.ymin} — {h.ymax}\n'
+                f'X: {h.xmin} - {h.xmax}\nY: {h.ymin} - {h.ymax}\n'
                 f'Categorias: {h.num_classes}\n\n{classes}\n\n'
                 'SRC não identificado no cabeçalho RS2.'))
         except Exception as exc:
@@ -908,7 +909,7 @@ class RS2ConverterDialog(QDialog):
                 QMessageBox.warning(self, tr('Entrada TIFF'), tr(str(exc)))
                 return
         progress = QProgressDialog(tr('Convertendo mapas…'), tr('Cancelar'), 0, 100, self)
-        progress.setWindowTitle(tr('Vista Saga Plugin — conversor'))
+        progress.setWindowTitle(tr('Vista Saga Plugin - conversor'))
         progress.setMinimumDuration(0)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.show()

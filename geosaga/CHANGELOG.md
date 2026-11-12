@@ -26,8 +26,16 @@ motores da 1.0.9. Muda a interface do módulo Avaliação e a forma de entregar 
   (2 antes de 11), e as notas digitadas são preservadas.
 - **TAB entre pesos e entre notas:** TAB e Shift+TAB saltam direto para o próximo campo de peso ou
   de nota, com o valor já selecionado para digitação; classes em “Não avaliar” são puladas.
-- **Mesmo fundo nas três guias:** as guias vetoriais deixam de pintar o fundo de cinza e passam a
-  usar o fundo padrão da guia, como a Raster.
+- **Mesmo fundo em todo o plugin:** as áreas com rolagem (guias vetoriais da Avaliação e da
+  Monitoria, Assinatura, Voronoi, Conversão de formatos e Sequenciador) deixam de pintar o fundo
+  de cinza e passam a usar o fundo padrão da guia do QGIS.
+- **Pesos sem distribuição automática:** mapas e critérios novos entram com o peso em branco;
+  remover um item não altera os demais. A divisão por igual só ocorre no botão “Distribuir pesos
+  igualmente”.
+- **Traço simples no lugar do travessão** em todos os textos de interface, títulos de janela,
+  nomes de camadas e cabeçalhos de relatório, nos sete módulos (catálogos en/es atualizados). O
+  “—” permanece só como marcador de nota não definida. Meias-riscas de intervalos (0–10,
+  1985–2024, Mann–Kendall) não foram alteradas.
 - **Guia Raster sem Título e Autor:** o título dos relatórios e dos metadados do GeoTIFF passa a
   ser o nome do arquivo salvo (vazio no resultado temporário); o autor fica em branco. Projetos
   antigos com título e autor continuam abrindo (os campos são ignorados).

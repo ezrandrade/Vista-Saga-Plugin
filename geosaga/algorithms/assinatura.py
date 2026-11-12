@@ -23,7 +23,7 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
         return 'assinatura'
 
     def displayName(self):
-        return tr('Assinatura espacial — classes em polígonos')
+        return tr('Assinatura espacial - classes em polígonos')
 
     def group(self):
         return tr('Análise ambiental')

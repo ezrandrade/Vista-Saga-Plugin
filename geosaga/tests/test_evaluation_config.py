@@ -100,10 +100,48 @@ class EvaluationConfigTests(unittest.TestCase):
             self.assertEqual(text.count('install_column_tab_navigation('), 2)
             self.assertIn('.installEventFilter(self._score_tab)', text)
             self.assertIn('.installEventFilter(self._weight_tab)', text)
-        self.assertIn('dialog.setAutoFillBackground(False)', raster)
-        self.assertIn('scroll.viewport().setAutoFillBackground(False)', raster)
         self.assertNotIn('title_edit', raster)
         self.assertNotIn('author_edit', raster)
+
+    def test_every_scroll_area_uses_tab_background(self):
+        """Toda área com rolagem dentro de guia usa o fundo padrão do QGIS."""
+        import re
+        root = Path(__file__).resolve().parents[1]
+        for path in root.glob('*.py'):
+            text = path.read_text(encoding='utf-8')
+            for match in re.finditer(r'^(\s*)([\w.]+)\.setWidget\(\w+\)\n(.*)$', text, re.M):
+                self.assertEqual(match.group(3).strip(), f'use_tab_background({match.group(2)})',
+                                 f'{path.name}: {match.group(0).strip()}')
+
+    def test_no_em_dash_in_interface_strings(self):
+        """Travessão só no marcador de nota indefinida (“—”), nunca em texto de interface."""
+        import io
+        import json
+        import tokenize
+        root = Path(__file__).resolve().parents[1]
+        found = []
+        for path in list(root.glob('*.py')) + list((root / 'algorithms').glob('*.py')):
+            src = path.read_text(encoding='utf-8')
+            kinds = {tokenize.STRING} | ({tokenize.FSTRING_MIDDLE} if hasattr(tokenize, 'FSTRING_MIDDLE') else set())
+            for tok in tokenize.generate_tokens(io.StringIO(src).readline):
+                if (tok.type in kinds and '—' in tok.string and not tok.string.startswith(('"""', "'''"))
+                        and '“—”' not in tok.string and tok.string not in ("'—'", '"—"')):
+                    found.append(f'{path.name}:{tok.start[0]}')
+        for lang in ('en', 'es'):
+            catalog = json.loads((root / 'i18n' / f'{lang}.json').read_text(encoding='utf-8'))
+            found += [f'{lang}.json: {k[:40]}' for k, v in catalog.items()
+                      if '“—”' not in k and ('—' in k or '—' in v)]
+        self.assertEqual(found, [])
+
+    def test_weights_are_not_distributed_automatically(self):
+        root = Path(__file__).resolve().parents[1]
+        raster = (root / 'evaluation_dialog.py').read_text(encoding='utf-8')
+        vector = (root / 'vector_evaluation_dialog.py').read_text(encoding='utf-8')
+        self.assertEqual(raster.count('self._assign_equal_weights()'), 1)  # só no botão
+        self.assertEqual(vector.count('self._distribute()'), 1)
+        for text, method in ((raster, 'def distribute_weights'), (vector, 'def distribute_weights')):
+            body = text.split(method, 1)[1].split('\n    def ', 1)[0]
+            self.assertTrue('_assign_equal_weights()' in body or '_distribute()' in body)
 
 
 if __name__ == '__main__':

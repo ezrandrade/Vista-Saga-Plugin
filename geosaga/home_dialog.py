@@ -15,7 +15,7 @@ class HomeDialog(QDialog):
     def __init__(self, plugin, parent=None):
         super().__init__(parent)
         self.plugin = plugin
-        self.setWindowTitle('Vista Saga Plugin — Painel de módulos')
+        self.setWindowTitle('Vista Saga Plugin - Painel de módulos')
         self.setModal(False)
         self.setMinimumSize(820, 590)
         self.resize(1010, 780)
@@ -77,7 +77,7 @@ class HomeDialog(QDialog):
             'Projeto independente inspirado nos procedimentos do Vista SAGA/UFRJ. '
             'Não contém código do programa original. '
             'Confira os resultados antes de utilizá-los em estudos técnicos.\n'
-            'Desenvolvedor: Esdras Andrade — Instituto de Geografia, Desenvolvimento '
+            'Desenvolvedor: Esdras Andrade - Instituto de Geografia, Desenvolvimento '
             'e Meio Ambiente (IGDEMA), Universidade Federal de Alagoas (UFAL).'
         )
         note.setObjectName('vistaSagaFootnote')

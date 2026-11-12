@@ -15,7 +15,7 @@ class GeoSAGAProvider(QgsProcessingProvider):
         return 'Vista Saga Plugin'
 
     def longName(self):
-        return tr('Vista Saga Plugin — análises temáticas')
+        return tr('Vista Saga Plugin - análises temáticas')
 
     def loadAlgorithms(self):
         self.addAlgorithm(AvaliacaoAlgorithm())

@@ -139,6 +139,9 @@ def weight_spin(value, callback=None):
     spin = QDoubleSpinBox()
     spin.setRange(0, 100)
     spin.setDecimals(2)
+    # Peso 0 é inválido (todo critério precisa de peso > 0): aparece em branco,
+    # para o usuário ver de imediato o que ainda falta digitar.
+    spin.setSpecialValueText(' ')
     spin.setAlignment(_number_alignment())
     spin.setValue(float(value))
     if callback is not None:
@@ -344,7 +347,7 @@ def _polygon_sublayer_uris(path):
         return [(path, stem)]
     if len(found) == 1:
         return [(found[0][0], stem)]
-    return [(uri, f'{stem} — {name}' if name else stem) for uri, name in found]
+    return [(uri, f'{stem} - {name}' if name else stem) for uri, name in found]
 
 
 def load_vector_source(source, name=''):
@@ -485,3 +488,16 @@ class HeaderSort:
         """Ordena `keys` com a função da coluna ativa (classe por padrão)."""
         function = key_functions.get(self.column, class_sort_key)
         return sorted(keys, key=function, reverse=self.descending)
+
+
+def use_tab_background(scroll):
+    """Fundo padrão da guia do QGIS numa área com rolagem.
+
+    QScrollArea.setWidget liga o preenchimento do fundo com a cor da janela
+    (cinza), o que destoa das guias montadas sem rolagem. Chamar logo após
+    ``setWidget``: desligado o preenchimento, aparece o fundo da guia.
+    """
+    scroll.viewport().setAutoFillBackground(False)
+    widget = scroll.widget()
+    if widget is not None:
+        widget.setAutoFillBackground(False)

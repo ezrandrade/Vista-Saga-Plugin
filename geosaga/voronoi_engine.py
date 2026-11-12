@@ -52,7 +52,7 @@ def _write_reports(csv_path, txt_path, mode, rows, excluded, pixel_area):
         writer.writeheader()
         writer.writerows(rows)
     with open(txt_path, 'w', encoding='utf-8') as f:
-        f.write('Vista Saga Plugin — Análises Voronoi\n')
+        f.write('Vista Saga Plugin - Análises Voronoi\n')
         f.write(f'Modalidade: {"Com Massa e Atrito" if mode == "mass_friction" else ("Com Atrito" if mode == "friction" else ("Com Massa" if mode == "mass" else "Simples"))}\n')
         if mode in ('friction','mass_friction'):
             f.write('Critério experimental: minimizar distância euclidiana × soma (1 + atrito)\n'

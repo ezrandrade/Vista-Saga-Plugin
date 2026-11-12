@@ -29,7 +29,7 @@ class CombinationDialog(QDialog):
         self._busy = False
         self._sources = [[], []]
         self._file_layers = []
-        self.setWindowTitle(tr('Vista Saga Plugin — Combinação de Mapas'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Combinação de Mapas'))
         self.setModal(False)
         self.setMinimumSize(650, 450)
         self.resize(790, 565)
@@ -50,7 +50,7 @@ class CombinationDialog(QDialog):
                           'Cada associação observada recebe um código, sem pesos ou notas.'))
             hint.setWordWrap(True)
             body.addWidget(hint)
-            source_group = QGroupBox(tr('Mapas de entrada — em ordem de combinação'))
+            source_group = QGroupBox(tr('Mapas de entrada - em ordem de combinação'))
             sf = QFormLayout(source_group)
             choose = QgsMapLayerComboBox()
             choose.setAllowEmptyLayer(True)
@@ -185,7 +185,7 @@ class CombinationDialog(QDialog):
                 preferred = next((n for n in ('CODIGO', 'CLASSE', 'USO', 'TIPO_USO', 'TIPOS_USO')
                                   if n in fields), fields[0])
                 from qgis.PyQt.QtWidgets import QInputDialog
-                field, ok = QInputDialog.getItem(self, tr('Campo de classe — ') + layer.name(),
+                field, ok = QInputDialog.getItem(self, tr('Campo de classe - ') + layer.name(),
                     tr('Campo:'), fields, fields.index(preferred), False)
                 if not ok:
                     continue
@@ -212,11 +212,11 @@ class CombinationDialog(QDialog):
                 if not names:
                     QMessageBox.warning(self,tr('Arquivo inválido'),tr(f'Camada sem campos: {path}'))
                     continue
-                field, ok = self._choose_field(names, f'Classe temática — {Path(path).name}')
+                field, ok = self._choose_field(names, f'Classe temática - {Path(path).name}')
                 if not ok:
                     continue
                 label, ok = self._choose_field(['(usar classe como legenda)']+names,
-                                                f'Legenda — {Path(path).name}')
+                                                f'Legenda - {Path(path).name}')
                 if not ok:
                     continue
                 if label == '(usar classe como legenda)':
@@ -253,7 +253,7 @@ class CombinationDialog(QDialog):
         widget = getattr(self, f'list_{mode}')
         widget.clear()
         for index, (layer,field,legend) in enumerate(self._sources[mode],1):
-            label = f'{index:02d} — {layer.name()}'
+            label = f'{index:02d} - {layer.name()}'
             if mode:
                 label += f'  •  {field}' + (f'  •  {legend}' if legend else '')
             widget.addItem(QListWidgetItem(label))

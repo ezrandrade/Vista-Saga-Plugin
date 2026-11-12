@@ -158,7 +158,7 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
             writer.writeheader()
             writer.writerows(rows)
         with open(txt_path,'w',encoding='utf-8') as report:
-            report.write('Vista Saga Plugin — Análises Voronoi\n')
+            report.write('Vista Saga Plugin - Análises Voronoi\n')
             report.write('Modalidade: Simples; saída vetorial direta (sem rasterização)\n')
             report.write('Extensão finita definida pelo usuário; distâncias euclidianas no SRC projetado.\n')
             report.write('Áreas métricas planares calculadas nas unidades lineares do SRC.\n\n')

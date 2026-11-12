@@ -18,6 +18,6 @@ def check():
         if not algorithm.parameterDefinitions():
             raise RuntimeError(f'Algoritmo sem parâmetros: {algorithm_id}')
         print(f'OK: {algorithm_id} ({algorithm.displayName()})')
-    print(f'OK: projeto QGIS acessível — {QgsProject.instance().fileName() or "sem arquivo"}')
+    print(f'OK: projeto QGIS acessível - {QgsProject.instance().fileName() or "sem arquivo"}')
     print('Registro validado. Execução geoespacial e interface ainda exigem testes manuais.')
     return True

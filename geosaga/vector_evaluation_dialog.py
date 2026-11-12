@@ -68,8 +68,8 @@ class VectorEvaluationDialog(QWidget):
     """Reusable evaluation form (QWidget inside tabs or standalone window)."""
 
     MODALITY = 'atributos'
-    WINDOW_TITLE = 'Vista Saga Plugin — Avaliação vetorial'
-    HEADING = '<b>AVALIAÇÃO ESPACIAL — VETOR POR ATRIBUTOS</b>'
+    WINDOW_TITLE = 'Vista Saga Plugin - Avaliação vetorial'
+    HEADING = '<b>AVALIAÇÃO ESPACIAL - VETOR POR ATRIBUTOS</b>'
     INTRO = ('Selecione uma camada de polígonos. Cada campo temático constitui um critério: '
              'atribua pesos e notas às classes. A geometria das feições será preservada. '
              'Não há sobreposição entre camadas nesta modalidade.')
@@ -79,7 +79,7 @@ class VectorEvaluationDialog(QWidget):
     EMPTY_CLASSES = 'Selecione um campo à esquerda.'
     START_STATUS = 'Selecione um campo temático para iniciar.'
     RESULT_PREFIX = 'avaliacao_atributos'
-    RESULT_NAME = 'Vista Saga — Avaliação vetorial'
+    RESULT_NAME = 'Vista Saga - Avaliação vetorial'
     RUN_TEXT = 'Executar avaliação'
 
     def __init__(self, iface, parent=None, embedded=False):
@@ -148,8 +148,8 @@ class VectorEvaluationDialog(QWidget):
         self._weight_tab = install_column_tab_navigation(self.criteria_table, 1)
         ll.addWidget(self.criteria_table, stretch=1)
         ll.addWidget(button('Distribuir pesos igualmente', self.distribute_weights,
-                            'Volta a dividir 100% igualmente entre os critérios, '
-                            'desfazendo pesos digitados.'))
+                            'Divide 100% igualmente entre os critérios, substituindo '
+                            'os pesos digitados. Critérios novos entram com peso em branco.'))
         self.weights_label = QLabel(tr('Nenhum critério selecionado.'))
         self.weights_label.setWordWrap(True)
         ll.addWidget(self.weights_label)
@@ -219,7 +219,7 @@ class VectorEvaluationDialog(QWidget):
         layer_row.addWidget(QLabel(tr('Camada:')))
         self.layer_combo = QgsMapLayerComboBox()
         self.layer_combo.setFilters(Qgis.LayerFilter.PolygonLayer)
-        self.layer_combo.setAllowEmptyLayer(True, tr('— selecione um polígono —'))
+        self.layer_combo.setAllowEmptyLayer(True, tr('- selecione um polígono -'))
         self.layer_combo.layerChanged.connect(self._layer_changed)
         layer_row.addWidget(self.layer_combo, 1)
         layer_row.addWidget(button('Atualizar', self._populate_fields,
@@ -323,11 +323,11 @@ class VectorEvaluationDialog(QWidget):
         self.status.setText(tr('Campo {field}: {count} classes; {missing} feições sem dados.').format(
             field=field, count=len(criterion['counts']), missing=criterion['missing']))
 
-    def _append(self, criterion, distribute=True):
+    def _append(self, criterion):
+        """Sem distribuição automática: o peso novo fica em branco (0) até ser
+        digitado ou até o botão "Distribuir pesos igualmente"."""
         self._save_classes()
         self.criteria.append(criterion)
-        if distribute:
-            self._distribute()
         self._render_criteria(select=len(self.criteria) - 1)
 
     def remove_field(self):
@@ -339,7 +339,6 @@ class VectorEvaluationDialog(QWidget):
             if 0 <= index < len(self.criteria):
                 self.criteria.pop(index)
         self.active = -1
-        self._distribute()
         self._render_criteria(select=min(indices[-1], len(self.criteria) - 1))
 
     # --------------------------------------------------------------------- pesos
@@ -388,7 +387,7 @@ class VectorEvaluationDialog(QWidget):
         if not self.criteria:
             self.weights_label.setText(tr('Nenhum critério selecionado.'))
         elif abs(total - 100) <= .011 and all(c['weight'] > 0 for c in self.criteria):
-            self.weights_label.setText(tr('Pesos: 100,00% — distribuição válida.'))
+            self.weights_label.setText(tr('Pesos: 100,00% - distribuição válida.'))
         else:
             self.weights_label.setText(
                 tr('Pesos: {total:.2f}% | Falta para 100%: {remaining:+.2f} ponto(s). '
@@ -587,7 +586,7 @@ class VectorEvaluationDialog(QWidget):
         try:
             saved = read_config(path, self.MODALITY)
         except (OSError, ValueError, json.JSONDecodeError) as exc:
-            QMessageBox.warning(self, tr('Vista Saga — Projeto inválido'), tr(str(exc)))
+            QMessageBox.warning(self, tr('Vista Saga - Projeto inválido'), tr(str(exc)))
             return
         if self.criteria and QMessageBox.question(self, tr('Carregar projeto'),
                 tr('Substituir a configuração atual pelo projeto salvo?')) != QMessageBox.StandardButton.Yes:
@@ -633,7 +632,7 @@ class VectorEvaluationDialog(QWidget):
 
     def _apply_record(self, criterion, rec):
         obsolete, pending = apply_saved(criterion, rec)
-        self._append(criterion, distribute=False)
+        self._append(criterion)
         notes = []
         label = self._criterion_label(criterion)
         if obsolete:

@@ -130,7 +130,7 @@ def create_reports(txt_path, csv_path, *, combinations, criteria,
             temp = str(csv_path) + '.vistasaga_tmp'
             with open(temp, 'w', newline='', encoding='utf-8-sig') as f:
                 writer = csv.writer(f, delimiter=';')
-                writer.writerow(['VISTA SAGA PLUGIN — RELATÓRIO DE COMBINAÇÕES'])
+                writer.writerow(['VISTA SAGA PLUGIN - RELATÓRIO DE COMBINAÇÕES'])
                 for key, value in meta:
                     writer.writerow([key, fmt(value)])
                 writer.writerow([])
@@ -162,7 +162,7 @@ def create_reports(txt_path, csv_path, *, combinations, criteria,
             Path(txt_path).parent.mkdir(parents=True, exist_ok=True)
             temp = str(txt_path) + '.vistasaga_tmp'
             with open(temp, 'w', encoding='utf-8-sig', newline='\n') as f:
-                f.write('Relatório de Combinações — Vista Saga Plugin\n\n')
+                f.write('Relatório de Combinações - Vista Saga Plugin\n\n')
                 for key, value in meta:
                     f.write(f'{key}: {fmt(value)}\n')
                 f.write('\n')

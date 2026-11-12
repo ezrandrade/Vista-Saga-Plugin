@@ -18,8 +18,8 @@ PREFERRED_FIELDS = ('CODIGO', 'CLASSE', 'USO', 'TIPO_USO')
 
 class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
     MODALITY = 'sobreposicao'
-    WINDOW_TITLE = 'Vista Saga Plugin — Avaliação por sobreposição'
-    HEADING = '<b>AVALIAÇÃO ESPACIAL — SOBREPOSIÇÃO DE MAPAS VETORIAIS</b>'
+    WINDOW_TITLE = 'Vista Saga Plugin - Avaliação por sobreposição'
+    HEADING = '<b>AVALIAÇÃO ESPACIAL - SOBREPOSIÇÃO DE MAPAS VETORIAIS</b>'
     INTRO = ('Adicione pelo menos duas camadas de polígonos, escolhendo um campo temático '
              'para cada mapa. Defina pesos e notas por classe. O plugin cruzará as geometrias '
              'e avaliará somente as regiões comuns a todas as camadas (interseção espacial). '
@@ -30,7 +30,7 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
     EMPTY_CLASSES = 'Adicione um mapa e selecione-o na lista.'
     START_STATUS = 'Adicione duas ou mais camadas com SRC igual e área comum.'
     RESULT_PREFIX = 'avaliacao_sobreposicao'
-    RESULT_NAME = 'Vista Saga — Avaliação por sobreposição'
+    RESULT_NAME = 'Vista Saga - Avaliação por sobreposição'
     RUN_TEXT = 'Executar sobreposição e avaliação'
 
     def _build(self):
@@ -84,7 +84,7 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
             if not layer.isValid() or not names:
                 continue
             default = next((n for n in PREFERRED_FIELDS if n in names), names[0])
-            field, ok = QInputDialog.getItem(self, tr('Campo temático — ') + layer.name(),
+            field, ok = QInputDialog.getItem(self, tr('Campo temático - ') + layer.name(),
                 tr('Campo de classificação:'), names, names.index(default), False)
             if not ok:
                 continue

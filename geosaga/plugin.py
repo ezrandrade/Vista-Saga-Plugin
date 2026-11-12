@@ -86,7 +86,7 @@ class VistaSagaPlugin:
         # guia a partir desses menus nativos; não há dependência do Ribbon.
         self.modules_action = QAction(plugin_icon, 'Vista Saga Plugin', self.iface.mainWindow())
         self.modules_action.setObjectName('vistaSagaModulesAction')
-        self.modules_action.setToolTip(tr('Vista Saga Plugin — selecionar módulo'))
+        self.modules_action.setToolTip(tr('Vista Saga Plugin - selecionar módulo'))
         self.modules_action.setMenu(self.toolbar_menu)
         self.toolbar_menu.setTitle('Vista Saga Plugin')
         self.toolbar_menu.setIcon(plugin_icon)
@@ -123,7 +123,7 @@ class VistaSagaPlugin:
         except Exception as exc:
             log_exception(f'Abrir módulo: {title}')
             QMessageBox.critical(
-                self.iface.mainWindow(), tr(tr('Vista Saga Plugin — {module}').format(module=tr(title))),
+                self.iface.mainWindow(), tr(tr('Vista Saga Plugin - {module}').format(module=tr(title))),
                 tr(tr('Não foi possível abrir o módulo. Detalhes técnicos foram registrados no '
                    'painel de mensagens do QGIS (aba Vista Saga Plugin).') + f'\n\n{tr(str(exc))}'))
 
@@ -163,7 +163,7 @@ class VistaSagaPlugin:
             processing.execAlgorithmDialog(algorithm_id, {})
         except Exception as exc:
             log_exception(f'Abrir algoritmo {algorithm}')
-            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga — Processing'),
+            QMessageBox.critical(self.iface.mainWindow(), tr('Vista Saga - Processing'),
                                  tr('Não foi possível abrir o módulo. Confira se o Processing do QGIS está ativado.')
                                  + f'\n\n{tr(str(exc))}')
 

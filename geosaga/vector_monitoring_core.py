@@ -106,7 +106,7 @@ def write_reports(csv_path, matrix_path, txt_path, summary, *, title='', initial
         writer.writerow(['TOTAL_HA'] + [f'{sum(lookup[(a,b)] for a in starts):.6f}' for b in ends]
                         + [f"{summary['area_total_ha']:.6f}"])
     with open(txt_path, 'w', encoding='utf-8', newline='\n') as file:
-        file.write('VISTA SAGA PLUGIN — MONITORIA VETORIAL DIRETA\n' + '=' * 60 + '\n')
+        file.write('VISTA SAGA PLUGIN - MONITORIA VETORIAL DIRETA\n' + '=' * 60 + '\n')
         file.write(f'Título: {title or "Monitoria vetorial"}\nPeríodo inicial: {initial}\n'
                    f'Período final: {final}\nSRC: {crs}\n')
         for source in input_sources:

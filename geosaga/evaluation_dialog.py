@@ -20,7 +20,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsPalettedRasterRenderer, QgsMessageLog, Qgis
 
 from .evaluation_task import EvaluationTask
-from .ui_shared import (HeaderSort, OutputSection, RASTER_OUTPUT_HINT, centered_check,
+from .ui_shared import (use_tab_background, HeaderSort, OutputSection, RASTER_OUTPUT_HINT, centered_check,
                         choose_project_layers, class_sort_key, install_column_tab_navigation,
                         score_spin, table_item, temporary_destination, weight_spin)
 from .evaluation_config import config_path_for
@@ -57,7 +57,7 @@ class EvaluationDialog(QDialog):
         self._task = None
         self.project_path = ''
         self._last_scale = 10
-        self.setWindowTitle(tr('Vista Saga Plugin — Avaliação'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Avaliação'))
         self.setMinimumSize(900, 610)
         self.resize(1110, 770)
         self.setModal(False)
@@ -85,7 +85,7 @@ class EvaluationDialog(QDialog):
         self.overlay_scroll.setWidgetResizable(True)
         self.overlay_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.analysis_tabs.addTab(self.overlay_scroll, tr('Vetorial (Sobreposição)'))
-        heading = QLabel(tr('<b>AVALIAÇÃO ESPACIAL — PESOS E NOTAS</b>'))
+        heading = QLabel(tr('<b>AVALIAÇÃO ESPACIAL - PESOS E NOTAS</b>'))
         outer.addWidget(heading)
         info = QLabel(tr('Selecione mapas categóricos, informe o peso de cada tema e atribua notas às suas classes. '
                       'Classes bloqueadas não serão avaliadas.'))
@@ -144,8 +144,8 @@ class EvaluationDialog(QDialog):
         self._weight_tab = install_column_tab_navigation(self.map_table, 1)
         left_layout.addWidget(self.map_table, stretch=1)
         left_layout.addWidget(button('Distribuir pesos igualmente', self.distribute_weights,
-                                     'Volta a dividir 100% igualmente entre os mapas, '
-                                     'desfazendo pesos digitados.'))
+                                     'Divide 100% igualmente entre os mapas, substituindo '
+                                     'os pesos digitados. Mapas novos entram com peso em branco.'))
         self.weight_label = QLabel()
         self.weight_label.setWordWrap(True)
         left_layout.addWidget(self.weight_label)
@@ -233,10 +233,7 @@ class EvaluationDialog(QDialog):
                 dialog = dialog_type(self.iface, parent=self, embedded=True)
                 dialog.setMinimumSize(0, 0)
                 scroll.setWidget(dialog)
-                # QScrollArea.setWidget liga o preenchimento do fundo com a cor da
-                # janela (cinza); desligado, aparece o fundo da guia, como na Raster.
-                dialog.setAutoFillBackground(False)
-                scroll.viewport().setAutoFillBackground(False)
+                use_tab_background(scroll)
                 setattr(self, attribute, dialog)
             except Exception:
                 log_exception()
@@ -254,6 +251,7 @@ class EvaluationDialog(QDialog):
                 error.setWordWrap(True)
                 error.setAlignment(Qt.AlignmentFlag.AlignTop)
                 scroll.setWidget(error)
+                use_tab_background(scroll)
                 return
         dialog.show()
 
@@ -366,9 +364,9 @@ class EvaluationDialog(QDialog):
             'blocked': list(restored.get('bloqueadas', [])) if restored else [],
         }
         self._save_current_notes()
+        # Sem distribuição automática: o peso de um mapa novo fica em branco (0)
+        # até ser digitado ou até o botão "Distribuir pesos igualmente".
         self.entries.append(entry)
-        if restored is None:
-            self._assign_equal_weights()
         self._render_maps(select=len(self.entries)-1 if select else None)
         self.status.setText(tr('{count} categorias carregadas de {layer}.').format(count=len(categories),layer=layer.name()))
         return True
@@ -381,7 +379,6 @@ class EvaluationDialog(QDialog):
         for i in selected:
             if 0 <= i < len(self.entries):
                 self.entries.pop(i)
-        self._assign_equal_weights()
         self.current_index = -1
         self._render_maps(select=min(selected[-1], len(self.entries)-1))
         self._refresh_weight_status()
@@ -413,7 +410,7 @@ class EvaluationDialog(QDialog):
         if not self.entries:
             self.weight_label.setText(tr('Nenhum mapa selecionado.'))
         elif abs(remaining) <= .011 and all(e['weight'] > 0 for e in self.entries):
-            self.weight_label.setText(tr('Pesos: 100,00% — distribuição válida.'))
+            self.weight_label.setText(tr('Pesos: 100,00% - distribuição válida.'))
         else:
             self.weight_label.setText(
                 tr('Pesos: {total:.2f}% | Falta para 100%: {remaining:+.2f} ponto(s). Todos os mapas precisam ter peso maior que zero.').format(total=total, remaining=remaining))
@@ -478,7 +475,7 @@ class EvaluationDialog(QDialog):
                 self.class_info.setText(tr('Selecione um mapa à esquerda.'))
                 return
             e = self.entries[idx]
-            self.class_info.setText(tr(f'<b>{e["name"]}</b> — {len(e["classes"])} classes identificadas '
+            self.class_info.setText(tr(f'<b>{e["name"]}</b> - {len(e["classes"])} classes identificadas '
                                     'na banda 1, excluindo NoData.'))
             self.class_table.setRowCount(len(e['classes']))
             for r, (code, count) in enumerate(self._ordered_classes(e)):
@@ -563,9 +560,9 @@ class EvaluationDialog(QDialog):
         try:
             config = self._collect_configuration()
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Validação — Vista Saga'), tr(str(exc)))
+            QMessageBox.warning(self, tr('Validação - Vista Saga'), tr(str(exc)))
             return
-        QMessageBox.information(self, tr('Validação — Vista Saga'),
+        QMessageBox.information(self, tr('Validação - Vista Saga'),
             tr(f'Configuração válida.\nMapas: {len(config["camadas"])}\n'
             f'Escala: 0–{config["escala"]}\nPesos: 100%\n'
             'Grades verificadas: dimensões, resolução, alinhamento e SRC.'))
@@ -607,7 +604,7 @@ class EvaluationDialog(QDialog):
             self.status.setText(tr('Avaliação em execução no gerenciador de tarefas do QGIS…'))
             QgsApplication.taskManager().addTask(task)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Vista Saga — Configuração incompleta'), tr(str(exc)))
+            QMessageBox.warning(self, tr('Vista Saga - Configuração incompleta'), tr(str(exc)))
 
     def cancel_task(self):
         if self._task:
@@ -622,7 +619,7 @@ class EvaluationDialog(QDialog):
         if not success:
             text = tr(task.error or ('Operação cancelada.' if task.isCanceled() else 'Falha na avaliação.'))
             self.status.setText(text)
-            QMessageBox.warning(self, tr('Vista Saga — Execução não concluída'), tr(text))
+            QMessageBox.warning(self, tr('Vista Saga - Execução não concluída'), tr(text))
             return
         summary = task.summary or {}
         msg = f'Resultado salvo em:\n{task.destination}\n\nPixels avaliados: {summary.get("pixels_validos", 0):,}'
@@ -638,11 +635,11 @@ class EvaluationDialog(QDialog):
             msg += '\n' + tr('Pesos e notas: ') + config
         except (OSError, ValueError) as exc:
             msg += '\n' + tr('Atenção: não foi possível gravar os pesos e as notas: ') + str(exc)
-        layer = self.iface.addRasterLayer(task.destination, task.title or 'Vista Saga — Avaliação')
+        layer = self.iface.addRasterLayer(task.destination, task.title or 'Vista Saga - Avaliação')
         if not layer or not layer.isValid():
             msg += '\n\n' + tr('Atenção: não foi possível carregar o resultado no QGIS.')
         self.status.setText(tr('Avaliação concluída.'))
-        QMessageBox.information(self, tr('Vista Saga — Avaliação concluída'), msg)
+        QMessageBox.information(self, tr('Vista Saga - Avaliação concluída'), msg)
 
     def _serialize(self, dest):
         self._save_current_notes()
@@ -735,7 +732,7 @@ class EvaluationDialog(QDialog):
             self.status.setText(tr('Projeto carregado: {count} mapa(s).').format(count=len(self.entries)))
             self.refresh_available()
         except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
-            QMessageBox.warning(self, tr('Vista Saga — Projeto inválido'), tr(str(exc)))
+            QMessageBox.warning(self, tr('Vista Saga - Projeto inválido'), tr(str(exc)))
 
     def shutdown(self):
         """Descarga do plugin: cancela a tarefa e impede callbacks em janela destruída."""
