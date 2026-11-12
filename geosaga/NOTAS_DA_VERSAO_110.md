@@ -16,6 +16,8 @@ foi alterado: os resultados numéricos são os mesmos da versão anterior.
   (vetor) ou arquivo temporário (raster). Salve-o antes de fechar o QGIS.
 - **Ordenação pelo cabeçalho** das tabelas de classes (clique de novo para inverter).
 - **TAB salta entre os pesos e entre as notas**, já com o valor selecionado para digitar.
+- **Classes sem nota em destaque**, com a contagem na coluna Classes; “Validar” lista todas as
+  pendências e avisa sobre feições com campo vazio.
 - **Pesos em branco** para mapas e critérios novos; a divisão por igual só acontece no botão
   “Distribuir pesos igualmente”.
 - **Mesmo fundo** nas guias de todos os módulos, e **traço simples (-)** no lugar do travessão nos

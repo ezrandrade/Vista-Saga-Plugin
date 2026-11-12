@@ -177,3 +177,15 @@ def apply_saved(criterion, saved):
     obsolete = (set(saved['notas']) | set(saved['nao_avaliar'])) - present
     pending = present - set(criterion['notes']) - criterion['excluded']
     return obsolete, pending
+
+
+def pending_classes(categories, notes, excluded):
+    """Classes ainda sem decisão (nem nota nem “Não avaliar”), em ordem natural.
+
+    É o que bloqueia a execução: o plugin nunca supõe nota 0 nem exclui a
+    classe por conta própria, porque isso mudaria o resultado sem um
+    julgamento explícito do usuário.
+    """
+    from .ui_shared import class_sort_key
+    return sorted(set(map(str, categories)) - set(map(str, notes)) - set(map(str, excluded)),
+                  key=class_sort_key)

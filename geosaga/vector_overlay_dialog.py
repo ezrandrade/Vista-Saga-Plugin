@@ -152,6 +152,8 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
         return problems
 
     def validate_configuration(self):
+        if self._show_pending():
+            return
         try:
             self._rules()
             validate_overlay_plan(self.criteria)
@@ -160,7 +162,7 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
                 tr(f'{len(sources)} camadas, {len(self.criteria)} critérios; pesos totalizam 100%.\n\n'
                 'A saída representará SOMENTE áreas cobertas por todos os mapas. '
                 'Sobreposições parciais e lacunas de cobertura podem reduzir a área avaliada. '
-                'Feições com classes excluídas ou nulas permanecem, mas sem nota.'))
+                'Feições com classes excluídas ou nulas permanecem, mas sem nota.') + self._empty_field_warning())
         except (ValueError, TypeError) as exc:
             QMessageBox.warning(self, tr('Configuração incompleta'), tr(str(exc)))
 

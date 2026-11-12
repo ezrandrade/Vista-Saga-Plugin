@@ -501,3 +501,51 @@ def use_tab_background(scroll):
     widget = scroll.widget()
     if widget is not None:
         widget.setAutoFillBackground(False)
+
+
+# ---------------------------------------------------------------------------
+# Pendências: classes sem nota (bloqueiam) e feições com campo vazio (avisam).
+# ---------------------------------------------------------------------------
+MAX_LISTED_CLASSES = 20
+
+
+def mark_pending(items, pending):
+    """Destaca em âmbar translúcido (legível em tema claro e escuro)."""
+    from qgis.PyQt.QtGui import QBrush, QColor
+    brush = QBrush(QColor(255, 193, 7, 90)) if pending else QBrush()
+    for item in items:
+        if item is not None:
+            item.setBackground(brush)
+            item.setToolTip(tr('Classe sem nota: atribua uma nota ou marque “Não avaliar”.')
+                            if pending else '')
+
+
+def class_count_text(total, pending):
+    if not pending:
+        return str(total)
+    return tr('{total} ({pending} sem nota)').format(total=total, pending=pending)
+
+
+def pending_messages(groups):
+    """groups: [(rótulo, classes pendentes, feições com campo vazio)].
+
+    Devolve (texto que bloqueia, texto de aviso); vazio quando não há nada.
+    """
+    blocking, warnings = [], []
+    for label, pending, missing in groups:
+        if pending:
+            shown = ', '.join(pending[:MAX_LISTED_CLASSES])
+            if len(pending) > MAX_LISTED_CLASSES:
+                shown += ', …'
+            blocking.append(tr('{label}: {count} classe(s) sem nota ({classes})').format(
+                label=label, count=len(pending), classes=shown))
+        if missing:
+            warnings.append(tr('{label}: {count} feição(ões) com o campo vazio ficarão sem nota.').format(
+                label=label, count=missing))
+    return '\n'.join(blocking), '\n'.join(warnings)
+
+
+PENDING_HEADER = ('Atribua uma nota ou marque “Não avaliar” nas classes abaixo. '
+                  'A avaliação não é executada com classes pendentes.')
+EMPTY_FIELD_HEADER = ('Aviso: campos vazios não são classes e não podem receber nota. '
+                      'Corrija a camada ou aceite que essas feições fiquem sem nota.')

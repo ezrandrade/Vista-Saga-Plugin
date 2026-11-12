@@ -23,7 +23,12 @@ from .evaluation_task import EvaluationTask
 from .ui_shared import (use_tab_background, HeaderSort, OutputSection, RASTER_OUTPUT_HINT, centered_check,
                         choose_project_layers, class_sort_key, install_column_tab_navigation,
                         score_spin, table_item, temporary_destination, weight_spin)
-from .evaluation_config import config_path_for
+from .evaluation_config import config_path_for, pending_classes
+from .ui_shared import PENDING_HEADER, class_count_text, mark_pending, pending_messages
+
+PENDING_HINT = ('Classes em destaque ainda estão sem nota (“—”). A avaliação só é executada quando '
+                'todas as classes têm nota ou estão marcadas em “Não avaliar”; a coluna Classes, '
+                'à esquerda, mostra quantas faltam em cada mapa.')
 from .raster_engine import file_source, open_raster, same_grid, scan_classes
 from .errors import log_exception
 
@@ -180,8 +185,7 @@ class EvaluationDialog(QDialog):
         assign.addWidget(button('Aplicar', self.apply_score))
         assign.addStretch()
         right_layout.addLayout(assign)
-        hint = QLabel(tr('Clique nas notas para editá-las. A nota “—” significa não definida. '
-                      'Marcar “Não avaliar” transforma os pixels da classe em NoData.'))
+        hint = QLabel(tr(PENDING_HINT))
         hint.setWordWrap(True)
         right_layout.addWidget(hint)
         splitter.addWidget(right)
@@ -426,7 +430,7 @@ class EvaluationDialog(QDialog):
                 spin = weight_spin(e['weight'], lambda value, idx=i: self._weight_changed(idx, value))
                 spin.installEventFilter(self._weight_tab)
                 self.map_table.setCellWidget(i, 1, spin)
-                self.map_table.setItem(i, 2, table_item(len(e['classes']), numeric=True))
+                self.map_table.setItem(i, 2, self._count_item(e))
             if select is not None and 0 <= select < len(self.entries):
                 self.map_table.selectRow(select)
                 self.current_index = select
@@ -490,12 +494,49 @@ class EvaluationDialog(QDialog):
                 score.installEventFilter(self._score_tab)
                 self.class_table.setCellWidget(r, 2, score)
                 center, skip = centered_check(code in e['blocked'],
-                                              'Exclui da avaliação os pixels desta classe.')
+                                              'Exclui da avaliação os pixels desta classe (ficam NoData).')
                 score.setEnabled(not skip.isChecked())
                 skip.toggled.connect(lambda checked, target=score: target.setEnabled(not checked))
+                score.valueChanged.connect(self._class_edited)
+                skip.toggled.connect(self._class_edited)
                 self.class_table.setCellWidget(r, 3, center)
         finally:
             self._rendering = False
+        self._mark_class_rows()
+
+    # ------------------------------------------------------------- pendências
+    def _pending(self, e):
+        return pending_classes([code for code, _ in e['classes']], e['notes'], e['blocked'])
+
+    def _count_item(self, e):
+        pending = len(self._pending(e))
+        item = table_item(class_count_text(len(e['classes']), pending), numeric=True)
+        mark_pending([item], pending)
+        return item
+
+    def _mark_class_rows(self):
+        for r in range(self.class_table.rowCount()):
+            spin = self.class_table.cellWidget(r, 2)
+            skip = self._get_skip(r)
+            pending = not (skip is not None and skip.isChecked()) and (spin is None or spin.value() < 0)
+            mark_pending([self.class_table.item(r, 0), self.class_table.item(r, 1)], pending)
+
+    def _class_edited(self, *_):
+        """Atualiza destaques e a contagem de pendências a cada nota digitada."""
+        if self._rendering or not 0 <= self.current_index < len(self.entries):
+            return
+        self._save_current_notes()
+        self._mark_class_rows()
+        self.map_table.setItem(self.current_index, 2, self._count_item(self.entries[self.current_index]))
+
+    def _show_pending(self):
+        """Lista TODAS as classes sem nota, por mapa; True se houver alguma."""
+        self._save_current_notes()
+        blocking, _ = pending_messages([(e['name'], self._pending(e), 0) for e in self.entries])
+        if not blocking:
+            return False
+        QMessageBox.warning(self, tr('Classes sem nota'), tr(PENDING_HEADER) + '\n\n' + blocking)
+        return True
 
     def _ordered_classes(self, e):
         notes, blocked, labels = e['notes'], set(e['blocked']), e['labels']
@@ -557,6 +598,8 @@ class EvaluationDialog(QDialog):
                 'legendas': [e['labels'] for e in self.entries]}
 
     def preview_validation(self):
+        if self._show_pending():
+            return
         try:
             config = self._collect_configuration()
         except (ValueError, OSError) as exc:
@@ -575,7 +618,7 @@ class EvaluationDialog(QDialog):
             self.output_edit.setText(tr(path if path.lower().endswith(('.tif', '.tiff')) else path + '.tif'))
 
     def execute(self):
-        if self._task:
+        if self._task or self._show_pending():
             return
         try:
             config = self._collect_configuration()

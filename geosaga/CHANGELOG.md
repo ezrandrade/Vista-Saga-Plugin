@@ -29,6 +29,13 @@ motores da 1.0.9. Muda a interface do módulo Avaliação e a forma de entregar 
 - **Mesmo fundo em todo o plugin:** as áreas com rolagem (guias vetoriais da Avaliação e da
   Monitoria, Assinatura, Voronoi, Conversão de formatos e Sequenciador) deixam de pintar o fundo
   de cinza e passam a usar o fundo padrão da guia do QGIS.
+- **Classes sem nota em evidência:** a nota “—” continua bloqueando a execução (o plugin nunca
+  supõe nota 0 nem exclui a classe sozinho), mas agora as classes pendentes ficam destacadas, a
+  coluna Classes mostra “7 (2 sem nota)” e o destaque some à medida que as notas são digitadas.
+  “Validar” e “Executar” listam todas as pendências, por camada ou mapa (antes, só as 5 primeiras
+  apareciam). Feições com o campo temático vazio não bloqueiam: aparecem como aviso em “Validar”
+  e na lista de pendências. A dica da tabela foi encurtada; “Repetir a mesma nota nas classes
+  selecionadas” substitui “Nota selecionada”, e o botão passou a “Aplicar”.
 - **Pesos sem distribuição automática:** mapas e critérios novos entram com o peso em branco;
   remover um item não altera os demais. A divisão por igual só ocorre no botão “Distribuir pesos
   igualmente”.

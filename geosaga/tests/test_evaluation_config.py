@@ -143,6 +143,27 @@ class EvaluationConfigTests(unittest.TestCase):
             body = text.split(method, 1)[1].split('\n    def ', 1)[0]
             self.assertTrue('_assign_equal_weights()' in body or '_distribute()' in body)
 
+    def test_pending_classes_block_only_undecided_classes(self):
+        self.assertEqual(cfg.pending_classes(['11', '2', '1', 'Mata'], {'1': 0.0}, {'Mata'}), ['2', '11'])
+        self.assertEqual(cfg.pending_classes(['1'], {'1': 0.0}, set()), [])  # zero é nota válida
+
+    def test_pending_messages_list_all_classes_and_warn_empty_fields(self):
+        from geosaga.ui_shared import class_count_text, pending_messages
+        import geosaga.i18n as i18n
+        original = i18n.qgis_language
+        i18n.qgis_language = lambda: 'pt'  # textos de origem, sem depender do idioma da máquina
+        self.addCleanup(setattr, i18n, 'qgis_language', original)
+        many = [str(i) for i in range(25)]
+        blocking, warnings = pending_messages([('Solos', many, 0), ('Uso', [], 3), ('Decl', ['4'], 0)])
+        self.assertIn('Solos: 25 classe(s) sem nota (0, 1,', blocking)
+        self.assertIn(', …)', blocking)
+        self.assertIn('Decl: 1 classe(s) sem nota (4)', blocking)
+        self.assertNotIn('Uso', blocking)
+        self.assertEqual(warnings, 'Uso: 3 feição(ões) com o campo vazio ficarão sem nota.')
+        self.assertEqual(pending_messages([('A', [], 0)]), ('', ''))
+        self.assertEqual(class_count_text(7, 0), '7')
+        self.assertEqual(class_count_text(7, 2), '7 (2 sem nota)')
+
 
 if __name__ == '__main__':
     unittest.main()

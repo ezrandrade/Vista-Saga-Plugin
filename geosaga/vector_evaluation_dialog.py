@@ -18,18 +18,22 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import Qgis, QgsProject, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
 from .ui_shared import (
+    EMPTY_FIELD_HEADER, PENDING_HEADER, class_count_text, mark_pending, pending_messages,
     HeaderSort, OutputSection, class_sort_key, install_column_tab_navigation, VECTOR_OUTPUT_HINT, cell_check, centered_check, materialize_in_memory,
     open_polygon_files, load_vector_source, score_spin, table_item, temporary_destination,
     vector_start_directory, weight_spin,
 )
 
 from .evaluation_config import (
-    SUFFIX, apply_saved, build_config, config_path_for, read_config, write_config,
+    SUFFIX, apply_saved, pending_classes, build_config, config_path_for, read_config, write_config,
 )
 from .vector_evaluation_core import category_key, validate_criteria
 from .vector_evaluation_writer import evaluate_vector_layer
 
 MAX_CATEGORIES = 256
+PENDING_HINT = ('Classes em destaque ainda estão sem nota (“—”). A avaliação só é executada quando '
+                'todas as classes têm nota ou estão marcadas em “Não avaliar”; a coluna Classes, '
+                'à esquerda, mostra quantas faltam em cada critério.')
 COL_CLASS, COL_COUNT, COL_SCORE, COL_SKIP = range(4)
 
 
@@ -185,11 +189,7 @@ class VectorEvaluationDialog(QWidget):
         batch.addWidget(button('Aplicar', self.apply_note))
         batch.addStretch(1)
         rl.addLayout(batch)
-        tip = QLabel(tr('Clique nas notas para editá-las. A nota “—” significa não definida: '
-                        'a avaliação só é executada quando todas as classes têm nota ou estão '
-                        'marcadas em “Não avaliar”. Marcar “Não avaliar” deixa a feição sem nota '
-                        '(AVALIACAO nula), mas ela permanece no GeoPackage. '
-                        'Valores nulos no campo também deixam a feição sem nota.'))
+        tip = QLabel(tr(PENDING_HINT))
         tip.setWordWrap(True)
         rl.addWidget(tip)
         split.addWidget(right)
@@ -366,7 +366,7 @@ class VectorEvaluationDialog(QWidget):
             spin = weight_spin(criterion['weight'], lambda value, i=row: self._weight_changed(i, value))
             spin.installEventFilter(self._weight_tab)
             self.criteria_table.setCellWidget(row, 1, spin)
-            self.criteria_table.setItem(row, 2, table_item(len(criterion['counts']), numeric=True))
+            self.criteria_table.setItem(row, 2, self._count_item(criterion))
         self._rendering = False
         self.active = -1
         if select is not None and 0 <= select < len(self.criteria):
@@ -439,13 +439,62 @@ class VectorEvaluationDialog(QWidget):
             spin.installEventFilter(self._score_tab)
             self.classes_table.setCellWidget(row, COL_SCORE, spin)
             holder, check = centered_check(key in criterion['excluded'],
-                                           'Deixa sem nota as feições desta classe.')
+                                           'Deixa sem nota (AVALIACAO nula) as feições desta classe; '
+                                           'elas permanecem no resultado.')
             spin.setEnabled(not check.isChecked())
             check.toggled.connect(lambda checked, target=spin: target.setEnabled(not checked))
+            spin.valueChanged.connect(self._class_edited)
+            check.toggled.connect(self._class_edited)
             self.classes_table.setCellWidget(row, COL_SKIP, holder)
         self._rendering = False
+        self._mark_class_rows()
         self.class_label.setText(tr('{field}: {count} classes válidas.').format(
             field=self._criterion_label(criterion), count=len(categories)))
+
+    # ------------------------------------------------------------- pendências
+    def _pending(self, criterion):
+        return pending_classes(criterion['counts'], criterion['notes'], criterion['excluded'])
+
+    def _count_item(self, criterion):
+        pending = len(self._pending(criterion))
+        item = table_item(class_count_text(len(criterion['counts']), pending), numeric=True)
+        mark_pending([item], pending)
+        return item
+
+    def _mark_class_rows(self):
+        for row in range(self.classes_table.rowCount()):
+            spin = self.classes_table.cellWidget(row, COL_SCORE)
+            check = cell_check(self.classes_table, row, COL_SKIP)
+            pending = not (check is not None and check.isChecked()) and (spin is None or spin.value() < 0)
+            mark_pending([self.classes_table.item(row, COL_CLASS),
+                          self.classes_table.item(row, COL_COUNT)], pending)
+
+    def _class_edited(self, *_):
+        """Atualiza destaques e a contagem de pendências a cada nota digitada."""
+        if self._rendering or not 0 <= self.active < len(self.criteria):
+            return
+        self._save_classes()
+        self._mark_class_rows()
+        self.criteria_table.setItem(self.active, 2, self._count_item(self.criteria[self.active]))
+
+    def _pending_groups(self):
+        self._save_classes()
+        return [(self._criterion_label(c), self._pending(c), c.get('missing', 0)) for c in self.criteria]
+
+    def _show_pending(self):
+        """Lista TODAS as classes sem nota, por critério; True se houver alguma."""
+        blocking, warnings = pending_messages(self._pending_groups())
+        if not blocking:
+            return False
+        text = tr(PENDING_HEADER) + '\n\n' + blocking
+        if warnings:
+            text += '\n\n' + tr(EMPTY_FIELD_HEADER) + '\n' + warnings
+        QMessageBox.warning(self, tr('Classes sem nota'), text)
+        return True
+
+    def _empty_field_warning(self):
+        _, warnings = pending_messages(self._pending_groups())
+        return ('\n\n' + tr(EMPTY_FIELD_HEADER) + '\n' + warnings) if warnings else ''
 
     def _ordered_classes(self, criterion):
         counts, notes, excluded = criterion['counts'], criterion['notes'], criterion['excluded']
@@ -512,6 +561,8 @@ class VectorEvaluationDialog(QWidget):
         return validate_criteria(self._engine_criteria(), scale=self._scale())
 
     def validate_configuration(self):
+        if self._show_pending():
+            return
         try:
             rules = self._rules()
             layer = self._layer()
@@ -521,7 +572,7 @@ class VectorEvaluationDialog(QWidget):
                 raise ValueError('Salve as alterações da camada antes de avaliar.')
             QMessageBox.information(self, tr('Avaliação vetorial'),
                 tr(f'Configuração válida: {len(rules)} critérios; {layer.featureCount()} feições. '
-                'As feições excluídas ou sem dado terão avaliação nula.'))
+                'As feições excluídas ou sem dado terão avaliação nula.') + self._empty_field_warning())
         except (ValueError, TypeError) as exc:
             QMessageBox.warning(self, tr('Regras incompletas'), tr(str(exc)))
 
@@ -697,7 +748,7 @@ class VectorEvaluationDialog(QWidget):
         return layer if layer and layer.isValid() else None
 
     def execute(self):
-        if self.running:
+        if self.running or self._show_pending():
             return
         try:
             self._check_inputs()
