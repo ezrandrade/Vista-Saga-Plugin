@@ -6,9 +6,9 @@
 
 **Site oficial e apresentação do projeto:** [vistasagaplugin.wordpress.com](https://vistasagaplugin.wordpress.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
 
-**Versão do código-fonte: `1.0.6` (11/11/2026).** Nova conversão **Vetor → RS2** e correção do formato RS2 para legendas com códigos não consecutivos, como as gravadas pelo Vista SAGA original; inclui as correções de estabilidade da 1.0.5. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
+**Versão do código-fonte: `1.0.8` (12/11/2026).** Novo ícone principal e ícones para os sete módulos no menu suspenso; inclui a conversão **Vetor → RS2** e as correções do formato RS2 da 1.0.6 e as correções de estabilidade da 1.0.5. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
 
-> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.6](geosaga/NOTAS_DA_VERSAO_106.md) · [Testes](tests/README.md).
+> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.8](geosaga/NOTAS_DA_VERSAO_108.md) · [Testes](tests/README.md).
 
 ## Módulos
 
@@ -58,6 +58,7 @@ python scripts/build_release.py
 
 ## Histórico, suporte e licença
 
+- [Notas da versão 1.0.8 (novos ícones)](geosaga/NOTAS_DA_VERSAO_108.md)
 - [Notas da versão 1.0.6 (Vetor → RS2 e formato RS2)](geosaga/NOTAS_DA_VERSAO_106.md)
 - [Notas da versão 1.0.5 (estabilidade)](geosaga/NOTAS_DA_VERSAO_105.md)
 - [Notas da versão 1.0.4 (pacote consolidado)](geosaga/NOTAS_DA_VERSAO_104.md)

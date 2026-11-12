@@ -1,3 +1,17 @@
+## 1.0.8 — novos ícones (2026-11-12)
+
+Nenhum algoritmo de processamento foi alterado; os identificadores `geosaga:*` foram preservados.
+
+- **Ícone principal:** o botão do plugin, os menus Raster e Complementos e a guia do QRibbonSkin
+  passam a usar o novo desenho da mão com o globo, em estilo plano. Os PNG de 16 a 512 px
+  (inclusive o de 19 px do QRibbonSkin) foram gerados a partir de um único SVG
+  (`icons/vista_saga_plugin.svg`), sem mudança no código do botão.
+- **Ícones dos módulos:** cada um dos sete itens do menu suspenso exibe o ícone do seu módulo
+  (`icons/modulos/*.svg`). Arquivo ausente não remove o item do menu.
+- Teste novo garante que todo módulo do menu tem um SVG existente, quadrado e sem scripts ou
+  referências externas.
+- A 1.0.7 existiu apenas como build interno de teste (1.0.7-dev1) e não foi lançada.
+
 ## 1.0.6 — conversão Vetor → RS2 e correção do formato RS2 (2026-11-11)
 
 - **Nova operação Vetor → RS2 (rasterização Vista SAGA)** no Conversor de formatos, sem a etapa

@@ -22,6 +22,26 @@ MODULES = (
     ('sequence_dialog', 'image_sequence_dialog', 'ImageSequenceDialog', 'Sequenciador de Mapas', 'open_sequence'),
 )
 
+# Ícone de cada módulo no menu suspenso (SVG em icons/modulos/), pelo método que o abre.
+# Ficam fora de MODULES porque o código desempacota essa tabela pela posição.
+MODULE_ICONS = {
+    'open_signature': 'assinatura_espacial.svg',
+    'open_monitoring': 'monitoria_espacial.svg',
+    'open_interactive': 'avaliacao_espacial.svg',
+    'open_voronoi': 'analises_voronoi.svg',
+    'open_combination': 'combinacao_mapas.svg',
+    'open_rs2_converter': 'conversor.svg',
+    'open_sequence': 'sequenciador_mapas.svg',
+}
+MODULE_ICON_DIR = Path(__file__).resolve().parent / 'icons' / 'modulos'
+
+
+def module_icon(method):
+    """QIcon do módulo; ícone vazio (o item continua no menu) se o arquivo faltar."""
+    name = MODULE_ICONS.get(method)
+    path = MODULE_ICON_DIR / name if name else None
+    return QIcon(str(path)) if path is not None and path.is_file() else QIcon()
+
 
 class VistaSagaPlugin:
     MENU = 'Vista Saga Plugin'
@@ -56,7 +76,7 @@ class VistaSagaPlugin:
 
         self.toolbar_menu = QMenu(self.iface.mainWindow())
         for *_spec, title, method in MODULES:
-            action = QAction(tr(title), self.iface.mainWindow())
+            action = QAction(module_icon(method), tr(title), self.iface.mainWindow())
             action.triggered.connect(getattr(self, method))
             self.toolbar_menu.addAction(action)
             self.actions.append(action)

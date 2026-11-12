@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs>
+<linearGradient id="paper" x2="0.8" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#dce9f3"/></linearGradient>
+<linearGradient id="blue" x2="0.6" y2="1"><stop stop-color="#8dc6e7"/><stop offset="1" stop-color="#3e729b"/></linearGradient>
+<linearGradient id="cyan" x2="0.5" y2="1"><stop stop-color="#a7e5e9"/><stop offset="1" stop-color="#40a9be"/></linearGradient>
+<linearGradient id="gold" x2="0.5" y2="1"><stop stop-color="#ffe4a0"/><stop offset="1" stop-color="#edb64c"/></linearGradient>
+<linearGradient id="coral" x2="0.5" y2="1"><stop stop-color="#ffc2af"/><stop offset="1" stop-color="#e77d70"/></linearGradient>
+<clipPath id="tile"><rect x="8" y="8" width="48" height="48" rx="5"/></clipPath>
+</defs><g stroke-linecap="round" stroke-linejoin="round"><path d="M10 7 H28 L36 15 V40 H10 Q7 40 7 37 V10 Q7 7 10 7Z" fill="url(#paper)" stroke="#507b9c" stroke-width="1.8"/><path d="M28 7 V15 H36" fill="url(#blue)" stroke="#507b9c" stroke-width="1.8"/><path d="M31 24 H48 L57 33 V55 Q57 58 54 58 H31 Q28 58 28 55 V27 Q28 24 31 24Z" fill="url(#paper)" stroke="#507b9c" stroke-width="1.8"/><path d="M48 24 V33 H57" fill="url(#blue)" stroke="#507b9c" stroke-width="1.8"/><path d="M13 17 H24 M13 22 H21 M40 48 H50 M40 53 H50" fill="none" stroke="#9bb8cb" stroke-width="2"/><path d="M15 29 H35 V24 L45 33 L35 42 V37 H15Z" fill="url(#cyan)" stroke="#507b9c" stroke-width="1.8"/><path d="M47 43 H27 V38 L17 47 L27 56 V51 H47Z" fill="url(#coral)" stroke="#507b9c" stroke-width="1.8"/></g></svg>
