@@ -22,6 +22,7 @@ foi alterado: os resultados numéricos são os mesmos da versão anterior.
   “Distribuir pesos igualmente”.
 - **Mesmo fundo** nas guias de todos os módulos, e **traço simples (-)** no lugar do travessão nos
   textos de interface e relatórios.
+- **Interface completa em espanhol**, em todos os módulos.
 - **Guia Raster sem Título e Autor**; o título dos relatórios passa a ser o nome do arquivo salvo.
 - **Pesos e notas reaproveitáveis:** cada execução grava `<resultado>_pesos_notas.geosaga.json`.
   Para repetir a configuração em outra avaliação, use “Abrir projeto…” na mesma guia.

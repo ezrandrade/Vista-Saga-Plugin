@@ -46,9 +46,10 @@ motores da 1.0.9. Muda a interface do módulo Avaliação e a forma de entregar 
 - **Guia Raster sem Título e Autor:** o título dos relatórios e dos metadados do GeoTIFF passa a
   ser o nome do arquivo salvo (vazio no resultado temporário); o autor fica em branco. Projetos
   antigos com título e autor continuam abrindo (os campos são ignorados).
-- **Espanhol completo no módulo Avaliação:** as 210 frases que faltavam no catálogo espanhol
-  (antes, a interface em espanhol mostrava parte dos textos em inglês). Os demais módulos seguem
-  com o espanhol parcial. No inglês, a linha de situação dos pesos usa o mesmo texto nas três guias.
+- **Espanhol completo em todo o plugin:** o catálogo espanhol passou de 226 para todas as 1.508
+  frases (antes, a interface em espanhol mostrava a maior parte dos textos em inglês). Um teste
+  novo exige que toda frase nova entre nos catálogos inglês e espanhol. No inglês, a linha de
+  situação dos pesos usa o mesmo texto nas três guias da Avaliação.
 - **Arquivo de pesos e notas:** cada execução grava `<resultado>_pesos_notas.geosaga.json`
   (pesos, notas, classes não avaliadas, camada e campo de origem), que “Abrir projeto…” reaplica
   em outra avaliação. Classes que deixaram de existir e classes novas sem nota são informadas.
