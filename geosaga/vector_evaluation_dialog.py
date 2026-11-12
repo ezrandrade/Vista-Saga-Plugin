@@ -18,7 +18,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import Qgis, QgsProject, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
 from .ui_shared import (
-    OutputSection, VECTOR_OUTPUT_HINT, cell_check, centered_check, materialize_in_memory,
+    HeaderSort, OutputSection, class_sort_key, install_column_tab_navigation, VECTOR_OUTPUT_HINT, cell_check, centered_check, materialize_in_memory,
     open_polygon_files, load_vector_source, score_spin, table_item, temporary_destination,
     vector_start_directory, weight_spin,
 )
@@ -26,7 +26,7 @@ from .ui_shared import (
 from .evaluation_config import (
     SUFFIX, apply_saved, build_config, config_path_for, read_config, write_config,
 )
-from .vector_evaluation_core import category_key, category_sort, validate_criteria
+from .vector_evaluation_core import category_key, validate_criteria
 from .vector_evaluation_writer import evaluate_vector_layer
 
 MAX_CATEGORIES = 256
@@ -145,6 +145,7 @@ class VectorEvaluationDialog(QWidget):
         head.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         head.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.criteria_table.itemSelectionChanged.connect(self._criterion_selected)
+        self._weight_tab = install_column_tab_navigation(self.criteria_table, 1)
         ll.addWidget(self.criteria_table, stretch=1)
         ll.addWidget(button('Distribuir pesos igualmente', self.distribute_weights,
                             'Volta a dividir 100% igualmente entre os critérios, '
@@ -170,6 +171,9 @@ class VectorEvaluationDialog(QWidget):
         head.setSectionResizeMode(COL_CLASS, QHeaderView.ResizeMode.Stretch)
         for column in (COL_COUNT, COL_SCORE, COL_SKIP):
             head.setSectionResizeMode(column, QHeaderView.ResizeMode.ResizeToContents)
+        self._score_tab = install_column_tab_navigation(self.classes_table, COL_SCORE)
+        self.class_sort = HeaderSort(self.classes_table, (COL_CLASS, COL_COUNT, COL_SCORE, COL_SKIP),
+                                     self._resort_classes)
         rl.addWidget(self.classes_table, stretch=1)
         batch = QHBoxLayout()
         batch.addWidget(QLabel(tr('Nota selecionada:')))
@@ -360,8 +364,9 @@ class VectorEvaluationDialog(QWidget):
         self.criteria_table.setRowCount(len(self.criteria))
         for row, criterion in enumerate(self.criteria):
             self.criteria_table.setItem(row, 0, table_item(self._criterion_label(criterion), numeric=False))
-            self.criteria_table.setCellWidget(row, 1, weight_spin(
-                criterion['weight'], lambda value, i=row: self._weight_changed(i, value)))
+            spin = weight_spin(criterion['weight'], lambda value, i=row: self._weight_changed(i, value))
+            spin.installEventFilter(self._weight_tab)
+            self.criteria_table.setCellWidget(row, 1, spin)
             self.criteria_table.setItem(row, 2, table_item(len(criterion['counts']), numeric=True))
         self._rendering = False
         self.active = -1
@@ -421,7 +426,7 @@ class VectorEvaluationDialog(QWidget):
             self.class_label.setText(tr(self.EMPTY_CLASSES))
             return
         criterion = self.criteria[next_index]
-        categories = sorted(criterion['counts'], key=category_sort)
+        categories = self._ordered_classes(criterion)
         scale = self._scale()
         self._rendering = True
         self.classes_table.setRowCount(len(categories))
@@ -432,6 +437,7 @@ class VectorEvaluationDialog(QWidget):
             self.classes_table.setItem(row, COL_COUNT, table_item(criterion['counts'][key], numeric=True))
             note = criterion['notes'].get(key)
             spin = score_spin(scale, None if note is None else min(float(note), scale))
+            spin.installEventFilter(self._score_tab)
             self.classes_table.setCellWidget(row, COL_SCORE, spin)
             holder, check = centered_check(key in criterion['excluded'],
                                            'Deixa sem nota as feições desta classe.')
@@ -441,6 +447,21 @@ class VectorEvaluationDialog(QWidget):
         self._rendering = False
         self.class_label.setText(tr('{field}: {count} classes válidas.').format(
             field=self._criterion_label(criterion), count=len(categories)))
+
+    def _ordered_classes(self, criterion):
+        counts, notes, excluded = criterion['counts'], criterion['notes'], criterion['excluded']
+        return self.class_sort.order(counts, {
+            COL_CLASS: class_sort_key,
+            COL_COUNT: lambda k: (counts[k], class_sort_key(k)),
+            COL_SCORE: lambda k: (-2.0 if k in excluded else float(notes.get(k, -1)), class_sort_key(k)),
+            COL_SKIP: lambda k: (k in excluded, class_sort_key(k)),
+        })
+
+    def _resort_classes(self):
+        """Reconstrói a tabela de classes na ordem do cabeçalho, sem perder notas."""
+        self._save_classes()
+        self.active = -1
+        self._criterion_selected()
 
     def apply_note(self):
         if self.active < 0:

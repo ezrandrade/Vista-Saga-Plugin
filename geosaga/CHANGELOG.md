@@ -21,6 +21,16 @@ motores da 1.0.9. Muda a interface do módulo Avaliação e a forma de entregar 
   “Salvar em” vazio: o resultado vetorial é carregado como camada temporária em memória; o raster,
   como arquivo temporário (o QGIS não mantém rasters em memória). Com um arquivo indicado, o
   resultado é salvo e carregado no QGIS. Relatórios CSV e TXT mantidos.
+- **Ordenação das classes:** clicar no cabeçalho (Classe, Feições/Descrição, Nota ou Não avaliar)
+  ordena a tabela; clicar de novo inverte a ordem. Classes numéricas seguem a ordem numérica
+  (2 antes de 11), e as notas digitadas são preservadas.
+- **TAB entre pesos e entre notas:** TAB e Shift+TAB saltam direto para o próximo campo de peso ou
+  de nota, com o valor já selecionado para digitação; classes em “Não avaliar” são puladas.
+- **Mesmo fundo nas três guias:** as guias vetoriais deixam de pintar o fundo de cinza e passam a
+  usar o fundo padrão da guia, como a Raster.
+- **Guia Raster sem Título e Autor:** o título dos relatórios e dos metadados do GeoTIFF passa a
+  ser o nome do arquivo salvo (vazio no resultado temporário); o autor fica em branco. Projetos
+  antigos com título e autor continuam abrindo (os campos são ignorados).
 - **Arquivo de pesos e notas:** cada execução grava `<resultado>_pesos_notas.geosaga.json`
   (pesos, notas, classes não avaliadas, camada e campo de origem), que “Abrir projeto…” reaplica
   em outra avaliação. Classes que deixaram de existir e classes novas sem nota são informadas.

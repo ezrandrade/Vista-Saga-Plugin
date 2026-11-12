@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _support  # noqa: E402,F401
 
 from geosaga import evaluation_config as cfg  # noqa: E402
-from geosaga.ui_shared import looks_numeric  # noqa: E402
+from geosaga.ui_shared import class_sort_key, looks_numeric  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 
 def criterion(counts):
@@ -85,6 +86,24 @@ class EvaluationConfigTests(unittest.TestCase):
             self.assertTrue(looks_numeric(value), value)
         for value in ('Floresta', '1a', 'Classe 2', ''):
             self.assertFalse(looks_numeric(value), value)
+
+    def test_class_order_is_numeric_then_text(self):
+        keys = ['11', 'Floresta', '2', 'agua', '1.5', '-1']
+        self.assertEqual(sorted(keys, key=class_sort_key), ['-1', '1.5', '2', '11', 'agua', 'Floresta'])
+
+    def test_three_tabs_share_sort_tab_navigation_and_background(self):
+        root = Path(__file__).resolve().parents[1]
+        raster = (root / 'evaluation_dialog.py').read_text(encoding='utf-8')
+        vector = (root / 'vector_evaluation_dialog.py').read_text(encoding='utf-8')
+        for text in (raster, vector):
+            self.assertIn('HeaderSort(', text)
+            self.assertEqual(text.count('install_column_tab_navigation('), 2)
+            self.assertIn('.installEventFilter(self._score_tab)', text)
+            self.assertIn('.installEventFilter(self._weight_tab)', text)
+        self.assertIn('dialog.setAutoFillBackground(False)', raster)
+        self.assertIn('scroll.viewport().setAutoFillBackground(False)', raster)
+        self.assertNotIn('title_edit', raster)
+        self.assertNotIn('author_edit', raster)
 
 
 if __name__ == '__main__':

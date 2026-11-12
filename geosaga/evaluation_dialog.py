@@ -20,7 +20,8 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsPalettedRasterRenderer, QgsMessageLog, Qgis
 
 from .evaluation_task import EvaluationTask
-from .ui_shared import (OutputSection, RASTER_OUTPUT_HINT, centered_check, choose_project_layers,
+from .ui_shared import (HeaderSort, OutputSection, RASTER_OUTPUT_HINT, centered_check,
+                        choose_project_layers, class_sort_key, install_column_tab_navigation,
                         score_spin, table_item, temporary_destination, weight_spin)
 from .evaluation_config import config_path_for
 from .raster_engine import file_source, open_raster, same_grid, scan_classes
@@ -100,19 +101,13 @@ class EvaluationDialog(QDialog):
         outer.addLayout(top)
 
         meta = QHBoxLayout()
-        meta.addWidget(QLabel(tr('Título:')))
-        self.title_edit = QLineEdit()
-        self.title_edit.setPlaceholderText(tr('Título da carta de avaliação'))
-        meta.addWidget(self.title_edit, 3)
-        meta.addWidget(QLabel(tr('Autor:')))
-        self.author_edit = QLineEdit()
-        meta.addWidget(self.author_edit, 2)
         meta.addWidget(QLabel(tr('Escala das notas:')))
         self.scale_combo = QComboBox()
         self.scale_combo.addItem(tr('0 a 10'), 10)
         self.scale_combo.addItem(tr('0 a 100'), 100)
         self.scale_combo.currentIndexChanged.connect(self._update_score_limits)
         meta.addWidget(self.scale_combo)
+        meta.addStretch(1)
         outer.addLayout(meta)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -146,6 +141,7 @@ class EvaluationDialog(QDialog):
         self.map_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.map_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.map_table.itemSelectionChanged.connect(self._map_selected)
+        self._weight_tab = install_column_tab_navigation(self.map_table, 1)
         left_layout.addWidget(self.map_table, stretch=1)
         left_layout.addWidget(button('Distribuir pesos igualmente', self.distribute_weights,
                                      'Volta a dividir 100% igualmente entre os mapas, '
@@ -171,6 +167,8 @@ class EvaluationDialog(QDialog):
         head.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         head.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         head.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self._score_tab = install_column_tab_navigation(self.class_table, 2)
+        self.class_sort = HeaderSort(self.class_table, (0, 1, 2, 3), self._resort_classes)
         right_layout.addWidget(self.class_table, stretch=1)
         assign = QHBoxLayout()
         assign.addWidget(QLabel(tr('Nota selecionada:')))
@@ -235,6 +233,10 @@ class EvaluationDialog(QDialog):
                 dialog = dialog_type(self.iface, parent=self, embedded=True)
                 dialog.setMinimumSize(0, 0)
                 scroll.setWidget(dialog)
+                # QScrollArea.setWidget liga o preenchimento do fundo com a cor da
+                # janela (cinza); desligado, aparece o fundo da guia, como na Raster.
+                dialog.setAutoFillBackground(False)
+                scroll.viewport().setAutoFillBackground(False)
                 setattr(self, attribute, dialog)
             except Exception:
                 log_exception()
@@ -424,8 +426,9 @@ class EvaluationDialog(QDialog):
                 name_item = view_item(e['name'])
                 name_item.setToolTip(e['path'])
                 self.map_table.setItem(i, 0, name_item)
-                self.map_table.setCellWidget(i, 1, weight_spin(
-                    e['weight'], lambda value, idx=i: self._weight_changed(idx, value)))
+                spin = weight_spin(e['weight'], lambda value, idx=i: self._weight_changed(idx, value))
+                spin.installEventFilter(self._weight_tab)
+                self.map_table.setCellWidget(i, 1, spin)
                 self.map_table.setItem(i, 2, table_item(len(e['classes']), numeric=True))
             if select is not None and 0 <= select < len(self.entries):
                 self.map_table.selectRow(select)
@@ -478,7 +481,7 @@ class EvaluationDialog(QDialog):
             self.class_info.setText(tr(f'<b>{e["name"]}</b> — {len(e["classes"])} classes identificadas '
                                     'na banda 1, excluindo NoData.'))
             self.class_table.setRowCount(len(e['classes']))
-            for r, (code, count) in enumerate(e['classes']):
+            for r, (code, count) in enumerate(self._ordered_classes(e)):
                 self.class_table.setItem(r, 0, table_item(code))
                 class_name = e['labels'].get(code, '')
                 count_text = f'{count:,}'.replace(',', '.')
@@ -487,6 +490,7 @@ class EvaluationDialog(QDialog):
                 self.class_table.setItem(r, 1, label)
                 note = e['notes'].get(code)
                 score = score_spin(self._current_scale(), None if note is None else float(note))
+                score.installEventFilter(self._score_tab)
                 self.class_table.setCellWidget(r, 2, score)
                 center, skip = centered_check(code in e['blocked'],
                                               'Exclui da avaliação os pixels desta classe.')
@@ -495,6 +499,20 @@ class EvaluationDialog(QDialog):
                 self.class_table.setCellWidget(r, 3, center)
         finally:
             self._rendering = False
+
+    def _ordered_classes(self, e):
+        notes, blocked, labels = e['notes'], set(e['blocked']), e['labels']
+        return self.class_sort.order(e['classes'], {
+            0: lambda c: class_sort_key(c[0]),
+            1: lambda c: (labels.get(c[0], '').casefold(), c[1], class_sort_key(c[0])),
+            2: lambda c: (-2.0 if c[0] in blocked else float(notes.get(c[0], -1)), class_sort_key(c[0])),
+            3: lambda c: (c[0] in blocked, class_sort_key(c[0])),
+        })
+
+    def _resort_classes(self):
+        """Reconstrói a tabela de classes na ordem do cabeçalho, sem perder notas."""
+        self._save_current_notes()
+        self._render_classes()
 
     def _get_skip(self, row):
         wrapper = self.class_table.cellWidget(row, 3)
@@ -577,8 +595,11 @@ class EvaluationDialog(QDialog):
                     return
             report = os.path.splitext(dest)[0] + '_relatorio.csv' if self.csv_check.isChecked() else ''
             report_txt = os.path.splitext(dest)[0] + '_relatorio.txt' if self.txt_check.isChecked() else ''
+            # Sem campos Título/Autor: o título do relatório e do GeoTIFF é o nome do
+            # arquivo salvo (como nas guias vetoriais, que usam o nome da camada).
+            title = '' if self.output.is_temporary() else os.path.splitext(os.path.basename(dest))[0]
             task = EvaluationTask([e['path'] for e in self.entries], config, dest, report,
-                                  self.title_edit.text(), self.author_edit.text(), self._task_finished, report_txt=report_txt)
+                                  title, '', self._task_finished, report_txt=report_txt)
             self._task = task
             self.execute_button.setEnabled(False)
             self.cancel_button.setEnabled(True)
@@ -617,7 +638,7 @@ class EvaluationDialog(QDialog):
             msg += '\n' + tr('Pesos e notas: ') + config
         except (OSError, ValueError) as exc:
             msg += '\n' + tr('Atenção: não foi possível gravar os pesos e as notas: ') + str(exc)
-        layer = self.iface.addRasterLayer(task.destination, self.title_edit.text().strip() or 'Vista Saga — Avaliação')
+        layer = self.iface.addRasterLayer(task.destination, task.title or 'Vista Saga — Avaliação')
         if not layer or not layer.isValid():
             msg += '\n\n' + tr('Atenção: não foi possível carregar o resultado no QGIS.')
         self.status.setText(tr('Avaliação concluída.'))
@@ -635,7 +656,6 @@ class EvaluationDialog(QDialog):
             entries.append({'arquivo': relative, 'nome': e['name'], 'peso': e['weight'],
                             'notas': e['notes'], 'bloqueadas': e['blocked']})
         return {'formato': 'geosaga-avaliacao', 'versao': self.PROJECT_VERSION,
-                'titulo': self.title_edit.text(), 'autor': self.author_edit.text(),
                 'escala': self._current_scale(), 'camadas': entries}
 
     def save_project(self):
@@ -664,8 +684,6 @@ class EvaluationDialog(QDialog):
         self.class_table.setRowCount(0)
         self.current_index = -1
         self.project_path = ''
-        self.title_edit.clear()
-        self.author_edit.clear()
         self.scale_combo.setCurrentIndex(0)
         self._render_maps()
         self.output_edit.clear()
@@ -701,8 +719,6 @@ class EvaluationDialog(QDialog):
             self.entries = []
             self.current_index = -1
             self.class_table.setRowCount(0)
-            self.title_edit.setText(str(project.get('titulo', '')))
-            self.author_edit.setText(str(project.get('autor', '')))
             scale_pos = self.scale_combo.findData(project.get('escala', 10))
             if scale_pos >= 0:
                 self.scale_combo.setCurrentIndex(scale_pos)

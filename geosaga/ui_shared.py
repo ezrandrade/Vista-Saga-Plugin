@@ -391,3 +391,97 @@ def open_polygon_files(parent, title, start_dir, multiple=True):
             else:
                 layers.append(layer)
     return layers, warnings
+
+
+# ---------------------------------------------------------------------------
+# Navegação por TAB entre os campos numéricos de uma coluna (pesos ou notas).
+# ---------------------------------------------------------------------------
+def install_column_tab_navigation(table, column):
+    """TAB/Shift+TAB saltam entre as caixas da coluna, com o valor já selecionado.
+
+    Caixas desativadas (classes em “Não avaliar”) são puladas. Na primeira e na
+    última linha, o TAB segue a ordem normal do formulário, para não prender
+    quem navega só pelo teclado. Devolve o filtro: instale-o em cada caixa com
+    ``spin.installEventFilter(filtro)``.
+    """
+    from qgis.PyQt.QtCore import QEvent, QObject, Qt, QTimer
+
+    class ColumnTabFilter(QObject):
+        def eventFilter(self, obj, event):
+            kind = event.type()
+            if kind == QEvent.Type.KeyPress and event.key() in (Qt.Key.Key_Tab, Qt.Key.Key_Backtab):
+                back = (event.key() == Qt.Key.Key_Backtab
+                        or bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier))
+                return self._jump(obj, -1 if back else 1)
+            if kind == QEvent.Type.FocusIn and event.reason() in (
+                    Qt.FocusReason.TabFocusReason, Qt.FocusReason.BacktabFocusReason):
+                QTimer.singleShot(0, obj.selectAll)
+            return False
+
+        def _jump(self, current, step):
+            rows = table.rowCount()
+            row = next((r for r in range(rows) if table.cellWidget(r, column) is current), None)
+            if row is None:
+                return False
+            target = row + step
+            while 0 <= target < rows:
+                spin = table.cellWidget(target, column)
+                if spin is not None and spin.isEnabled():
+                    table.scrollTo(table.model().index(target, column))
+                    spin.setFocus(Qt.FocusReason.TabFocusReason)
+                    QTimer.singleShot(0, spin.selectAll)
+                    return True
+                target += step
+            return False
+
+    return ColumnTabFilter(table)
+
+
+# ---------------------------------------------------------------------------
+# Ordenação das tabelas de classes pelo cabeçalho.
+# ---------------------------------------------------------------------------
+def class_sort_key(key):
+    """Classes numéricas em ordem numérica (2 antes de 11); textos depois, A→Z."""
+    try:
+        return (0, float(str(key).replace(',', '.')), '')
+    except (TypeError, ValueError, OverflowError):
+        return (1, 0.0, str(key).casefold())
+
+
+class HeaderSort:
+    """Estado da ordenação: clicar de novo na mesma coluna inverte a ordem.
+
+    As tabelas são reconstruídas na ordem pedida, em vez de usar a ordenação
+    nativa do QTableWidget, que compara texto (colocaria “11” antes de “2”)
+    e não conhece as caixas de nota e de “Não avaliar” dentro das células.
+    """
+
+    def __init__(self, table, sortable_columns, on_change):
+        from qgis.PyQt.QtCore import Qt
+        self.table = table
+        self.columns = set(sortable_columns)
+        self.column = 0
+        self.descending = False
+        self._on_change = on_change
+        header = table.horizontalHeader()
+        header.setSectionsClickable(True)
+        header.setSortIndicatorShown(True)
+        header.setSortIndicator(0, Qt.SortOrder.AscendingOrder)
+        header.sectionClicked.connect(self._clicked)
+
+    def _clicked(self, column):
+        from qgis.PyQt.QtCore import Qt
+        if column not in self.columns:
+            self.table.horizontalHeader().setSortIndicator(
+                self.column, Qt.SortOrder.DescendingOrder if self.descending else Qt.SortOrder.AscendingOrder)
+            return
+        self.descending = (not self.descending) if column == self.column else False
+        self.column = column
+        self.table.horizontalHeader().setSortIndicator(
+            column, Qt.SortOrder.DescendingOrder if self.descending else Qt.SortOrder.AscendingOrder)
+        self._on_change()
+
+    def order(self, keys, key_functions):
+        """Ordena `keys` com a função da coluna ativa (classe por padrão)."""
+        function = key_functions.get(self.column, class_sort_key)
+        return sorted(keys, key=function, reverse=self.descending)

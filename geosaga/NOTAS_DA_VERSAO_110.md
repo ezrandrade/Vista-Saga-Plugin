@@ -14,6 +14,9 @@ foi alterado: os resultados numéricos são os mesmos da versão anterior.
 - **Classes** e **Não avaliar** nas três guias; números alinhados à direita.
 - **Resultado sempre carregado no QGIS.** Sem arquivo indicado: camada temporária em memória
   (vetor) ou arquivo temporário (raster). Salve-o antes de fechar o QGIS.
+- **Ordenação pelo cabeçalho** das tabelas de classes (clique de novo para inverter).
+- **TAB salta entre os pesos e entre as notas**, já com o valor selecionado para digitar.
+- **Guia Raster sem Título e Autor**; o título dos relatórios passa a ser o nome do arquivo salvo.
 - **Pesos e notas reaproveitáveis:** cada execução grava `<resultado>_pesos_notas.geosaga.json`.
   Para repetir a configuração em outra avaliação, use “Abrir projeto…” na mesma guia.
 
