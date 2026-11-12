@@ -39,3 +39,19 @@ Ambiente: QGIS 4.2.3, Qt 6.11, PyQt 6.11, GDAL 3.13 (conda-forge), modo `offscre
 | `tests/qgis/gui_monkey.py` em `pt_BR` e `en_US` | 0 exceções não tratadas |
 
 Pendente: execução das mesmas suítes no QGIS para Windows (OSGeo4W) e comparação numérica com o Vista SAGA/UFRJ. Instruções em [`tests/README.md`](../tests/README.md).
+
+## Homologação da versão 1.1.0 (12/11/2026)
+
+Módulo Avaliação (guias Raster, Vetorial (Atributos) e Vetorial (Sobreposição)). Build de teste
+`1.1.0-dev6` aprovado pelo autor no QGIS para Windows, com a interface em português, inglês e
+espanhol. Suítes locais: `geosaga/tests` OK (23 pulados por falta de GDAL/Shapely/rasterio no
+contêiner); `tests/unit` 36/36. Nenhum algoritmo de cálculo alterado.
+
+## Homologação parcial da versão 1.2.0 (build `1.2.0-dev6`)
+
+Conversor de Formatos, só alterações de interface: novo nome do módulo ("Conversor de
+Formatos"), aparência igual à dos demais módulos (área com rolagem com moldura), título do topo
+da tela retirado e altura da janela ajustada ao conteúdo. Aprovado pelo autor no QGIS para
+Windows. Suítes locais: `geosaga/tests` OK (23 pulados); `tests/unit` 36/36. Nenhum algoritmo de
+conversão alterado; não exige validação no Vista SAGA original. A 1.2.0 segue em
+desenvolvimento: novas alterações exigirão nova homologação.
