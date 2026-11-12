@@ -1,14 +1,14 @@
 # Vista Saga Plugin
 
-<p align="center"><img src="docs/assets/vista-saga-mark.svg" width="160" alt="Vista Saga Plugin — mão sustentando o globo" /></p>
+<p align="center"><img src="docs/assets/vista-saga-mark.png" width="160" alt="Vista Saga Plugin — mão sustentando o globo" /></p>
 
 **Complemento independente de geoprocessamento para QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O projeto reúne procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, **sem incorporar o código do software original** e sem vínculo oficial com seus desenvolvedores.
 
 **Site oficial e apresentação do projeto:** [vistasagaplugin.wordpress.com](https://vistasagaplugin.wordpress.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
 
-**Versão do código-fonte: `1.0.8` (12/11/2026).** Novo ícone principal e ícones para os sete módulos no menu suspenso; inclui a conversão **Vetor → RS2** e as correções do formato RS2 da 1.0.6 e as correções de estabilidade da 1.0.5. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
+**Versão do código-fonte: `1.0.9` (12/11/2026).** Novo ícone principal em alta qualidade e ícones para os sete módulos no menu suspenso; inclui a conversão **Vetor → RS2** e as correções do formato RS2 da 1.0.6 e as correções de estabilidade da 1.0.5. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
 
-> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.8](geosaga/NOTAS_DA_VERSAO_108.md) · [Testes](tests/README.md).
+> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.0.9](geosaga/NOTAS_DA_VERSAO_109.md) · [Testes](tests/README.md).
 
 ## Módulos
 
@@ -58,6 +58,7 @@ python scripts/build_release.py
 
 ## Histórico, suporte e licença
 
+- [Notas da versão 1.0.9 (ícone principal em alta qualidade)](geosaga/NOTAS_DA_VERSAO_109.md)
 - [Notas da versão 1.0.8 (novos ícones)](geosaga/NOTAS_DA_VERSAO_108.md)
 - [Notas da versão 1.0.6 (Vetor → RS2 e formato RS2)](geosaga/NOTAS_DA_VERSAO_106.md)
 - [Notas da versão 1.0.5 (estabilidade)](geosaga/NOTAS_DA_VERSAO_105.md)

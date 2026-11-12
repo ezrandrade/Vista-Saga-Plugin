@@ -1,3 +1,16 @@
+## 1.0.9 — ícone principal em alta qualidade (2026-11-12)
+
+Nenhum código ou algoritmo de processamento foi alterado.
+
+- **Ícone principal:** `icon.png` e `icons/icon_*.png` passam a vir da imagem original do desenho,
+  e não do SVG vetorizado automaticamente. Em 256 e 512 px (Gerenciador de Complementos), somem
+  as faixas de cor duras e as bordas serrilhadas da vetorização; de 16 a 48 px o desenho é o
+  mesmo. Os tamanhos 16, 24, 32, 48, 64, 128, 256 e 512 px vêm do pacote do autor; 19 e 50 px
+  (QRibbonSkin e barra) foram reduzidos da imagem original de 1.254 px (Lanczos, transparência
+  pré-multiplicada).
+- **README:** logotipo do repositório trocado pelo novo desenho, em PNG de 512 px
+  (`docs/assets/vista-saga-mark.png`); o SVG do logotipo antigo foi removido.
+
 ## 1.0.8 — novos ícones (2026-11-12)
 
 Nenhum algoritmo de processamento foi alterado; os identificadores `geosaga:*` foram preservados.
