@@ -8,7 +8,7 @@ import _support  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 NAMES = ["Assinatura", "Monitoria", "Avaliação", "Análises Voronoi",
-         "Combinação de Mapas", "Conversão de Formatos", "Sequenciador de Mapas"]
+         "Combinação de Mapas", "Conversor de Formatos", "Sequenciador de Mapas"]
 CALLBACKS = ["open_signature", "open_monitoring", "open_interactive", "open_voronoi",
              "open_combination", "open_rs2_converter", "open_sequence"]
 

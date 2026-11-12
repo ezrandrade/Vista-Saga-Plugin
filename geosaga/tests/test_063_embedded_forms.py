@@ -47,7 +47,7 @@ class EmbeddedFormsRegression(unittest.TestCase):
         text = read('home_dialog.py')
         self.assertEqual(text.count("'Abrir "), 7)
         for key in ('Avaliação', 'Monitoria', 'Assinatura',
-                    'Combinação de Mapas', 'Conversão de Formatos',
+                    'Combinação de Mapas', 'Conversor de Formatos',
                     'Não contém código do programa original', 'Esdras Andrade', 'IGDEMA', 'UFAL'):
             self.assertIn(key, text)
         self.assertIn('description_label = QLabel(description)', text)

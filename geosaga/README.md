@@ -1,8 +1,8 @@
-# Vista Saga Plugin — versão 1.1.0
+# Vista Saga Plugin — versão 1.2.0
 
 Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O programa moderniza procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, sem incorporar o código deste. Não há vínculo institucional com os desenvolvedores do Vista SAGA/UFRJ original.
 
-> **Versão 1.1.0:** sete módulos em português, inglês e espanhol, inclusive nas mensagens de erro; o idioma segue a configuração do QGIS. No módulo Avaliação, as três guias (Raster, Vetorial (Atributos) e Vetorial (Sobreposição)) têm o mesmo leiaute, e cada execução grava um arquivo de pesos e notas (`*_pesos_notas.geosaga.json`) que pode ser reaberto em “Abrir projeto…”. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin** (ícone de 24 px); se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**. No **QRibbonSkin**, utilize **Complementos → Vista Saga Plugin**; após instalar ou atualizar, volte à interface clássica e reative a Ribbon para que ela reconstrua a guia de complementos.
+> **Versão 1.2.0 (em desenvolvimento):** o módulo de conversão passa a se chamar **Conversor de Formatos**. **Desde a 1.1.0:** sete módulos em português, inglês e espanhol, inclusive nas mensagens de erro; o idioma segue a configuração do QGIS. No módulo Avaliação, as três guias (Raster, Vetorial (Atributos) e Vetorial (Sobreposição)) têm o mesmo leiaute, e cada execução grava um arquivo de pesos e notas (`*_pesos_notas.geosaga.json`) que pode ser reaberto em “Abrir projeto…”. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin** (ícone de 24 px); se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**. No **QRibbonSkin**, utilize **Complementos → Vista Saga Plugin**; após instalar ou atualizar, volte à interface clássica e reative a Ribbon para que ela reconstrua a guia de complementos.
 
 ## Sete módulos
 
@@ -11,7 +11,7 @@ Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andr
 3. **Avaliação** — classificação multicritério com pesos e notas, em raster ou vetores.
 4. **Análises Voronoi** — Simples, Massa, Atrito e Massa + Atrito; atrito único ou composição de múltiplos rasters com pesos e notas por classe.
 5. **Combinação de Mapas** — cruzamento categórico e cálculo de áreas, em raster ou vetor.
-6. **Conversão de Formatos** — RS2/GeoTIFF/vetor, incluindo vetorização e rasterização.
+6. **Conversor de Formatos** — RS2/GeoTIFF/vetor, incluindo vetorização e rasterização.
 7. **Sequenciador de Mapas** — três abas Raster/Vetorial/Misto, ordenação temporal, GIF animado e PNGs opcionais, preservando as camadas de origem.
 
 ## Instalação e compatibilidade

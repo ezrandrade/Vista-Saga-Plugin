@@ -5,10 +5,10 @@ Suporte a arquivos locais, seleção de rasters do projeto, SRC nativo e lotes.
 from .i18n import tr
 from pathlib import Path
 
-from qgis.PyQt.QtCore import QCoreApplication, Qt
+from qgis.PyQt.QtCore import QCoreApplication, Qt, QTimer
 from qgis.PyQt.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
-    QFrame, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox,
     QPushButton, QProgressDialog, QScrollArea, QToolButton, QVBoxLayout, QWidget,
     QDoubleSpinBox, QSpinBox, QAbstractItemView,
 )
@@ -35,9 +35,9 @@ class RS2ConverterDialog(QDialog):
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
-        self.setWindowTitle(tr('Vista Saga Plugin - Conversão de formatos'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Conversor de formatos'))
         self.setMinimumWidth(690)
-        self.resize(750, 660)
+        self.resize(750, 480)  # altura final ajustada ao conteúdo em _fit_height()
         self.setModal(False)
         # SRC das operações com origem RS2 (0 e 2), lembrado entre sessões. O RS2 não
         # guarda SRC; a escolha é do usuário. Fica separado do SRC opcional de
@@ -49,19 +49,18 @@ class RS2ConverterDialog(QDialog):
         self._create_ui()
 
     def _create_ui(self):
+        # Mesma estrutura do Sequenciador de Mapas: área com rolagem com a moldura
+        # padrão do estilo. Sem moldura, o Windows desenha as seções direto sobre o
+        # fundo da janela, com outros tons de cinza e outra linha de contorno.
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(10, 10, 10, 10)
+        outer.setContentsMargins(8, 8, 8, 8)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
         holder = QWidget()
         root = QVBoxLayout(holder)
-        root.setContentsMargins(9, 6, 9, 8)
+        root.setContentsMargins(10, 10, 10, 10)
         root.setSpacing(9)
 
-        title = QLabel(tr('Conversão de formatos'))
-        title.setStyleSheet('font-size: 16px; font-weight: 600;')
-        root.addWidget(title)
         self.description = QLabel()
         self.description.setWordWrap(True)
         root.addWidget(self.description)
@@ -273,6 +272,7 @@ class RS2ConverterDialog(QDialog):
         scroll.setWidget(holder)
         use_tab_background(scroll)
         outer.addWidget(scroll, 1)
+        self._outer, self._scroll, self._holder = outer, scroll, holder
 
         actions = QHBoxLayout()
         self.inspect_button = QPushButton(tr('Propriedades RS2…'))
@@ -287,6 +287,7 @@ class RS2ConverterDialog(QDialog):
         close.clicked.connect(self.close)
         actions.addWidget(close)
         outer.addLayout(actions)
+        self._actions = actions
         self._batch_changed()
 
     def _toggle_advanced(self, opened):
@@ -295,6 +296,40 @@ class RS2ConverterDialog(QDialog):
             Qt.ArrowType.DownArrow if opened else Qt.ArrowType.RightArrow)
         self.advanced_toggle.setText(
             tr('Ocultar opções avançadas' if opened else 'Mostrar opções avançadas'))
+        self._schedule_fit()
+
+    def _schedule_fit(self):
+        if getattr(self, '_scroll', None) is not None:
+            QTimer.singleShot(0, self._fit_height)
+
+    def _fit_height(self):
+        """Ajusta a altura da janela ao conteúdo visível, sem espaço vazio embaixo.
+
+        Os campos mudam com a operação, o lote e as opções avançadas. A janela
+        acompanha, até 90% da altura útil da tela; acima disso, a rolagem assume.
+        A largura escolhida pelo usuário é mantida. A altura é somada a partir das
+        partes fixas (margens, moldura, botões), sem depender da geometria atual do
+        viewport, que no Windows pode ainda não estar atualizada logo após show().
+        """
+        margins = self._outer.contentsMargins()
+        frame = 2 * self._scroll.frameWidth()
+        width = max(self.width() - margins.left() - margins.right() - frame, 200)
+        layout = self._holder.layout()
+        layout.activate()
+        content = layout.sizeHint().height()
+        if layout.hasHeightForWidth():
+            content = max(layout.heightForWidth(width), layout.minimumSize().height())
+        target = (margins.top() + margins.bottom() + frame + content
+                  + self._outer.spacing() + self._actions.sizeHint().height())
+        screen = self.screen()
+        if screen is not None:
+            target = min(target, int(screen.availableGeometry().height() * 0.9))
+        if target != self.height():
+            self.resize(self.width(), target)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._schedule_fit()
 
     def _temp_changed(self, *_):
         persistent = not self.temporary_check.isChecked()
@@ -429,6 +464,7 @@ class RS2ConverterDialog(QDialog):
             if not output or Path(output).suffix.lower() != desired:
                 self.destination.setText(
                     self._suggest_output(Path(self.source.text().strip()), operation))
+        self._schedule_fit()
 
     def _batch_changed(self, *_):
         many = self.batch.isChecked()
