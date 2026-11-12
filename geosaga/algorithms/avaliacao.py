@@ -23,7 +23,7 @@ class AvaliacaoAlgorithm(QgsProcessingAlgorithm):
         return 'avaliacao'
 
     def displayName(self):
-        return tr('Avaliação ambiental — pesos e notas')
+        return tr('Avaliação ambiental - pesos e notas')
 
     def group(self):
         return tr('Análise ambiental')

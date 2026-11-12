@@ -89,7 +89,7 @@ def run():
         if count!=4:
             raise RuntimeError('Quantidade de polígonos resultantes incorreta.')
         layer=None
-        print('Vista Saga 0.6.0 — teste integrado concluído: 4 combinações raster e vetoriais; '
+        print('Vista Saga 0.6.0 - teste integrado concluído: 4 combinações raster e vetoriais; '
               'áreas e legendas conferidas.')
         return {'raster':summary['combinations'],'vector':result['combinations'],
                 'area_vector_ha':result['area_ha']}

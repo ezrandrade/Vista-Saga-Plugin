@@ -27,8 +27,8 @@ class TabsUX062(unittest.TestCase):
 
     def test_evaluation_contains_embedded_modalities(self):
         code = source('evaluation_dialog.py')
-        self.assertIn("'Vetorial — atributos'", code)
-        self.assertIn("'Vetorial — sobreposição'", code)
+        self.assertIn("'Vetorial (Atributos)'", code)
+        self.assertIn("'Vetorial (Sobreposição)'", code)
         self.assertIn('self.attributes_scroll.setWidgetResizable(True)', code)
         self.assertIn('self.overlay_scroll.setWidgetResizable(True)', code)
         self.assertIn('scroll.setWidget(dialog)', code)

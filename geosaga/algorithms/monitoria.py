@@ -26,7 +26,7 @@ class MonitoriaAlgorithm(QgsProcessingAlgorithm):
         return 'monitoria'
 
     def displayName(self):
-        return tr('Monitoria espacial — matriz de transição')
+        return tr('Monitoria espacial - matriz de transição')
 
     def group(self):
         return tr('Análise ambiental')

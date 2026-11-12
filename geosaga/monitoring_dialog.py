@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import (Qgis, QgsApplication, QgsPalettedRasterRenderer,
                        QgsProject, QgsRasterLayer, QgsMessageLog)
 from qgis.gui import QgsMapLayerComboBox
-from .ui_shared import temporary_destination
+from .ui_shared import use_tab_background, temporary_destination
 
 from .raster_engine import file_source
 from .monitoring_task import MonitoringTask
@@ -27,7 +27,7 @@ class MonitoringDialog(QDialog):
         super().__init__(parent)
         self.iface = iface
         self._task = None
-        self.setWindowTitle(tr('Vista Saga Plugin — Monitoria'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Monitoria'))
         self.setMinimumSize(700, 445)
         self.resize(840, 565)
         self.setModal(False)
@@ -44,6 +44,7 @@ class MonitoringDialog(QDialog):
         self.config_tab.setFrameShape(QFrame.Shape.NoFrame)
         holder = QWidget()
         self.config_tab.setWidget(holder)
+        use_tab_background(self.config_tab)
         self.results_tab = QTabWidget()
         self.raster_results_page = QWidget()
         self.results_tab.addTab(self.raster_results_page, tr('Raster'))
@@ -70,7 +71,7 @@ class MonitoringDialog(QDialog):
         output_group = QGroupBox(tr('Saída da análise'))
         layout = QFormLayout(output_group)
         self.title_edit = QLineEdit()
-        self.title_edit.setPlaceholderText(tr('Ex.: Mudanças de uso da terra — 1985–2024'))
+        self.title_edit.setPlaceholderText(tr('Ex.: Mudanças de uso da terra - 1985–2024'))
         layout.addRow(tr('Título do estudo:'), self.title_edit)
         path_row = QHBoxLayout()
         self.output_edit = QLineEdit()
@@ -210,6 +211,7 @@ class MonitoringDialog(QDialog):
                     if control.text() == 'Fechar':
                         control.hide()
                 self.vector_tab.setWidget(dialog)
+                use_tab_background(self.vector_tab)
                 self._vector_dialog = dialog
             except Exception:
                 log_exception()
@@ -223,6 +225,7 @@ class MonitoringDialog(QDialog):
                                + details.splitlines()[-1])
                 error.setWordWrap(True)
                 self.vector_tab.setWidget(error)
+                use_tab_background(self.vector_tab)
                 return
         self._vector_dialog.show()
 
@@ -349,7 +352,7 @@ class MonitoringDialog(QDialog):
             self.status.setText(tr('Monitoria em execução. Contando e classificando transições…'))
             QgsApplication.taskManager().addTask(self._task)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Vista Saga — Monitoria'), tr(str(exc)))
+            QMessageBox.warning(self, tr('Vista Saga - Monitoria'), tr(str(exc)))
 
     def _progress_changed(self, percent):
         self.progress.setValue(int(percent))

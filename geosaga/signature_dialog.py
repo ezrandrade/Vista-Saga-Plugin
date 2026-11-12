@@ -16,7 +16,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
 
-from .ui_shared import temporary_destination, choose_project_layers
+from .ui_shared import use_tab_background, temporary_destination, choose_project_layers
 from .signature_engine import run_signature, validate_signature, _outpaths
 from .errors import log_exception
 
@@ -30,7 +30,7 @@ class SignatureDialog(QDialog):
         self._area_stack = []
         self._merged_areas = None
         self.setModal(False)
-        self.setWindowTitle(tr('Vista Saga Plugin — Assinatura'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Assinatura'))
         self.resize(800, 530)
         self.setMinimumSize(690, 440)
         self._build_ui()
@@ -53,6 +53,7 @@ class SignatureDialog(QDialog):
         config_scroll.setWidgetResizable(True)
         config_scroll.setFrameShape(QFrame.Shape.NoFrame)
         config_scroll.setWidget(cfg)
+        use_tab_background(config_scroll)
         result_tab = QWidget()
         self.tabs.addTab(config_scroll, tr('Configuração'))
         self.tabs.addTab(result_tab, tr('Resultados'))
@@ -269,7 +270,7 @@ class SignatureDialog(QDialog):
                 raise ValueError(f'Camada de áreas inválida ou com edição pendente: {layer.name()}')
             if layer.geometryType() != Qgis.GeometryType.Polygon or layer.crs() != first.crs():
                 raise ValueError('As camadas de áreas devem ser poligonais e possuir o mesmo SRC.')
-        merged = QgsVectorLayer('MultiPolygon', 'Áreas de análise — múltiplas camadas', 'memory')
+        merged = QgsVectorLayer('MultiPolygon', 'Áreas de análise - múltiplas camadas', 'memory')
         merged.setCrs(first.crs())
         provider = merged.dataProvider()
         provider.addAttributes([QgsField('VS_ORIGEM', QMetaType.Type.QString),
@@ -382,7 +383,7 @@ class SignatureDialog(QDialog):
         try:
             validate_signature(thematic, areas, mode, field, path, label_field, area_name)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Assinatura — Verificar entrada'), tr(str(exc)))
+            QMessageBox.warning(self, tr('Assinatura - Verificar entrada'), tr(str(exc)))
             return
         existing = [p for p in _outpaths(path) if Path(p).exists()]
         if existing:
@@ -397,7 +398,7 @@ class SignatureDialog(QDialog):
         self._busy = True
         self.run_button.setEnabled(False)
         popup = QProgressDialog(tr('Calculando as assinaturas…'), tr('Cancelar'), 0, 100, self)
-        popup.setWindowTitle(tr('Vista Saga — Assinatura'))
+        popup.setWindowTitle(tr('Vista Saga - Assinatura'))
         popup.setWindowModality(Qt.WindowModality.WindowModal)
         popup.setMinimumDuration(0)
         popup.setValue(0)
@@ -426,12 +427,12 @@ class SignatureDialog(QDialog):
                     self.table.setItem(i, j, QTableWidgetItem(str(value)))
             self.tabs.setCurrentIndex(1)
             if result['note'].startswith('ATENÇÃO:'):
-                QMessageBox.warning(self, tr('Assinatura — Áreas conflitantes'), tr(result['note']))
+                QMessageBox.warning(self, tr('Assinatura - Áreas conflitantes'), tr(result['note']))
             self.status.setText(tr('Assinatura calculada. Relatórios disponíveis na pasta escolhida.'))
             if self.add_project.isChecked() or self.temporary_check.isChecked():
                 from qgis.core import QgsVectorLayer
                 new_layer = QgsVectorLayer(result['gpkg'] + '|layername=assinatura_areas',
-                                           'Assinatura — áreas', 'ogr')
+                                           'Assinatura - áreas', 'ogr')
                 if new_layer.isValid():
                     QgsProject.instance().addMapLayer(new_layer)
                 else:
@@ -442,7 +443,7 @@ class SignatureDialog(QDialog):
         except Exception as exc:
             log_exception()
             self.status.setText(tr('A assinatura não foi concluída.'))
-            QMessageBox.critical(self, tr('Assinatura — Falha'), tr(str(exc)))
+            QMessageBox.critical(self, tr('Assinatura - Falha'), tr(str(exc)))
         finally:
             popup.close()
             self._busy = False

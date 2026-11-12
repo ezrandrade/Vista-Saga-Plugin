@@ -1,3 +1,60 @@
+## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)
+
+Nenhum algoritmo de cálculo foi alterado: notas, pesos, interseção e relatórios usam os mesmos
+motores da 1.0.9. Muda a interface do módulo Avaliação e a forma de entregar o resultado.
+
+- **Guias renomeadas:** “Vetorial (Atributos)” e “Vetorial (Sobreposição)”.
+- **Mesmo leiaute nas três guias:** Novo/Abrir/Salvar projeto; “Escala das notas”;
+  1. critérios e pesos; 2. classes do critério selecionado; 3. Resultado.
+- **Sobreposição:** a seção 1 reúne “Adicionar camadas do QGIS…”, o novo “Adicionar de
+  arquivo(s)…” (abre na pasta das camadas já carregadas no QGIS) e “Remover”. Saíram o seletor
+  de camada e campo e o botão “Adicionar camada”, redundantes: o campo temático já é escolhido
+  na importação. A lista do QGIS mostra apenas camadas de polígonos.
+- **Atributos:** novo botão “Arquivo…” ao lado da camada; saiu o botão que abria a
+  sobreposição em outra janela (as guias já cumprem esse papel).
+- **Terminologia e alinhamento:** “Categorias” passou a “Classes” e “Excluir” a “Não avaliar”,
+  como na guia Raster. Valores numéricos (pesos, quantidades, notas e classes numéricas) ficam à
+  direita; classes textuais, à esquerda, como numa planilha. A caixa “Não avaliar” é centralizada.
+- **Notas vetoriais** com o mesmo controle da guia Raster: “—” é nota não definida, e marcar
+  “Não avaliar” desativa a nota da classe.
+- **Resultado:** saíram as caixas “Resultado temporário” e “Adicionar resultado ao QGIS”. Campo
+  “Salvar em” vazio: o resultado vetorial é carregado como camada temporária em memória; o raster,
+  como arquivo temporário (o QGIS não mantém rasters em memória). Com um arquivo indicado, o
+  resultado é salvo e carregado no QGIS. Relatórios CSV e TXT mantidos.
+- **Ordenação das classes:** clicar no cabeçalho (Classe, Feições/Descrição, Nota ou Não avaliar)
+  ordena a tabela; clicar de novo inverte a ordem. Classes numéricas seguem a ordem numérica
+  (2 antes de 11), e as notas digitadas são preservadas.
+- **TAB entre pesos e entre notas:** TAB e Shift+TAB saltam direto para o próximo campo de peso ou
+  de nota, com o valor já selecionado para digitação; classes em “Não avaliar” são puladas.
+- **Mesmo fundo em todo o plugin:** as áreas com rolagem (guias vetoriais da Avaliação e da
+  Monitoria, Assinatura, Voronoi, Conversão de formatos e Sequenciador) deixam de pintar o fundo
+  de cinza e passam a usar o fundo padrão da guia do QGIS.
+- **Classes sem nota em evidência:** a nota “—” continua bloqueando a execução (o plugin nunca
+  supõe nota 0 nem exclui a classe sozinho), mas agora as classes pendentes ficam destacadas, a
+  coluna Classes mostra “7 (2 sem nota)” e o destaque some à medida que as notas são digitadas.
+  “Validar” e “Executar” listam todas as pendências, por camada ou mapa (antes, só as 5 primeiras
+  apareciam). Feições com o campo temático vazio não bloqueiam: aparecem como aviso em “Validar”
+  e na lista de pendências. A dica da tabela foi encurtada; “Repetir a mesma nota nas classes
+  selecionadas” substitui “Nota selecionada”, e o botão passou a “Aplicar”.
+- **Pesos sem distribuição automática:** mapas e critérios novos entram com o peso em branco;
+  remover um item não altera os demais. A divisão por igual só ocorre no botão “Distribuir pesos
+  igualmente”.
+- **Traço simples no lugar do travessão** em todos os textos de interface, títulos de janela,
+  nomes de camadas e cabeçalhos de relatório, nos sete módulos (catálogos en/es atualizados). O
+  “—” permanece só como marcador de nota não definida. Meias-riscas de intervalos (0–10,
+  1985–2024, Mann–Kendall) não foram alteradas.
+- **Guia Raster sem Título e Autor:** o título dos relatórios e dos metadados do GeoTIFF passa a
+  ser o nome do arquivo salvo (vazio no resultado temporário); o autor fica em branco. Projetos
+  antigos com título e autor continuam abrindo (os campos são ignorados).
+- **Espanhol completo em todo o plugin:** o catálogo espanhol passou de 226 para todas as 1.508
+  frases (antes, a interface em espanhol mostrava a maior parte dos textos em inglês). Um teste
+  novo exige que toda frase nova entre nos catálogos inglês e espanhol. No inglês, a linha de
+  situação dos pesos usa o mesmo texto nas três guias da Avaliação.
+- **Arquivo de pesos e notas:** cada execução grava `<resultado>_pesos_notas.geosaga.json`
+  (pesos, notas, classes não avaliadas, camada e campo de origem), que “Abrir projeto…” reaplica
+  em outra avaliação. Classes que deixaram de existir e classes novas sem nota são informadas.
+  Nas guias vetoriais, “Salvar projeto…” grava o mesmo arquivo a qualquer momento.
+
 ## 1.0.9 — ícone principal em alta qualidade (2026-11-12)
 
 Nenhum código ou algoritmo de processamento foi alterado.

@@ -6,7 +6,7 @@ from .errors import log_exception
 
 class EvaluationTask(QgsTask):
     def __init__(self, paths, config, destination, report, title, author, callback, report_txt=''):
-        super().__init__('Vista Saga — Avaliação', QgsTask.Flag.CanCancel)
+        super().__init__('Vista Saga - Avaliação', QgsTask.Flag.CanCancel)
         self.paths = list(paths)
         self.config = config
         self.destination = destination

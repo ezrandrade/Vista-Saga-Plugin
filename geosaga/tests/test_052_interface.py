@@ -33,10 +33,13 @@ class UiConsistencyTests(unittest.TestCase):
 
     def test_vector_evaluations_can_close(self):
         self.assertIn("self.close_button = button('Fechar', self._close_form)", source('vector_evaluation_dialog.py'))
-        for name in ('vector_evaluation_dialog.py', 'vector_overlay_dialog.py'):
-            text = source(name)
-            self.assertIn('self.close_button.setEnabled(False)', text)
-            self.assertIn('self.close_button.setEnabled(True)', text)
+        text = source('vector_evaluation_dialog.py')
+        self.assertIn('self.close_button.setEnabled(False)', text)
+        self.assertIn('self.close_button.setEnabled(True)', text)
+        # A sobreposição herda execute() e só troca o motor (_run_engine).
+        overlay = source('vector_overlay_dialog.py')
+        self.assertNotIn('def execute(', overlay)
+        self.assertIn('def _run_engine(', overlay)
 
     def test_legacy_ids_still_unchanged(self):
         for name, alg in [('monitoria.py', 'monitoria'), ('assinatura.py', 'assinatura')]:

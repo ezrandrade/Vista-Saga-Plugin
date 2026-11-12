@@ -20,7 +20,7 @@ from qgis.core import (
 )
 from qgis.gui import QgsMapLayerComboBox
 
-from .ui_shared import temporary_destination
+from .ui_shared import use_tab_background, temporary_destination
 from .voronoi_core import Generator
 from .voronoi_engine import grid_from_extent, run_voronoi
 from .voronoi_vector import save_simple_voronoi
@@ -34,7 +34,7 @@ class VoronoiRasterTask(QgsTask):
     no método finished(), que o QGIS invoca na thread principal.
     """
     def __init__(self, points, destination, wkt, transform, width, height, mode, vectorize, friction_path=None, friction_components=None):
-        super().__init__('Vista Saga — Voronoi raster', QgsTask.Flag.CanCancel)
+        super().__init__('Vista Saga - Voronoi raster', QgsTask.Flag.CanCancel)
         self.points = tuple(points)  # Generator é uma dataclass simples, sem QObject.
         self.destination = str(destination)
         self.wkt = str(wkt)
@@ -81,7 +81,7 @@ class VoronoiDialog(QDialog):
         self._busy = False
         self._task = None
         self._progress_dialog = None
-        self.setWindowTitle(tr('Vista Saga Plugin — Análises Voronoi'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Análises Voronoi'))
         self.setModal(False)
         self.setMinimumSize(630, 450)
         self.resize(760, 605)
@@ -108,6 +108,7 @@ class VoronoiDialog(QDialog):
         content_layout.setContentsMargins(0, 0, 4, 0)
         content_layout.setSpacing(9)
         scroll.setWidget(scroll_contents)
+        use_tab_background(scroll)
         layout.addWidget(scroll, 1)
 
         options = QGroupBox(tr('1. Modelo de influência'))
@@ -170,7 +171,7 @@ class VoronoiDialog(QDialog):
         # Na 0.8.3 a tabela estava diretamente no formulário, e a janela
         # sem rolagem podia exibir apenas o título "Superfícies integradas".
         self.friction_stack_dialog = QDialog(self)
-        self.friction_stack_dialog.setWindowTitle(tr('Superfícies de atrito — seleção e pesos'))
+        self.friction_stack_dialog.setWindowTitle(tr('Superfícies de atrito - seleção e pesos'))
         self.friction_stack_dialog.resize(840, 475)
         stack_dialog_box = QVBoxLayout(self.friction_stack_dialog)
         stack_hint = QLabel(tr('Selecione até 12 rasters. Edite o peso positivo e, se necessário, as notas '
@@ -244,7 +245,7 @@ class VoronoiDialog(QDialog):
         outform = QFormLayout(output)
         self.output_type=QComboBox()
         self.output_type.addItem(tr('GeoTIFF (raster)'), 'raster')
-        self.output_type.addItem(tr('GeoPackage (vetor direto — Simples)'), 'direct')
+        self.output_type.addItem(tr('GeoPackage (vetor direto - Simples)'), 'direct')
         self.output_type.addItem(tr('GeoTIFF + GeoPackage (poligonização)'), 'both')
         self.output_type.currentIndexChanged.connect(self._update_output)
         outform.addRow(tr('Formato de saída:'),self.output_type)
@@ -556,7 +557,7 @@ class VoronoiDialog(QDialog):
                 # Campos de nome opcionais; feições multipartes recebem IDs próprios.
                 try: name = str(feature[label_name]) if label_name else f'Feição {feature.id()}'
                 except (KeyError, TypeError): name = f'Feição {feature.id()}'
-                if len(locations) > 1: name += f' — parte {part_index+1}'
+                if len(locations) > 1: name += f' - parte {part_index+1}'
                 points.append(Generator(len(points)+1,float(position.x()),float(position.y()),mass,name))
         return points
 
@@ -821,7 +822,7 @@ class VoronoiDialog(QDialog):
             except Exception as exc:
                 log_exception()
                 self.status.setText(tr('Resultado criado, mas não foi possível carregar no QGIS.'))
-                QMessageBox.warning(self, tr('Voronoi — carregar resultado'), tr(str(exc)))
+                QMessageBox.warning(self, tr('Voronoi - carregar resultado'), tr(str(exc)))
         elif task.error:
             self.status.setText(tr('Falha na execução; revise os parâmetros.'))
             QMessageBox.critical(self, tr('Voronoi não concluído'), tr(task.error))
@@ -859,7 +860,7 @@ class VoronoiDialog(QDialog):
             QgsProject.instance().addMapLayer(raster)
         if result['gpkg']:
             vector = QgsVectorLayer(result['gpkg']+'|layername=voronoi_espacial',
-                                    'Análises Voronoi — polígonos','ogr')
+                                    'Análises Voronoi - polígonos','ogr')
             if vector.isValid():
                 if len(result['rows']) <= 75:
                     cats = []

@@ -53,7 +53,7 @@ class DirectVectorTests(unittest.TestCase):
         from pathlib import Path
         content=(Path(__file__).resolve().parents[1]/'voronoi_dialog.py').read_text()
         self.assertIn('if self.mode.currentIndex() in (1,3) else None',content)
-        self.assertIn('GeoPackage (vetor direto — Simples)',content)
+        self.assertIn('GeoPackage (vetor direto - Simples)',content)
         self.assertIn('self.mass_field.setVisible(weighted)',content)
         self.assertIn('self.output_type.model().item(1).setEnabled(not (weighted or friction))',content)
         self.assertIn('self.extent_mode.addItem',content)

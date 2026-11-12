@@ -2,155 +2,158 @@
 
 Aproveita as mesmas tabelas de notas e pesos já homologadas na avaliação de
 atributos; apenas altera a fonte de cada critério e o processamento geométrico.
+Cada camada entra uma vez, com o campo temático escolhido na importação: por
+isso não há seletor de camada/campo à parte, como na guia Atributos.
 """
 from .i18n import tr
-import os
-from collections import Counter
-
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import (
-    QApplication, QFileDialog, QGroupBox, QMessageBox,
-    QProgressDialog, QPushButton,
-)
+from qgis.PyQt.QtWidgets import QHBoxLayout, QInputDialog, QMessageBox, QPushButton
 from qgis.core import QgsProject
 
-from .vector_evaluation_core import category_key
-from .vector_evaluation_dialog import VectorEvaluationDialog
-from .ui_shared import choose_project_layers, temporary_destination
+from .vector_evaluation_dialog import VectorEvaluationDialog, scan_categories
+from .ui_shared import choose_project_layers, load_vector_source, open_polygon_files, vector_start_directory
 from .vector_overlay_engine import validate_overlay_plan, validate_source_layers, evaluate_overlay
+
+PREFERRED_FIELDS = ('CODIGO', 'CLASSE', 'USO', 'TIPO_USO')
 
 
 class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
+    MODALITY = 'sobreposicao'
+    WINDOW_TITLE = 'Vista Saga Plugin - Avaliação por sobreposição'
+    HEADING = '<b>AVALIAÇÃO ESPACIAL - SOBREPOSIÇÃO DE MAPAS VETORIAIS</b>'
+    INTRO = ('Adicione pelo menos duas camadas de polígonos, escolhendo um campo temático '
+             'para cada mapa. Defina pesos e notas por classe. O plugin cruzará as geometrias '
+             'e avaliará somente as regiões comuns a todas as camadas (interseção espacial). '
+             'Os originais não serão modificados.')
+    SOURCES_TITLE = '1. Camadas empilhadas e pesos'
+    CLASSES_TITLE = '2. Classes da camada selecionada'
+    CRITERION_HEADER = 'Camada → campo'
+    EMPTY_CLASSES = 'Adicione um mapa e selecione-o na lista.'
+    START_STATUS = 'Adicione duas ou mais camadas com SRC igual e área comum.'
+    RESULT_PREFIX = 'avaliacao_sobreposicao'
+    RESULT_NAME = 'Vista Saga - Avaliação por sobreposição'
+    RUN_TEXT = 'Executar sobreposição e avaliação'
+
     def _build(self):
         super()._build()
-        self.setWindowTitle(tr('Vista Saga Plugin — Avaliação por sobreposição'))
         self.setMinimumSize(900, 625)
-        heading = self.layout().itemAt(0).widget()
-        heading.setText(tr('<b>AVALIAÇÃO ESPACIAL — SOBREPOSIÇÃO DE MAPAS VETORIAIS</b>'))
-        self.layout().itemAt(1).widget().setText(
-            tr('Adicione pelo menos duas camadas poligonais do QGIS, escolhendo um campo temático '
-            'para cada mapa. Defina pesos e notas por classe. O plugin cruzará as geometrias '
-            'e avaliará somente as regiões comuns a todas as camadas (interseção espacial). '
-            'Os originais não serão modificados.'))
-        for group in self.findChildren(QGroupBox):
-            if group.title().startswith('1.'):
-                group.setTitle(tr('1. Selecionar próximo mapa vetorial'))
-            elif group.title().startswith('2.'):
-                group.setTitle(tr('2. Camadas empilhadas e pesos'))
-            elif group.title().startswith('3.'):
-                group.setTitle(tr('3. Categorias, notas e exclusões'))
-        for control in self.findChildren(QPushButton):
-            if control.text() == 'Empilhar camadas vetoriais independentes…':
-                control.hide()
-            if control.text() == 'Adicionar campo':
-                control.setText(tr('Adicionar camada'))
-            elif control.text() == 'Remover campo selecionado':
-                control.setText(tr('Remover camada selecionada'))
-        self.criteria_table.setHorizontalHeaderLabels([tr('Mapa / campo'), tr('Peso (%)'), tr('Categorias')])
-        self.class_label.setText(tr('Adicione um mapa e selecione-o na lista.'))
-        self.status.setText(tr('Adicione duas ou mais camadas com SRC igual e área comum.'))
-        self.output_edit.setPlaceholderText(tr('Salvar polígonos avaliados por sobreposição (.gpkg)'))
-        button_bulk = QPushButton(tr('Adicionar várias camadas do QGIS…'))
-        button_bulk.clicked.connect(self.add_project_many)
-        self.layout().insertWidget(3, button_bulk)
-        self.run_button.setText(tr('Executar sobreposição e avaliação'))
+
+    def _build_source_controls(self, layout):
+        row = QHBoxLayout()
+        from_project = QPushButton(tr('Adicionar camadas do QGIS…'))
+        from_project.setToolTip(tr('Escolhe uma ou várias camadas de polígonos já carregadas no QGIS.'))
+        from_project.clicked.connect(self.add_project_many)
+        row.addWidget(from_project)
+        from_files = QPushButton(tr('Adicionar de arquivo(s)…'))
+        from_files.setToolTip(tr('Abre camadas de polígonos em arquivo, a partir da pasta das '
+                                 'camadas já carregadas no QGIS, e as adiciona ao projeto.'))
+        from_files.clicked.connect(self.add_files)
+        row.addWidget(from_files)
+        remove = QPushButton(tr('Remover'))
+        remove.clicked.connect(self.remove_field)
+        row.addWidget(remove)
+        row.addStretch(1)
+        layout.addLayout(row)
+
+    # Sem seletor de camada/campo: estes ganchos da classe base ficam neutros.
+    def _populate_fields(self):
+        pass
 
     def _layer_changed(self, _layer=None):
-        # Diferentemente da avaliação por atributos, TROCAR a camada no seletor
-        # não deve apagar a pilha configurada anteriormente.
-        if not self.running and hasattr(self, 'field_combo'):
-            self._populate_fields()
+        pass
+
+    def _layers_in_use(self):
+        project = QgsProject.instance()
+        layers = (project.mapLayer(c['layer_id']) for c in self.criteria)
+        return [layer.source() for layer in layers if layer is not None]
 
     def add_project_many(self):
-        from qgis.PyQt.QtWidgets import QInputDialog
-        for layer in choose_project_layers(self, 'vector', 'Empilhar mapas vetoriais'):
+        self._add_layers(choose_project_layers(self, 'polygon', 'Empilhar mapas vetoriais'))
+
+    def add_files(self):
+        layers, warnings = open_polygon_files(self, 'Adicionar mapas vetoriais',
+                                              vector_start_directory(self._layers_in_use()))
+        self._add_layers(layers)
+        if warnings:
+            QMessageBox.warning(self, tr('Avaliação por sobreposição'), '\n'.join(warnings))
+
+    def _add_layers(self, layers):
+        for layer in layers:
             if any(c['layer_id'] == layer.id() for c in self.criteria):
                 continue
-            if not layer.isValid() or not layer.fields().names():
-                continue
             names = layer.fields().names()
-            default = next((n for n in ('CODIGO','CLASSE','USO','TIPO_USO') if n in names), names[0])
-            field, ok = QInputDialog.getItem(self, tr('Campo temático — ') + layer.name(),
+            if not layer.isValid() or not names:
+                continue
+            default = next((n for n in PREFERRED_FIELDS if n in names), names[0])
+            field, ok = QInputDialog.getItem(self, tr('Campo temático - ') + layer.name(),
                 tr('Campo de classificação:'), names, names.index(default), False)
             if not ok:
                 continue
-            self.layer_combo.setLayer(layer)
-            self.field_combo.setCurrentText(field)
-            self.add_field()
+            try:
+                criterion = self._new_criterion(layer, field)
+            except ValueError as exc:
+                QMessageBox.warning(self, tr('Avaliação por sobreposição'), tr(str(exc)))
+                continue
+            self._append(criterion)
+            self.status.setText(
+                tr('{count} mapa(s) na avaliação. ').format(count=len(self.criteria)) +
+                tr('Último mapa: {count} classes; {missing} valores nulos.').format(
+                    count=len(criterion['counts']), missing=criterion['missing']))
 
-    def add_field(self):
-        layer = self._layer()
-        field = self.field_combo.currentText()
-        if not layer or not field:
-            QMessageBox.warning(self, tr('Avaliação por sobreposição'),
-                                tr('Selecione uma camada poligonal e o campo de classificação.'))
-            return
+    def _new_criterion(self, layer, field):
         if layer.isEditable():
-            QMessageBox.warning(self, tr('Camada em edição'),
-                                tr('Salve ou descarte as edições da camada antes de adicioná-la.'))
-            return
+            raise ValueError('Salve ou descarte as edições da camada antes de adicioná-la.')
         if any(c['layer_id'] == layer.id() for c in self.criteria):
-            QMessageBox.warning(self, tr('Camada já adicionada'),
-                                tr('Cada mapa deve ser adicionado uma vez. Para avaliar vários campos '
-                                'da mesma camada, utilize Avaliação vetorial por atributos.'))
-            return
-        counts = Counter()
-        missing = 0
-        for feature in layer.getFeatures():
-            key = category_key(feature[field])
-            if key is None:
-                missing += 1
-            else:
-                counts[key] += 1
-                if len(counts) > 256:
-                    QMessageBox.warning(self, tr('Campo com muitas categorias'),
-                                        tr(f'{layer.name()} / {field}: há mais de 256 categorias. '
-                                        'Reclassifique valores contínuos antes da avaliação.'))
-                    return
-        if not counts:
-            QMessageBox.warning(self, tr('Avaliação por sobreposição'),
-                                tr('O campo não apresenta categorias válidas.'))
-            return
+            raise ValueError('Cada mapa deve ser adicionado uma vez. Para avaliar vários campos '
+                             'da mesma camada, utilize Avaliação vetorial por atributos.')
         if self.criteria:
             previous = QgsProject.instance().mapLayer(self.criteria[0]['layer_id'])
             if previous is not None and layer.crs() != previous.crs():
-                QMessageBox.warning(self, tr('SRC incompatível'),
-                                    tr('Os mapas precisam ter o mesmo SRC. Reprojete a camada '
-                                    'no QGIS antes de adicioná-la à avaliação.'))
-                return
-        self._save_classes()
+                raise ValueError('Os mapas precisam ter o mesmo SRC. Reprojete a camada '
+                                 'no QGIS antes de adicioná-la à avaliação.')
+        counts, missing = scan_categories(layer, field)
         used = {c['field'] for c in self.criteria}
         index = 1
         while f'C{index:02d}' in used:
             index += 1
-        self.criteria.append({
-            'field': f'C{index:02d}', 'source_field': field,
-            'layer_id': layer.id(), 'label': f'{layer.name()} → {field}',
-            'counts': dict(counts), 'missing': missing, 'weight': 0.,
-            'notes': {}, 'excluded': set(),
-        })
-        self._distribute()
-        self._render_criteria(select=len(self.criteria) - 1)
-        self.status.setText(tr('{count} mapa(s) na avaliação. ').format(count=len(self.criteria)) +
-                            tr('Último mapa: {count} categorias; {missing} valores nulos.').format(count=len(counts), missing=missing))
+        return {'field': f'C{index:02d}', 'source_field': field,
+                'layer_id': layer.id(), 'label': f'{layer.name()} → {field}',
+                'counts': counts, 'missing': missing, 'weight': 0.,
+                'notes': {}, 'excluded': set()}
 
-    def _render_criteria(self, select=None):
-        super()._render_criteria(select=select)
-        for i, criterion in enumerate(self.criteria):
-            self.criteria_table.item(i, 0).setText(criterion.get('label', criterion['field']))
-        self._update_selection_title()
+    def _criterion_label(self, criterion):
+        return criterion.get('label', criterion['field'])
 
-    def _criterion_selected(self):
-        super()._criterion_selected()
-        self._update_selection_title()
+    def _criterion_source(self, criterion):
+        layer = QgsProject.instance().mapLayer(criterion['layer_id'])
+        return (layer.name(), layer.source()) if layer is not None else (criterion['label'], '')
 
-    def _update_selection_title(self):
-        index = self.criteria_table.currentRow()
-        if 0 <= index < len(self.criteria):
-            c = self.criteria[index]
-            self.class_label.setText(tr(f'{c["label"]}: {len(c["counts"])} categorias.'))
+    def _criterion_field(self, criterion):
+        return criterion['source_field']
+
+    def _restore(self, records):
+        problems = []
+        self._clear_criteria()
+        for rec in records:
+            layer = load_vector_source(rec['fonte'], rec['camada']) if rec['fonte'] else None
+            if layer is None:
+                problems.append(tr('Camada não encontrada: {source}.').format(
+                    source=rec['fonte'] or rec['camada']))
+                continue
+            if rec['campo'] not in layer.fields().names():
+                problems.append(tr('{layer}: o campo {field} não existe.').format(
+                    layer=layer.name(), field=rec['campo']))
+                continue
+            try:
+                criterion = self._new_criterion(layer, rec['campo'])
+            except ValueError as exc:
+                problems.append(tr(str(exc)))
+                continue
+            problems.extend(self._apply_record(criterion, rec))
+        return problems
 
     def validate_configuration(self):
+        if self._show_pending():
+            return
         try:
             self._rules()
             validate_overlay_plan(self.criteria)
@@ -159,76 +162,26 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
                 tr(f'{len(sources)} camadas, {len(self.criteria)} critérios; pesos totalizam 100%.\n\n'
                 'A saída representará SOMENTE áreas cobertas por todos os mapas. '
                 'Sobreposições parciais e lacunas de cobertura podem reduzir a área avaliada. '
-                'Feições com classes excluídas ou nulas permanecem, mas sem nota.'))
+                'Feições com classes excluídas ou nulas permanecem, mas sem nota.') + self._empty_field_warning())
         except (ValueError, TypeError) as exc:
             QMessageBox.warning(self, tr('Configuração incompleta'), tr(str(exc)))
 
-    def select_output(self):
-        suggestion = self.output_edit.text() or os.path.join(os.path.expanduser('~'), 'avaliacao_sobreposicao.gpkg')
-        dest, _ = QFileDialog.getSaveFileName(self, tr('Salvar avaliação por sobreposição'),
-                                              suggestion, 'GeoPackage (*.gpkg)')
-        if dest:
-            self.output_edit.setText(dest if dest.lower().endswith('.gpkg') else dest + '.gpkg')
+    def _check_inputs(self):
+        self._rules()
+        validate_overlay_plan(self.criteria)
+        validate_source_layers(self.criteria, QgsProject.instance())
 
-    def execute(self):
-        if self.running:
-            return
-        try:
-            self._rules()
-            validate_overlay_plan(self.criteria)
-            validate_source_layers(self.criteria, QgsProject.instance())
-            dest = (temporary_destination('avaliacao_sobreposicao', '.gpkg')
-                    if self.temporary_check.isChecked() else self.output_edit.text().strip())
-            if not dest:
-                raise ValueError('Informe o GeoPackage de saída.')
-            dest = os.path.abspath(dest)
-            if os.path.exists(dest):
-                if QMessageBox.question(
-                    self, tr('Substituir resultado?'),
-                    tr('O GeoPackage de saída já existe. Deseja substituí-lo?\n'
-                    'Se estiver carregado no QGIS, remova a camada antiga antes de continuar.')
-                ) != QMessageBox.StandardButton.Yes:
-                    return
-            self.running = True
-            self.run_button.setEnabled(False)
-            self.close_button.setEnabled(False)
-            progress = QProgressDialog(tr('Sobrepondo camadas vetoriais…'), tr('Cancelar'), 0, 100, self)
-            progress.setMinimumDuration(0)
-            progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+    def _run_engine(self, dest, update, cancelled):
+        return evaluate_overlay(
+            self.criteria, self._scale(), dest,
+            QgsProject.instance(), progress=update, cancelled=cancelled,
+            report_csv=self.csv_check.isChecked(), report_txt=self.txt_check.isChecked())
 
-            def update(pct):
-                if pct is not None:
-                    progress.setValue(max(0, min(100, int(pct))))
-                QApplication.processEvents()
-
-            try:
-                summary = evaluate_overlay(
-                    self.criteria, int(self.scale_combo.currentData()), dest,
-                    QgsProject.instance(), progress=update, cancelled=progress.wasCanceled,
-                    report_csv=self.csv_check.isChecked(), report_txt=self.txt_check.isChecked())
-            finally:
-                progress.close()
-            if self.load_check.isChecked() or self.temporary_check.isChecked():
-                added = self.iface.addVectorLayer(dest, 'Vista Saga — Avaliação por sobreposição', 'ogr')
-                if not added or not added.isValid():
-                    self.status.setText(tr('Arquivo gerado, mas não foi possível carregá-lo no QGIS.'))
-                    QMessageBox.warning(self, tr('Saída criada'),
-                                        tr('O GeoPackage foi gerado, mas não pôde ser adicionado ao projeto.'))
-                    return
-            self.status.setText(tr('Avaliação por sobreposição concluída: ') + dest)
-            QMessageBox.information(self, tr('Avaliação concluída'),
-                tr(f'Camadas: {summary["camadas"]}\n'
-                f'Polígonos resultantes: {summary["total"]}\n'
-                f'Com nota: {summary["validos"]}\n'
-                f'Sem nota: {summary["excluidos_ou_sem_dado"]}\n'
-                f'Área total: {summary["area_total_ha"]:.4f} ha\n\n'
-                f'Saída: {dest}\n\n'
-                'Apenas a área de interseção comum foi avaliada.'
-                + (f'\nCSV: {summary["relatorio_csv"]}' if summary.get('relatorio_csv') else '')
-                + (f'\nTXT: {summary["relatorio_txt"]}' if summary.get('relatorio_txt') else '')))
-        except (OSError, ValueError, TypeError, InterruptedError, RuntimeError) as exc:
-            QMessageBox.warning(self, tr('Sobreposição não concluída'), tr(str(exc)))
-        finally:
-            self.running = False
-            self.run_button.setEnabled(True)
-            self.close_button.setEnabled(True)
+    def _summary_text(self, summary, dest):
+        return tr(f'Camadas: {summary["camadas"]}\n'
+                  f'Polígonos resultantes: {summary["total"]}\n'
+                  f'Com nota: {summary["validos"]}\n'
+                  f'Sem nota: {summary["excluidos_ou_sem_dado"]}\n'
+                  f'Área total: {summary["area_total_ha"]:.4f} ha\n\n'
+                  f'Saída: {dest}\n\n'
+                  'Apenas a área de interseção comum foi avaliada.')

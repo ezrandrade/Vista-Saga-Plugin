@@ -87,7 +87,7 @@ def write_monitoring_reports(transitions_path, matrix_path, text_path, summary, 
     hectares = ('Indisponível (SRC não projetado ou sem unidades lineares válidas)'
                 if summary['area_valida_ha'] is None else f"{summary['area_valida_ha']:.6f}")
     with open(text_path, 'w', encoding='utf-8', newline='\n') as stream:
-        stream.write('VISTA SAGA PLUGIN — MONITORIA ESPACIAL\n')
+        stream.write('VISTA SAGA PLUGIN - MONITORIA ESPACIAL\n')
         stream.write('=' * 65 + '\n')
         stream.write(f'Título: {title or "Monitoria de mudanças"}\n')
         stream.write(f'Período inicial: {before_label}\nPeríodo final: {after_label}\n')
@@ -100,7 +100,7 @@ def write_monitoring_reports(transitions_path, matrix_path, text_path, summary, 
         stream.write(f'Mudanças (pixels): {summary["mudancas"]} '
                      f'({summary["pct_mudanca"]:.6f}% dos válidos)\n')
         stream.write(f'Área válida (ha): {hectares}\n\n')
-        stream.write('TRANSIÇÕES — IDENTIFICADOR | INICIAL -> FINAL | PIXELS | % VÁLIDOS | HA\n')
+        stream.write('TRANSIÇÕES - IDENTIFICADOR | INICIAL -> FINAL | PIXELS | % VÁLIDOS | HA\n')
         for row in rows:
             area = 'N/D' if row['area_ha'] is None else f"{row['area_ha']:.6f}"
             stream.write(f"{row['id']} | {csv_code(row['inicial'])} -> "
@@ -139,7 +139,7 @@ def write_mk_csv(path, series):
 
 def append_mk_txt(path, series):
     with open(path, 'a', encoding='utf-8') as out:
-        out.write('\n\nANÁLISE TEMPORAL — MANN–KENDALL (bilateral)\n')
+        out.write('\n\nANÁLISE TEMPORAL - MANN–KENDALL (bilateral)\n')
         if not series or series.get('status') != 'calculado':
             out.write((series or {}).get('mensagem',
                 'Não aplicável: a comparação de dois mapas não permite Mann–Kendall.') + '\n')

@@ -30,7 +30,7 @@ class VectorMonitoringDialog(QWidget):
         self.iface = iface
         self._busy = False
         self._file_layers = {}
-        self.setWindowTitle(tr('Vista Saga Plugin — Monitoria vetorial'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Monitoria vetorial'))
         self.resize(820, 490)
         self.setMinimumSize(690, 425)
         self._build_ui()
@@ -210,7 +210,7 @@ class VectorMonitoringDialog(QWidget):
         try:
             validate_vector_monitoring(a, b, fa, fb, path, na, nb)
         except (ValueError, OSError) as exc:
-            QMessageBox.warning(self, tr('Monitoria vetorial — entrada'), tr(str(exc)))
+            QMessageBox.warning(self, tr('Monitoria vetorial - entrada'), tr(str(exc)))
             return
         from pathlib import Path
         stem = str(Path(path).with_suffix(''))
@@ -228,7 +228,7 @@ class VectorMonitoringDialog(QWidget):
         self.run_button.setEnabled(False)
         self.status.setText(tr('Executando interseção e cálculo das áreas…'))
         dialog = QProgressDialog(tr('Monitoria vetorial em execução…'), tr('Cancelar'), 0, 100, self)
-        dialog.setWindowTitle(tr('Vista Saga — Monitoria vetorial'))
+        dialog.setWindowTitle(tr('Vista Saga - Monitoria vetorial'))
         dialog.setWindowModality(Qt.WindowModality.WindowModal)
         dialog.setMinimumDuration(0)
         dialog.setValue(0)

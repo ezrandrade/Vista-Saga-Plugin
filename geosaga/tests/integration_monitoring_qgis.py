@@ -57,6 +57,6 @@ def run():
         if not all(Path(report[key]).is_file()
                    for key in ('mapa', 'transicoes', 'matriz', 'resumo')):
             raise RuntimeError('Arquivos esperados não encontrados.')
-        print('OK — Monitoria Ambiental 0.4.0: GeoTIFF e matriz conferidos; '
+        print('OK - Monitoria Ambiental 0.4.0: GeoTIFF e matriz conferidos; '
               '5 pixels válidos, 2 mudanças, 3 permanências; áreas corretas.')
         return True

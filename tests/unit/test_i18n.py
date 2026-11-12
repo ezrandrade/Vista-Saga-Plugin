@@ -82,3 +82,9 @@ def test_every_user_message_in_code_has_english_translation():
             if key and any(c.isalpha() for c in key) and key not in en:
                 missing.add((path.name, key[:80]))
     assert sorted(missing) == []
+
+
+def test_spanish_catalog_covers_every_english_entry():
+    """Desde a 1.1.0, o espanhol é completo: toda frase nova precisa entrar nos dois catálogos."""
+    missing = sorted(set(load('en')) - set(load('es')))
+    assert missing == []

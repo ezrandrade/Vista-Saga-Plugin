@@ -71,7 +71,7 @@ def run():
         np.testing.assert_allclose(actual, [[9.2, 7.6], [1.6, 3.2]], atol=1e-5)
         if info['pixels_validos'] != 4:
             raise RuntimeError('Contagem de pixels válidos divergente na Avaliação.')
-        print('OK — Avaliação Ambiental: média ponderada dos quatro pixels.')
+        print('OK - Avaliação Ambiental: média ponderada dos quatro pixels.')
 
         layer_a = QgsRasterLayer(str(a), 'anterior')
         layer_b = QgsRasterLayer(str(b), 'posterior')
@@ -85,7 +85,7 @@ def run():
         transitions = _csv_rows(transition_csv)
         if len(transitions) != 4 or sum(int(row['pixels']) for row in transitions) != 4:
             raise RuntimeError('Matriz de transições divergente.')
-        print('OK — Monitoria Ambiental: quatro transições, quatro pixels.')
+        print('OK - Monitoria Ambiental: quatro transições, quatro pixels.')
 
         region = QgsVectorLayer('Polygon?crs=EPSG:3857', 'área sintética', 'memory')
         if not region.isValid():
@@ -104,7 +104,7 @@ def run():
         signature = _csv_rows(signature_csv)
         if len(signature) != 2 or sum(int(row['pixels']) for row in signature) != 4:
             raise RuntimeError('Assinatura: contagens incorretas.')
-        print('OK — Assinatura Ambiental: duas classes, quatro pixels.')
+        print('OK - Assinatura Ambiental: duas classes, quatro pixels.')
 
     print('TESTE INTEGRADO CONCLUÍDO. Execute novamente no Windows e Linux/Flatpak.')
     return True
