@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs>
+<linearGradient id="paper" x2="0.8" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#dce9f3"/></linearGradient>
+<linearGradient id="blue" x2="0.6" y2="1"><stop stop-color="#8dc6e7"/><stop offset="1" stop-color="#3e729b"/></linearGradient>
+<linearGradient id="cyan" x2="0.5" y2="1"><stop stop-color="#a7e5e9"/><stop offset="1" stop-color="#40a9be"/></linearGradient>
+<linearGradient id="gold" x2="0.5" y2="1"><stop stop-color="#ffe4a0"/><stop offset="1" stop-color="#edb64c"/></linearGradient>
+<linearGradient id="coral" x2="0.5" y2="1"><stop stop-color="#ffc2af"/><stop offset="1" stop-color="#e77d70"/></linearGradient>
+<clipPath id="tile"><rect x="8" y="8" width="48" height="48" rx="5"/></clipPath>
+</defs><g stroke-linecap="round" stroke-linejoin="round"><rect x="19" y="7" width="37" height="35" rx="4" fill="url(#blue)" stroke="#507b9c" stroke-width="1.8"/><rect x="13" y="13" width="37" height="35" rx="4" fill="url(#paper)" stroke="#507b9c" stroke-width="1.8"/><rect x="7" y="19" width="37" height="35" rx="4" fill="url(#paper)" stroke="#507b9c" stroke-width="1.8"/><rect x="11" y="23" width="29" height="27" rx="2" fill="url(#cyan)" stroke="none" stroke-width="1.8"/><path d="M12 45 C17 39 24 43 25 35 S33 34 39 25" fill="none" stroke="#eafaff" stroke-width="3"/><path d="M11 30 L20 33 L25 23 M30 50 L32 43 L40 40" fill="none" stroke="#6eb1c8" stroke-width="1.2"/><circle cx="47" cy="47" r="12" fill="url(#coral)" stroke="#ffffff" stroke-width="2"/><path d="M44 41 L53 47 L44 53Z" fill="#ffffff" stroke="#ffffff" stroke-width="1"/></g></svg>
