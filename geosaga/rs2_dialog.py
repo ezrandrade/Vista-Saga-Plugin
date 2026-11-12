@@ -61,9 +61,6 @@ class RS2ConverterDialog(QDialog):
         root.setContentsMargins(10, 10, 10, 10)
         root.setSpacing(9)
 
-        title = QLabel(tr('Conversor de formatos'))
-        title.setStyleSheet('font-size: 16px; font-weight: 600;')
-        root.addWidget(title)
         self.description = QLabel()
         self.description.setWordWrap(True)
         root.addWidget(self.description)

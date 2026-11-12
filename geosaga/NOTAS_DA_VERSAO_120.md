@@ -7,10 +7,12 @@ Inclui tudo da 1.1.0.
 
 ## O que muda para quem usa
 
-- O módulo **Conversão de Formatos** passa a se chamar **Conversor de Formatos** (menu, título da
-  janela e cabeçalho). Em inglês, “Format converter”; em espanhol, “Conversor de formatos”.
+- O módulo **Conversão de Formatos** passa a se chamar **Conversor de Formatos** (menu e título
+  da janela). Em inglês, “Format converter”; em espanhol, “Conversor de formatos”.
 - A janela do Conversor tem a mesma aparência dos demais módulos (cores das seções e linhas de
   contorno, como no Sequenciador de Mapas).
+- O título grande no topo da tela foi retirado, como nos demais módulos; o nome do módulo continua
+  na barra de título da janela.
 
 ## Compatibilidade
 

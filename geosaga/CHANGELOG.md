@@ -2,13 +2,15 @@
 
 Versão dedicada ao módulo de conversão. Outras alterações serão acrescentadas antes do lançamento.
 
-- **Novo nome do módulo:** “Conversão de Formatos” passou a “Conversor de Formatos” no menu, no
-  título da janela e no cabeçalho da tela (inglês: “Format converter”; espanhol: “Conversor de
+- **Novo nome do módulo:** “Conversão de Formatos” passou a “Conversor de Formatos” no menu e no
+  título da janela (inglês: “Format converter”; espanhol: “Conversor de
   formatos”). Os identificadores internos (`rs2_dialog`, `open_rs2_converter`, `geosaga:*`) não
   mudam, e projetos e modelos antigos continuam funcionando.
 - **Aparência igual à dos demais módulos:** a área com rolagem da janela passa a ter a moldura
   padrão, como no Sequenciador de Mapas; as seções deixam de aparecer com outros tons de cinza e
   outra linha de contorno no Windows.
+- **Sem título no topo da tela:** como nos demais módulos, a janela começa pelo texto de
+  apresentação; o nome do módulo fica na barra de título.
 - Nenhum algoritmo de conversão foi alterado.
 
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)
