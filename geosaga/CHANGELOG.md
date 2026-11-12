@@ -6,6 +6,9 @@ Versão dedicada ao módulo de conversão. Outras alterações serão acrescenta
   título da janela e no cabeçalho da tela (inglês: “Format converter”; espanhol: “Conversor de
   formatos”). Os identificadores internos (`rs2_dialog`, `open_rs2_converter`, `geosaga:*`) não
   mudam, e projetos e modelos antigos continuam funcionando.
+- **Aparência igual à dos demais módulos:** a área com rolagem da janela passa a ter a moldura
+  padrão, como no Sequenciador de Mapas; as seções deixam de aparecer com outros tons de cinza e
+  outra linha de contorno no Windows.
 - Nenhum algoritmo de conversão foi alterado.
 
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)

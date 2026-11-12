@@ -8,7 +8,7 @@ from pathlib import Path
 from qgis.PyQt.QtCore import QCoreApplication, Qt
 from qgis.PyQt.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
-    QFrame, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox,
     QPushButton, QProgressDialog, QScrollArea, QToolButton, QVBoxLayout, QWidget,
     QDoubleSpinBox, QSpinBox, QAbstractItemView,
 )
@@ -49,14 +49,16 @@ class RS2ConverterDialog(QDialog):
         self._create_ui()
 
     def _create_ui(self):
+        # Mesma estrutura do Sequenciador de Mapas: área com rolagem com a moldura
+        # padrão do estilo. Sem moldura, o Windows desenha as seções direto sobre o
+        # fundo da janela, com outros tons de cinza e outra linha de contorno.
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(10, 10, 10, 10)
+        outer.setContentsMargins(8, 8, 8, 8)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
         holder = QWidget()
         root = QVBoxLayout(holder)
-        root.setContentsMargins(9, 6, 9, 8)
+        root.setContentsMargins(10, 10, 10, 10)
         root.setSpacing(9)
 
         title = QLabel(tr('Conversor de formatos'))
