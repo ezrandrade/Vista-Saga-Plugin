@@ -56,7 +56,27 @@ essas bibliotecas faltam.
 - **Arredondamento:** o Vista SAGA converte médias em classes por **"meio para par"**
   (`round()` do Python/NumPy), não por "meio para cima".
 - **Tradução:** textos de interface e mensagens passam por `tr()`; mensagens montadas em tempo de
-  execução precisam do modelo correspondente (`{0}`, `{1}`…) em `geosaga/i18n/en.json`.
+  execução precisam do modelo correspondente (`{0}`, `{1}`…) em `geosaga/i18n/en.json` **e** em
+  `geosaga/i18n/es.json` (o espanhol é completo desde a 1.1.0, e um teste exige os dois catálogos).
+  Formatos: `en.json` com recuo de 2 e quebra de linha final, na ordem de inserção; `es.json` com
+  recuo de 1, chaves ordenadas e sem quebra de linha final. Relatórios CSV/TXT, sufixos de arquivo
+  e o campo `MOTIVO` ficam sempre em português.
+
+## Padrões de interface
+
+- **Traço simples (-), nunca travessão (—)**, em textos de interface, títulos, nomes de camadas e
+  relatórios. Exceções: o marcador “—” de nota não definida e as meias-riscas de intervalos
+  (0–10, 1985–2024, Mann–Kendall). Um teste confere.
+- **Fundo:** toda `QScrollArea` dentro de guia chama `use_tab_background()` (em `ui_shared.py`)
+  logo após `setWidget`, para usar o fundo padrão da guia do QGIS. Um teste confere.
+- **Rótulos** com maiúscula só na primeira palavra (“Escala das notas”, não “Escala das Notas”).
+- **Tabelas:** números alinhados à direita e textos à esquerda (`table_item`, `weight_spin`,
+  `score_spin`, `centered_check` em `ui_shared.py`).
+- **Avaliação:** as três guias têm o mesmo leiaute (projeto, escala, critérios e pesos, classes,
+  resultado). A nota “—” bloqueia a execução, e o plugin nunca supõe nota 0 nem exclui classes
+  sozinho; pesos novos entram em branco, e a divisão igual só ocorre pelo botão. Campo “Salvar
+  em” vazio: vetor em memória, raster em arquivo temporário. Cada execução grava
+  `*_pesos_notas.geosaga.json` (formato em `evaluation_config.py`).
 
 ## Versões e lançamento
 
@@ -72,6 +92,16 @@ essas bibliotecas faltam.
 1. Cada melhoria numa **branch nova** a partir da `main`.
 2. Rodar as suítes; gerar um **ZIP de teste** para o autor validar no QGIS (e no Vista SAGA, quando
    couber). Não declarar algo homologado sem esse teste.
-3. Abrir o **pull request**; **o merge é feito pelo autor**, depois da validação.
+3. Abrir o **pull request**; **o merge é feito pelo autor**, depois da validação, ou pelo Claude
+   quando o autor pedir explicitamente (via API do GitHub, `merge_method=merge`, título
+   `Merge PR #N: …`). PRs que dependem de outros entram na ordem das dependências.
 4. Arquivos de dados do autor (RS2, Shapefiles, GeoTIFF) **não vão para o repositório**, que é
    público: recrie a estrutura com dados sintéticos nos testes.
+
+## Pendências registradas
+
+- **Na versão final:** criar as tags e Releases no GitHub (v1.0.5, v1.0.6, v1.0.8, v1.0.9, v1.1.0…)
+  e apagar as branches já incorporadas; conferir antes `fix/testes-desatualizados` e
+  `docs/logo-readme`, que têm 1 commit fora da `main`. Não fazer isso antes.
+- **QRibbonSkin:** erro ao descarregar o plugin (barra de ferramentas apagada); tratar só quando o
+  trabalho for no próprio QRibbonSkin.
