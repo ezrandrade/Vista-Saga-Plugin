@@ -11,10 +11,12 @@ class UIModules061(unittest.TestCase):
             self.assertIn('vetorial' if f == 'combination_dialog.py' else 'Vetorial', text, f)
     def test_temporary_mode_supported_across_main_modules(self):
         for f in ('combination_dialog.py','evaluation_dialog.py',
-                  'vector_evaluation_dialog.py','vector_overlay_dialog.py',
+                  'vector_evaluation_dialog.py',
                   'monitoring_dialog.py','vector_monitoring_dialog.py',
                   'signature_dialog.py','rs2_dialog.py'):
             self.assertIn('temporary_destination',src(f),f)
+        # A sobreposição herda o destino temporário da guia Atributos.
+        self.assertIn('class VectorOverlayEvaluationDialog(VectorEvaluationDialog)', src('vector_overlay_dialog.py'))
     def test_multi_add_and_remove(self):
         for f in ('combination_dialog.py','evaluation_dialog.py','signature_dialog.py'):
             self.assertIn('choose_project_layers',src(f),f)

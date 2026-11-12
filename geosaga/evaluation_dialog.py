@@ -20,7 +20,9 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsPalettedRasterRenderer, QgsMessageLog, Qgis
 
 from .evaluation_task import EvaluationTask
-from .ui_shared import choose_project_layers, temporary_destination
+from .ui_shared import (OutputSection, RASTER_OUTPUT_HINT, centered_check, choose_project_layers,
+                        score_spin, table_item, temporary_destination, weight_spin)
+from .evaluation_config import config_path_for
 from .raster_engine import file_source, open_raster, same_grid, scan_classes
 from .errors import log_exception
 
@@ -77,11 +79,11 @@ class EvaluationDialog(QDialog):
         self.attributes_scroll = QScrollArea()
         self.attributes_scroll.setWidgetResizable(True)
         self.attributes_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.analysis_tabs.addTab(self.attributes_scroll, tr('Vetorial — atributos'))
+        self.analysis_tabs.addTab(self.attributes_scroll, tr('Vetorial (Atributos)'))
         self.overlay_scroll = QScrollArea()
         self.overlay_scroll.setWidgetResizable(True)
         self.overlay_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.analysis_tabs.addTab(self.overlay_scroll, tr('Vetorial — sobreposição'))
+        self.analysis_tabs.addTab(self.overlay_scroll, tr('Vetorial (Sobreposição)'))
         heading = QLabel(tr('<b>AVALIAÇÃO ESPACIAL — PESOS E NOTAS</b>'))
         outer.addWidget(heading)
         info = QLabel(tr('Selecione mapas categóricos, informe o peso de cada tema e atribua notas às suas classes. '
@@ -105,7 +107,7 @@ class EvaluationDialog(QDialog):
         meta.addWidget(QLabel(tr('Autor:')))
         self.author_edit = QLineEdit()
         meta.addWidget(self.author_edit, 2)
-        meta.addWidget(QLabel(tr('Escala:')))
+        meta.addWidget(QLabel(tr('Escala das notas:')))
         self.scale_combo = QComboBox()
         self.scale_combo.addItem(tr('0 a 10'), 10)
         self.scale_combo.addItem(tr('0 a 100'), 100)
@@ -145,13 +147,15 @@ class EvaluationDialog(QDialog):
         self.map_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.map_table.itemSelectionChanged.connect(self._map_selected)
         left_layout.addWidget(self.map_table, stretch=1)
-        left_layout.addWidget(button('Distribuir pesos igualmente', self.distribute_weights))
+        left_layout.addWidget(button('Distribuir pesos igualmente', self.distribute_weights,
+                                     'Volta a dividir 100% igualmente entre os mapas, '
+                                     'desfazendo pesos digitados.'))
         self.weight_label = QLabel()
         self.weight_label.setWordWrap(True)
         left_layout.addWidget(self.weight_label)
         splitter.addWidget(left)
 
-        right = QGroupBox(tr('2. Categorias do mapa selecionado'))
+        right = QGroupBox(tr('2. Classes do mapa selecionado'))
         right_layout = QVBoxLayout(right)
         self.class_info = QLabel(tr('Selecione um mapa à esquerda.'))
         self.class_info.setWordWrap(True)
@@ -185,33 +189,11 @@ class EvaluationDialog(QDialog):
         splitter.addWidget(right)
         splitter.setSizes([410, 660])
 
-        output_group = QGroupBox(tr('3. Resultado'))
-        output_layout = QVBoxLayout(output_group)
-        output_row = QHBoxLayout()
-        output_row.addWidget(QLabel(tr('Carta GeoTIFF:')))
-        self.output_edit = QLineEdit()
-        self.output_edit.setPlaceholderText(tr('Selecione onde salvar a carta de avaliação espacial (.tif)'))
-        output_row.addWidget(self.output_edit, 1)
-        output_row.addWidget(button('Procurar…', self.select_output))
-        output_layout.addLayout(output_row)
-        self.temporary_check = QCheckBox(tr('Resultado temporário no QGIS (pode ser salvo posteriormente)'))
-        self.temporary_check.setChecked(True)
-        output_layout.addWidget(self.temporary_check)
-        self.output_edit.setEnabled(False)
-        self.temporary_check.toggled.connect(lambda active: self.output_edit.setEnabled(not active))
-        opts = QHBoxLayout()
-        self.csv_check = QCheckBox(tr('Gerar relatório CSV (combinações, notas e áreas)'))
-        self.csv_check.setChecked(True)
-        opts.addWidget(self.csv_check)
-        self.txt_check = QCheckBox(tr('Gerar relatório TXT (modelo Vista SAGA)'))
-        self.txt_check.setChecked(True)
-        opts.addWidget(self.txt_check)
-        self.load_check = QCheckBox(tr('Adicionar resultado ao QGIS'))
-        self.load_check.setChecked(True)
-        opts.addWidget(self.load_check)
-        opts.addStretch()
-        output_layout.addLayout(opts)
-        outer.addWidget(output_group)
+        self.output = OutputSection(self.select_output, '[Arquivo temporário]', RASTER_OUTPUT_HINT)
+        self.output_edit = self.output.edit
+        self.csv_check = self.output.csv_check
+        self.txt_check = self.output.txt_check
+        outer.addWidget(self.output.group)
         footer = QHBoxLayout()
         self.status = QLabel('')
         self.status.setWordWrap(True)
@@ -442,14 +424,9 @@ class EvaluationDialog(QDialog):
                 name_item = view_item(e['name'])
                 name_item.setToolTip(e['path'])
                 self.map_table.setItem(i, 0, name_item)
-                spin = QDoubleSpinBox()
-                spin.setRange(0, 100)
-                spin.setDecimals(2)
-                spin.setSuffix(tr(' %'))
-                spin.setValue(e['weight'])
-                spin.valueChanged.connect(lambda value, idx=i: self._weight_changed(idx, value))
-                self.map_table.setCellWidget(i, 1, spin)
-                self.map_table.setItem(i, 2, view_item(str(len(e['classes']))))
+                self.map_table.setCellWidget(i, 1, weight_spin(
+                    e['weight'], lambda value, idx=i: self._weight_changed(idx, value)))
+                self.map_table.setItem(i, 2, table_item(len(e['classes']), numeric=True))
             if select is not None and 0 <= select < len(self.entries):
                 self.map_table.selectRow(select)
                 self.current_index = select
@@ -502,31 +479,19 @@ class EvaluationDialog(QDialog):
                                     'na banda 1, excluindo NoData.'))
             self.class_table.setRowCount(len(e['classes']))
             for r, (code, count) in enumerate(e['classes']):
-                self.class_table.setItem(r, 0, view_item(code))
+                self.class_table.setItem(r, 0, table_item(code))
                 class_name = e['labels'].get(code, '')
                 count_text = f'{count:,}'.replace(',', '.')
                 label = view_item(f'{class_name}  ({count_text} px)' if class_name else f'{count_text} pixels')
                 label.setToolTip(tr('Nome da classe quando disponível na legenda do QGIS; quantidade de pixels válidos.'))
                 self.class_table.setItem(r, 1, label)
-                score = QDoubleSpinBox()
-                score.setRange(-1, self._current_scale())
-                score.setDecimals(2)
-                score.setSingleStep(1)
-                score.setSpecialValueText('—')
-                score.setValue(float(e['notes'].get(code, -1)))
+                note = e['notes'].get(code)
+                score = score_spin(self._current_scale(), None if note is None else float(note))
                 self.class_table.setCellWidget(r, 2, score)
-                skip = QCheckBox()
-                skip.setToolTip(tr('Exclui da avaliação os pixels desta classe.'))
-                skip.setChecked(code in e['blocked'])
+                center, skip = centered_check(code in e['blocked'],
+                                              'Exclui da avaliação os pixels desta classe.')
                 score.setEnabled(not skip.isChecked())
                 skip.toggled.connect(lambda checked, target=score: target.setEnabled(not checked))
-                center = QWidget()
-                row_layout = QHBoxLayout(center)
-                row_layout.setContentsMargins(0, 0, 0, 0)
-                row_layout.addStretch(1)
-                row_layout.addWidget(skip)
-                row_layout.addStretch(1)
-                # cellWidget parent now container; _get_skip reads layout widget below.
                 self.class_table.setCellWidget(r, 3, center)
         finally:
             self._rendering = False
@@ -600,15 +565,13 @@ class EvaluationDialog(QDialog):
         try:
             config = self._collect_configuration()
             dest = (temporary_destination('avaliacao_raster', '.tif')
-                    if self.temporary_check.isChecked() else self.output_edit.text().strip())
-            if not dest:
-                raise ValueError('Informe o caminho do raster de saída (.tif).')
+                    if self.output.is_temporary() else self.output.path())
             if not dest.lower().endswith(('.tif', '.tiff')):
                 raise ValueError('A carta de avaliação deve ser salva em GeoTIFF (.tif).')
             dest = os.path.abspath(dest)
             if any(os.path.realpath(dest) == os.path.realpath(e['path']) for e in self.entries):
                 raise ValueError('A saída não pode sobrescrever um mapa de entrada.')
-            if os.path.exists(dest):
+            if os.path.exists(dest) and not self.output.is_temporary():
                 if QMessageBox.question(self, tr('Substituir resultado?'),
                     tr(f'O arquivo já existe:\n{dest}\n\nDeseja substituí-lo?')) != QMessageBox.StandardButton.Yes:
                     return
@@ -646,12 +609,19 @@ class EvaluationDialog(QDialog):
             msg += f'\nRelatório CSV: {task.report}'
         if task.report_txt:
             msg += f'\nRelatório TXT: {task.report_txt}'
-        if self.load_check.isChecked() or self.temporary_check.isChecked():
-            layer = self.iface.addRasterLayer(task.destination, self.title_edit.text().strip() or 'Vista Saga — Avaliação')
-            if not layer or not layer.isValid():
-                msg += '\n(Atenção: não foi possível adicionar o raster ao QGIS.)'
-        self.status.setText(tr('Avaliação concluída. O resultado foi salvo em GeoTIFF.'))
-        QMessageBox.information(self, tr('Vista Saga — Avaliação concluída'), tr(msg))
+        msg = tr(msg)
+        try:
+            config = config_path_for(task.destination)
+            with open(config, 'w', encoding='utf-8') as file:
+                json.dump(self._serialize(config), file, ensure_ascii=False, indent=2)
+            msg += '\n' + tr('Pesos e notas: ') + config
+        except (OSError, ValueError) as exc:
+            msg += '\n' + tr('Atenção: não foi possível gravar os pesos e as notas: ') + str(exc)
+        layer = self.iface.addRasterLayer(task.destination, self.title_edit.text().strip() or 'Vista Saga — Avaliação')
+        if not layer or not layer.isValid():
+            msg += '\n\n' + tr('Atenção: não foi possível carregar o resultado no QGIS.')
+        self.status.setText(tr('Avaliação concluída.'))
+        QMessageBox.information(self, tr('Vista Saga — Avaliação concluída'), msg)
 
     def _serialize(self, dest):
         self._save_current_notes()
