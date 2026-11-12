@@ -1,8 +1,8 @@
-# Vista Saga Plugin — versão 1.0.5
+# Vista Saga Plugin — versão 1.1.0
 
 Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O programa moderniza procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, sem incorporar o código deste. Não há vínculo institucional com os desenvolvedores do Vista SAGA/UFRJ original.
 
-> **Versão 1.0.5 (estável):** sete módulos em português e inglês, inclusive nas mensagens de erro. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin** (ícone de 24 px); se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**. No **QRibbonSkin**, utilize **Complementos → Vista Saga Plugin**; após instalar ou atualizar, volte à interface clássica e reative a Ribbon para que ela reconstrua a guia de complementos.
+> **Versão 1.1.0:** sete módulos em português, inglês e espanhol, inclusive nas mensagens de erro; o idioma segue a configuração do QGIS. No módulo Avaliação, as três guias (Raster, Vetorial (Atributos) e Vetorial (Sobreposição)) têm o mesmo leiaute, e cada execução grava um arquivo de pesos e notas (`*_pesos_notas.geosaga.json`) que pode ser reaberto em “Abrir projeto…”. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin** (ícone de 24 px); se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**. No **QRibbonSkin**, utilize **Complementos → Vista Saga Plugin**; após instalar ou atualizar, volte à interface clássica e reative a Ribbon para que ela reconstrua a guia de complementos.
 
 ## Sete módulos
 

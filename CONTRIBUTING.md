@@ -4,4 +4,11 @@ Relate falhas em [Issues](https://github.com/ezrandrade/Vista-Saga-Plugin/issues
 
 Mudanças em algoritmos devem vir acompanhadas de teste de regressão e discussão da metodologia, especialmente para Voronoi com Atrito. Evite alterar o diretório Python `geosaga` e os IDs `geosaga:*` sem plano explícito de migração.
 
-Antes de enviar contribuições, execute os testes unitários e verifique o funcionamento no QGIS 4.x. A versão 0.9.0 é candidata experimental à 1.0; não marque recursos novos como homologados sem testá-los em ambiente real.
+Antes de enviar contribuições, execute as duas suítes de testes e verifique o funcionamento no QGIS 4.x. Não marque recursos novos como homologados sem testá-los em ambiente real.
+
+```bash
+python -m unittest discover -s geosaga/tests -p 'test_*.py'
+python -m pytest -q tests/unit
+```
+
+Textos de interface e mensagens passam por `tr()` e precisam de tradução nos dois catálogos, `geosaga/i18n/en.json` e `geosaga/i18n/es.json`; mensagens montadas em tempo de execução usam modelos com `{0}`, `{1}`… Os testes falham se faltar alguma frase em qualquer um dos catálogos.
