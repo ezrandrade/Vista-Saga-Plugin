@@ -272,7 +272,7 @@ class RS2ConverterDialog(QDialog):
         scroll.setWidget(holder)
         use_tab_background(scroll)
         outer.addWidget(scroll, 1)
-        self._scroll, self._holder = scroll, holder
+        self._outer, self._scroll, self._holder = outer, scroll, holder
 
         actions = QHBoxLayout()
         self.inspect_button = QPushButton(tr('Propriedades RS2…'))
@@ -287,6 +287,7 @@ class RS2ConverterDialog(QDialog):
         close.clicked.connect(self.close)
         actions.addWidget(close)
         outer.addLayout(actions)
+        self._actions = actions
         self._batch_changed()
 
     def _toggle_advanced(self, opened):
@@ -306,19 +307,29 @@ class RS2ConverterDialog(QDialog):
 
         Os campos mudam com a operação, o lote e as opções avançadas. A janela
         acompanha, até 90% da altura útil da tela; acima disso, a rolagem assume.
-        A largura escolhida pelo usuário é mantida.
+        A largura escolhida pelo usuário é mantida. A altura é somada a partir das
+        partes fixas (margens, moldura, botões), sem depender da geometria atual do
+        viewport, que no Windows pode ainda não estar atualizada logo após show().
         """
+        margins = self._outer.contentsMargins()
+        frame = 2 * self._scroll.frameWidth()
+        width = max(self.width() - margins.left() - margins.right() - frame, 200)
         layout = self._holder.layout()
         layout.activate()
         content = layout.sizeHint().height()
-        chrome = self.height() - self._scroll.viewport().height()
-        target = content + chrome
+        if layout.hasHeightForWidth():
+            content = max(layout.heightForWidth(width), layout.minimumSize().height())
+        target = (margins.top() + margins.bottom() + frame + content
+                  + self._outer.spacing() + self._actions.sizeHint().height())
         screen = self.screen()
         if screen is not None:
             target = min(target, int(screen.availableGeometry().height() * 0.9))
-        target = max(target, self.minimumSizeHint().height())
         if target != self.height():
             self.resize(self.width(), target)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._schedule_fit()
 
     def _temp_changed(self, *_):
         persistent = not self.temporary_check.isChecked()
