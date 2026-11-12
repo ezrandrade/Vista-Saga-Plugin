@@ -6,7 +6,7 @@ Instruções para o Claude ao trabalhar neste repositório. Leia também `CONTRI
 
 - Complemento independente para **QGIS 4.x / Qt6 / Python 3.12**, inspirado no Vista SAGA/UFRJ,
   **sem código do programa original**. Sete módulos: Assinatura, Monitoria, Avaliação, Análises
-  Voronoi, Combinação de Mapas, Conversão de Formatos e Sequenciador de Mapas.
+  Voronoi, Combinação de Mapas, Conversor de Formatos e Sequenciador de Mapas.
 - O autor usa o plugin na **tese de doutorado**. Mudanças em algoritmos são decisões de método:
   exigem teste de regressão, justificativa escrita e, quando envolvem o formato RS2 ou resultados
   comparáveis ao Vista SAGA, validação do autor no **Vista SAGA original**.

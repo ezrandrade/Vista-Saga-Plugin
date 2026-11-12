@@ -11,7 +11,7 @@ Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andr
 3. **Avaliação** — classificação multicritério com pesos e notas, em raster ou vetores.
 4. **Análises Voronoi** — Simples, Massa, Atrito e Massa + Atrito; atrito único ou composição de múltiplos rasters com pesos e notas por classe.
 5. **Combinação de Mapas** — cruzamento categórico e cálculo de áreas, em raster ou vetor.
-6. **Conversão de Formatos** — RS2/GeoTIFF/vetor, incluindo vetorização e rasterização.
+6. **Conversor de Formatos** — RS2/GeoTIFF/vetor, incluindo vetorização e rasterização.
 7. **Sequenciador de Mapas** — três abas Raster/Vetorial/Misto, ordenação temporal, GIF animado e PNGs opcionais, preservando as camadas de origem.
 
 ## Instalação e compatibilidade

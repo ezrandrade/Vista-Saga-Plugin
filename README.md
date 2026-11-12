@@ -19,7 +19,7 @@
 | Avaliação | Análises multicritério por pesos e notas, em raster e vetor |
 | Análises Voronoi | Simples, Massa, Atrito, Massa + Atrito e atrito integrado de várias superfícies ponderadas |
 | Combinação de Mapas | Cruzamento de mapas categóricos raster e vetoriais |
-| Conversão de Formatos | Interoperabilidade RS2 ↔ GeoTIFF e dados vetoriais, incluindo Vetor → RS2; rasterização e vetorização |
+| Conversor de Formatos | Interoperabilidade RS2 ↔ GeoTIFF e dados vetoriais, incluindo Vetor → RS2; rasterização e vetorização |
 | Sequenciador de Mapas | Animações Raster, Vetorial e Mista; exportação GIF e quadros PNG |
 
 ## Requisitos e instalação

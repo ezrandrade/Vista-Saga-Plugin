@@ -35,7 +35,7 @@ class RS2ConverterDialog(QDialog):
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
-        self.setWindowTitle(tr('Vista Saga Plugin - Conversão de formatos'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Conversor de formatos'))
         self.setMinimumWidth(690)
         self.resize(750, 660)
         self.setModal(False)
@@ -59,7 +59,7 @@ class RS2ConverterDialog(QDialog):
         root.setContentsMargins(9, 6, 9, 8)
         root.setSpacing(9)
 
-        title = QLabel(tr('Conversão de formatos'))
+        title = QLabel(tr('Conversor de formatos'))
         title.setStyleSheet('font-size: 16px; font-weight: 600;')
         root.addWidget(title)
         self.description = QLabel()
