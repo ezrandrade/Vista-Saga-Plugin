@@ -55,3 +55,10 @@ da tela retirado e altura da janela ajustada ao conteúdo. Aprovado pelo autor n
 Windows. Suítes locais: `geosaga/tests` OK (23 pulados); `tests/unit` 36/36. Nenhum algoritmo de
 conversão alterado; não exige validação no Vista SAGA original. A 1.2.0 segue em
 desenvolvimento: novas alterações exigirão nova homologação.
+
+### Build `1.2.0-dev12` — Combinação vetorial com tolerância de lascas e incorporação de resíduos
+
+Caso real do autor (Renda × Escolaridade, EPSG:31985, 2.343,27 ha; dados fora do repositório):
+no QGIS para Windows, a combinação das camadas originais concluiu com **15 combinações**, o mesmo
+número previsto pela simulação com GEOS (antes: 24, das quais 9 formadas só por resíduos).
+Regras cobertas por `test_120_sliver_tolerance.py` e `test_120_combination_fields.py`.
