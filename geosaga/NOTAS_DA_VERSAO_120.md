@@ -1,7 +1,7 @@
 # Vista Saga Plugin 1.2.0 — notas da versão
 
-> **Em desenvolvimento.** Esta versão reúne as alterações dos módulos **Conversor de Formatos** e
-> **Combinação de Mapas**; outras mudanças serão acrescentadas antes do lançamento.
+> **Em desenvolvimento.** Esta versão reúne as alterações dos módulos **Conversor de Formatos**,
+> **Combinação de Mapas** e **Sequenciador de Mapas**; outras mudanças serão acrescentadas antes do lançamento.
 
 Inclui tudo da 1.1.0.
 
@@ -52,10 +52,10 @@ Inclui tudo da 1.1.0.
 
 ## Compatibilidade
 
-- Nenhum algoritmo de conversão foi alterado. Na combinação vetorial, a única mudança é a
-  tolerância de lascas: camadas sem sobreposições internas geram os mesmos mapas e relatórios da
-  1.1.0 (o `_resumo.txt` ganha as linhas da tolerância); camadas antes recusadas por lascas
-  passam a ser combinadas.
+- Nenhum algoritmo de conversão foi alterado. Na combinação vetorial, mudam a tolerância de
+  lascas (camadas antes recusadas por lascas passam a ser combinadas) e a incorporação de
+  resíduos (combinações que só existiam em tiras microscópicas desaparecem; a área total é a
+  mesma). O `_resumo.txt` ganha as linhas correspondentes. A combinação raster não mudou.
 - Resultados vetoriais da Combinação gerados pela 1.2.0 usam `COD_nn`/`LEG_nn`; estilos e
   expressões feitos sobre `Cnn`/`Lnn` precisam ser ajustados.
 - Os identificadores internos e os algoritmos Processing `geosaga:*` não mudam; projetos e modelos
