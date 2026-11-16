@@ -31,9 +31,17 @@ Inclui tudo da 1.1.0.
 - Cada camada entra **uma única vez**, com o campo de classe escolhido para ela. Se a mesma camada
   for adicionada de novo, um aviso mostra o campo já usado.
 
+- **Lascas de precisão não bloqueiam mais a combinação vetorial.** Sobreposições entre polígonos
+  de uma mesma camada com largura média abaixo de 1 cm (por exemplo, fronteiras com vértices
+  ligeiramente diferentes depois de reprojeção) são mantidas, e o `_resumo.txt` informa quantas
+  são e a área duplicada. Sobreposições mais espessas continuam bloqueando, e a mensagem lista
+  todos os pares com área e largura. Registre a tolerância na metodologia, se a usar.
+
 ## Compatibilidade
 
-- Nenhum algoritmo de conversão ou de combinação foi alterado: RS2, GeoTIFF, vetores, mapas
-  combinados e relatórios gerados são os mesmos da 1.1.0.
+- Nenhum algoritmo de conversão foi alterado. Na combinação vetorial, a única mudança é a
+  tolerância de lascas: camadas sem sobreposições internas geram os mesmos mapas e relatórios da
+  1.1.0 (o `_resumo.txt` ganha as linhas da tolerância); camadas antes recusadas por lascas
+  passam a ser combinadas.
 - Os identificadores internos e os algoritmos Processing `geosaga:*` não mudam; projetos e modelos
   antigos continuam funcionando.

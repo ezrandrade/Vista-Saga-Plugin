@@ -9,8 +9,12 @@ import tempfile
 from collections import defaultdict
 
 from .combination_core import (normalized_code, combination_index,
-                               composition_rows, write_combination_reports)
+                               composition_rows, write_combination_reports,
+                               classify_overlap, sliver_report_lines, SLIVER_WIDTH_M)
 from .errors import log_exception
+from .i18n import tr
+
+MAX_LISTED_OVERLAPS = 10
 
 
 def validate_vector_sources(sources, fields, labels, destination):
@@ -47,8 +51,14 @@ def validate_vector_sources(sources, fields, labels, destination):
 
 
 def _make_thematic(source, field, label_field, index, cancelled):
+    """Copia a camada com os campos temáticos C<n>/L<n>, conferindo sobreposições.
+
+    Devolve (camada temporária, estatística das lascas toleradas). Sobreposições
+    internas mais espessas que SLIVER_WIDTH_M bloqueiam, listando todos os pares.
+    """
     from qgis.PyQt.QtCore import QMetaType
-    from qgis.core import QgsGeometry, QgsFeature, QgsField, QgsVectorLayer, QgsSpatialIndex
+    from qgis.core import (Qgis, QgsGeometry, QgsFeature, QgsField, QgsVectorLayer,
+                           QgsSpatialIndex, QgsUnitTypes)
     temporary = QgsVectorLayer('MultiPolygon', 'Mapa temporário', 'memory')
     temporary.setCrs(source.crs())
     if not temporary.isValid():
@@ -59,9 +69,18 @@ def _make_thematic(source, field, label_field, index, cancelled):
                                    QgsField(label_name, QMetaType.Type.QString)]):
         raise RuntimeError('Falha ao criar os campos temáticos temporários.')
     temporary.updateFields()
+    # Metros -> unidades do SRC (em graus, conversão aproximada do próprio QGIS).
+    factor = QgsUnitTypes.fromUnitToUnitFactor(Qgis.DistanceUnit.Meters, source.crs().mapUnits())
+    if not factor or factor <= 0:
+        factor = 1.0
+    tolerance = SLIVER_WIDTH_M * factor
     feats = []
     index = QgsSpatialIndex()
     geometries = {}
+    codes = {}
+    tolerated_area = 0.0
+    slivers = 0
+    rejected = []
     for feat in source.getFeatures():
         if cancelled and cancelled():
             raise InterruptedError('Combinação vetorial cancelada.')
@@ -79,13 +98,18 @@ def _make_thematic(source, field, label_field, index, cancelled):
             if not geom.intersects(prior):
                 continue
             crossing = geom.intersection(prior)
-            if not crossing.isEmpty() and crossing.area() > max(
-                    1e-14, min(geom.area(), prior.area()) * 1e-10):
-                raise ValueError(f'{source.name()}: polígonos temáticos se sobrepõem '
-                                 f'(feições {prior_id} e {feat.id()}). '
-                                 'Corrija a topologia antes de combinar para não duplicar áreas.')
+            if crossing.isEmpty():
+                continue
+            pieces = [(part.area(), part.length()) for part in crossing.asGeometryCollection()
+                      if part.type() == Qgis.GeometryType.Polygon]
+            area_ok, count, area_bad, widest = classify_overlap(pieces, tolerance)
+            tolerated_area += area_ok
+            slivers += count
+            if area_bad:
+                rejected.append((prior_id, feat.id(), codes[prior_id], code, area_bad, widest))
         index.addFeature(feat)
         geometries[feat.id()] = QgsGeometry(geom)
+        codes[feat.id()] = code
         value = feat[label_field] if label_field else None
         legend = (str(value).strip() if value is not None and not (
             hasattr(value, 'isNull') and value.isNull()) else '')
@@ -104,10 +128,27 @@ def _make_thematic(source, field, label_field, index, cancelled):
             feats.clear()
     if feats and not provider.addFeatures(feats)[0]:
         raise OSError('Falha ao gravar feições temporárias.')
+    if rejected:
+        raise ValueError(_overlap_message(source.name(), rejected, factor))
     temporary.updateExtents()
     if not temporary.featureCount():
         raise ValueError(f'{source.name()}: nenhuma classe válida foi encontrada.')
-    return temporary
+    return temporary, {'name': source.name(), 'count': slivers,
+                       'area_m2': tolerated_area / (factor * factor)}
+
+
+def _overlap_message(name, rejected, factor):
+    """Lista os pares que se sobrepõem acima da tolerância, com área e largura."""
+    lines = [tr('{0}: {1} par(es) de polígonos da mesma camada se sobrepõem com largura média '
+                'de pelo menos {2} cm. Corrija a topologia antes de combinar, para não '
+                'duplicar áreas.').format(name, len(rejected), f'{SLIVER_WIDTH_M * 100:g}')]
+    for first, second, code_a, code_b, area, width in rejected[:MAX_LISTED_OVERLAPS]:
+        lines.append(tr('- feições {0} e {1} (classes {2} e {3}): {4} m², largura média {5} m').format(
+            first, second, code_a, code_b, f'{area / (factor * factor):.4f}',
+            f'{width / factor:.3f}'))
+    if len(rejected) > MAX_LISTED_OVERLAPS:
+        lines.append(tr('… e mais {0} pares.').format(len(rejected) - MAX_LISTED_OVERLAPS))
+    return '\n'.join(lines)
 
 
 def run_vector_combination(sources, fields, labels, destination, *, progress=None, cancelled=None):
@@ -127,8 +168,11 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
     joined = None
     output = None
     try:
+        sliver_stats = []
         for idx, (layer, field, legend) in enumerate(zip(sources, fields, labels), 1):
-            prepared.append(_make_thematic(layer, field, legend, idx, cancelled))
+            thematic, stats = _make_thematic(layer, field, legend, idx, cancelled)
+            prepared.append(thematic)
+            sliver_stats.append(stats)
             if progress:progress(int(15*idx/len(sources)))
         joined = prepared[0]
         class Feedback(QgsProcessingFeedback):
@@ -226,14 +270,15 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
         write_combination_reports(staged_csv, staged_txt, rows,
                                   [layer.name() for layer in sources], mode='Vetorial',
                                   crs=sources[0].crs().authid(),
-                                  area_method='QgsDistanceArea para CRS geográfico; unidades projetadas convertidas para m².')
+                                  area_method='QgsDistanceArea para CRS geográfico; unidades projetadas convertidas para m².',
+                                  notes=sliver_report_lines(sliver_stats))
         if cancelled and cancelled():
             raise InterruptedError('Combinação cancelada.')
         _publish_set(list(zip((gpkg,staged_csv,staged_txt), destinations)), parent)
         if progress:progress(100)
         return {'output':destinations[0], 'csv':destinations[1],'txt':destinations[2],
                 'combinations':len(rows),'features':len(feature_data),
-                'area_ha':total_area/10000,'rows':rows}
+                'area_ha':total_area/10000,'rows':rows,'slivers':sliver_stats}
     finally:
         output = None
         joined = None

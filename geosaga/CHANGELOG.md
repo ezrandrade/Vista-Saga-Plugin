@@ -39,7 +39,19 @@ serão acrescentadas antes do lançamento.
   campo de classe próprio). Ao repetir uma camada, o aviso informa o nome e o campo já usado e
   indica como trocar o atributo. Em “Adicionar várias do QGIS…” e “Adicionar arquivos…”, a
   repetição é detectada antes de perguntar o campo.
-- Nenhum algoritmo de combinação foi alterado.
+- **Tolerância de lascas na combinação vetorial (decisão de método).** Antes, qualquer
+  sobreposição entre polígonos de uma mesma camada maior que 10⁻¹⁰ da área do menor polígono
+  bloqueava a combinação, inclusive lascas de precisão invisíveis (casos reais: lascas de até
+  0,04 mm de largura e 0,03 m² no total, em camadas de 2.343 ha). Agora o critério é a
+  **largura média** de cada pedaço sobreposto (2 × área ÷ perímetro): abaixo de **1 cm**, o
+  pedaço é tratado como imprecisão de coordenadas e **mantido**, e o `_resumo.txt` registra, por
+  mapa, o número de lascas e a área duplicada (a janela de conclusão também informa). A partir
+  de 1 cm, a combinação continua bloqueada, e a mensagem lista **todos** os pares (até 10), com
+  classes, área e largura média. Justificativa: a largura separa ruído de coordenadas de erro
+  real independentemente do tamanho dos polígonos, e 1 cm fica muito abaixo da precisão
+  cartográfica de bases municipais. Em SRC geográfico, 1 cm é convertido para graus pela
+  conversão aproximada do QGIS. Teste de regressão: `test_120_sliver_tolerance.py`.
+- Fora a tolerância de lascas, nenhum algoritmo de combinação foi alterado.
 
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)
 

@@ -479,9 +479,15 @@ class CombinationDialog(QDialog):
                      tr('arquivo temporário') if temporary else dest)
             self.status.setText(tr('Concluído: {count} combinações. Resultado: {where}.').format(
                 count=result['combinations'], where=where))
-            QMessageBox.information(self,tr('Combinação concluída'),
-                tr(f"Combinações observadas: {result['combinations']}\n"
-                f"Relatórios: {result['csv']} e {result['txt']}"))
+            message = tr(f"Combinações observadas: {result['combinations']}\n"
+                         f"Relatórios: {result['csv']} e {result['txt']}")
+            slivers = [s for s in result.get('slivers', ()) if s['count']]
+            if slivers:
+                message += '\n\n' + tr('Lascas toleradas (largura média abaixo de 1 cm), registradas no resumo:')
+                for item in slivers:
+                    message += '\n' + tr('{0}: {1} lascas, {2} m² de área duplicada').format(
+                        item['name'], item['count'], f"{item['area_m2']:.4f}")
+            QMessageBox.information(self,tr('Combinação concluída'), message)
         except InterruptedError:
             self.status.setText(tr('Processamento cancelado, sem alterar as entradas.'))
         except Exception as exc:

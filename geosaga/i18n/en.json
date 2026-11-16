@@ -1321,7 +1321,6 @@
   "{0}: o arquivo deve conter polígonos.": "{0}: the file must contain polygons.",
   "{0}: o campo {1} não existe mais.": "{0}: field {1} no longer exists.",
   "{0}: o peso deve ser maior que zero.": "{0}: the weight must be greater than zero.",
-  "{0}: polígonos temáticos se sobrepõem (feições {1} e {2}). Corrija a topologia antes de combinar para não duplicar áreas.": "{0}: thematic polygons overlap (features {1} and {2}). Fix the topology before combining so that areas are not duplicated.",
   "{0}: salve as edições pendentes antes de combinar.": "{0}: save pending edits before combining.",
   "{0}: salve ou descarte as edições pendentes.": "{0}: save or discard pending edits.",
   "{0}: salve ou descarte edições pendentes antes da avaliação.": "{0}: save or discard pending edits before the evaluation.",
@@ -1508,5 +1507,10 @@
   "Selecione uma camada no menu acima ou na lista de camadas adicionadas.": "Select a layer in the menu above or in the list of added layers.",
   "Selecione uma única camada da lista para alterar seus campos.": "Select a single layer in the list to change its fields.",
   "{name} (na lista; a alteração vale imediatamente)": "{name} (in the list; changes apply immediately)",
-  "Os campos agora são os da camada “{name}”. Confira o campo de classe e clique de novo em “Adicionar camada selecionada”.": "The fields now belong to the layer “{name}”. Check the class field and click “Add selected layer” again."
+  "Os campos agora são os da camada “{name}”. Confira o campo de classe e clique de novo em “Adicionar camada selecionada”.": "The fields now belong to the layer “{name}”. Check the class field and click “Add selected layer” again.",
+  "{0}: {1} par(es) de polígonos da mesma camada se sobrepõem com largura média de pelo menos {2} cm. Corrija a topologia antes de combinar, para não duplicar áreas.": "{0}: {1} pair(s) of polygons in the same layer overlap with a mean width of at least {2} cm. Fix the topology before combining so that areas are not duplicated.",
+  "- feições {0} e {1} (classes {2} e {3}): {4} m², largura média {5} m": "- features {0} and {1} (classes {2} and {3}): {4} m², mean width {5} m",
+  "… e mais {0} pares.": "… and {0} more pairs.",
+  "Lascas toleradas (largura média abaixo de 1 cm), registradas no resumo:": "Tolerated slivers (mean width below 1 cm), recorded in the summary:",
+  "{0}: {1} lascas, {2} m² de área duplicada": "{0}: {1} slivers, {2} m² of duplicated area"
 }
