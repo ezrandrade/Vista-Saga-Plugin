@@ -10,7 +10,17 @@ from geosaga.monitoring_engine import run_monitoring
 
 
 def run():
-    """Testa tendência da proporção da classe 1 em 5 datas sintéticas."""
+    """Testa tendência da proporção da classe 1 em 5 datas sintéticas.
+
+    Desde a 1.2.0 a Monitoria não executa Mann–Kendall; o teste volta com o
+    módulo de tendências da 2.0.
+    """
+    print('Mann–Kendall retirado da Monitoria na 1.2.0 (volta como módulo na 2.0): teste não aplicável.')
+    return True
+
+
+def _run_series_2_0():
+    """Roteiro mantido para o módulo de tendências (2.0)."""
     with tempfile.TemporaryDirectory(prefix='vistasaga_mk_') as temp:
         base = Path(temp)
         years = [1986, 1991, 1996, 2001, 2016]

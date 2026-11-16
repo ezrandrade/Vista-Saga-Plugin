@@ -7,14 +7,21 @@ from pathlib import Path
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
-    QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout,
+    QApplication, QComboBox, QFileDialog, QFormLayout,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QProgressDialog,
     QPushButton, QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget,
     QHeaderView, QAbstractItemView,
 )
 from qgis.core import Qgis, QgsProject, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
-from .ui_shared import temporary_destination
+from .ui_shared import materialize_in_memory, temporary_destination
+
+
+VECTOR_MONITORING_HINT = (
+    'Em branco, o resultado é carregado no QGIS como camada temporária em memória (salve-a '
+    'antes de fechar o QGIS). Com um arquivo indicado, ele é salvo em disco e carregado no '
+    'QGIS. Na mesma pasta são gerados _transicoes.csv, _matriz.csv (área em ha) e '
+    '_resumo.txt; sem arquivo indicado, eles ficam na pasta temporária do QGIS.')
 
 from .vector_monitoring_engine import run_vector_monitoring, validate_vector_monitoring
 from .errors import log_exception
@@ -51,26 +58,25 @@ class VectorMonitoringDialog(QWidget):
         self.after_select = self._make_layer_selection(rows, 'Mapa final', 'Final')
         root.addLayout(rows)
 
-        out = QGroupBox(tr('Saída'))
+        out = QGroupBox(tr('Resultado'))
         form = QFormLayout(out)
         self.title = QLineEdit()
         self.title.setPlaceholderText(tr('Ex.: Mudanças de uso da terra entre 1986 e 2016'))
-        form.addRow(tr('Título:'), self.title)
+        form.addRow(tr('Título do estudo:'), self.title)
         pathrow = QHBoxLayout()
         self.dest = QLineEdit()
-        self.dest.setPlaceholderText(tr('Arquivo .gpkg de transições'))
+        # Em branco: camada temporária em memória; preenchido: GeoPackage salvo.
+        # Nos dois casos o resultado é carregado no QGIS.
+        self.dest.setPlaceholderText(tr('[Camada temporária em memória]'))
+        self.dest.setClearButtonEnabled(True)
         pathrow.addWidget(self.dest, 1)
         browse = QPushButton(tr('Procurar…'))
         browse.clicked.connect(self._output)
         pathrow.addWidget(browse)
-        form.addRow(tr('GeoPackage:'), pathrow)
-        note = QLabel(tr('Serão gerados automaticamente os relatórios _transicoes.csv, '
-                      '_matriz.csv (área em ha) e _resumo.txt na mesma pasta.'))
+        form.addRow(tr('Salvar em:'), pathrow)
+        note = QLabel(tr(VECTOR_MONITORING_HINT))
         note.setWordWrap(True)
         form.addRow('', note)
-        self.add_to_project = QCheckBox(tr('Adicionar resultado ao projeto QGIS'))
-        self.add_to_project.setChecked(True)
-        form.addRow('', self.add_to_project)
         root.addWidget(out)
         caution = QLabel(tr('A monitoria compara somente a área comum às duas camadas. '
                          'Confira a equivalência temática entre os períodos e a topologia dos polígonos.'))
@@ -94,17 +100,12 @@ class VectorMonitoringDialog(QWidget):
         self.status = QLabel(tr('Selecione os polígonos e campos de classificação.'))
         self.status.setWordWrap(True)
         commands.addWidget(self.status, 1)
-        self.temporary_check = QCheckBox(tr('Resultado temporário no QGIS (pode salvar depois)'))
-        self.temporary_check.setChecked(True)
-        self.dest.setEnabled(False)
-        self.temporary_check.toggled.connect(lambda active: self.dest.setEnabled(not active))
-        form.addRow('', self.temporary_check)
-        self.run_button = QPushButton(tr('Executar monitoria vetorial'))
+        self.run_button = QPushButton(tr('Executar monitoria'))
         self.run_button.clicked.connect(self.run)
         commands.addWidget(self.run_button)
-        close = QPushButton(tr('Fechar'))
-        close.clicked.connect(self.close)
-        commands.addWidget(close)
+        self.close_button = QPushButton(tr('Fechar'))
+        self.close_button.clicked.connect(self.close)
+        commands.addWidget(self.close_button)
         body.addLayout(commands)
 
     def _make_layer_selection(self, parent, heading, period):
@@ -114,7 +115,7 @@ class VectorMonitoringDialog(QWidget):
         selector.setFilters(Qgis.LayerFilter.VectorLayer)
         selector.setAllowEmptyLayer(True)
         selector.setShowCrs(True)
-        form.addRow(tr('Camada QGIS:'), selector)
+        form.addRow(tr('Camada no QGIS:'), selector)
         file_path = QLineEdit()
         file_path.setPlaceholderText(tr('Opcional: SHP, GPKG, GeoJSON, FlatGeobuf…'))
         pathrow = QHBoxLayout()
@@ -205,8 +206,9 @@ class VectorMonitoringDialog(QWidget):
         fb = self.after_select[2].currentText()
         na = self.before_select[3].currentData() or ''
         nb = self.after_select[3].currentData() or ''
-        path = (temporary_destination('monitoria_vetorial', '.gpkg')
-                if self.temporary_check.isChecked() else self.dest.text().strip())
+        chosen = self.dest.text().strip()
+        temporary = not chosen
+        path = chosen or temporary_destination('monitoria_vetorial', '.gpkg')
         try:
             validate_vector_monitoring(a, b, fa, fb, path, na, nb)
         except (ValueError, OSError) as exc:
@@ -246,15 +248,17 @@ class VectorMonitoringDialog(QWidget):
                 cancelled=dialog.wasCanceled)
             self.status.setText(tr('Monitoria vetorial concluída. GeoPackage, CSVs e TXT disponíveis.'))
             self._show_result(result)
-            if self.add_to_project.isChecked() or self.temporary_check.isChecked():
-                layer = QgsVectorLayer(path + '|layername=monitoria_vetorial',
-                                       Path(path).stem, 'ogr')
-                if layer.isValid():
-                    self._style_layer(layer)
-                    QgsProject.instance().addMapLayer(layer)
-                else:
-                    QMessageBox.warning(self, tr('Resultado concluído'),
-                                        tr('Os arquivos foram gravados, mas a camada não pôde ser carregada.'))
+            # O resultado é sempre carregado no QGIS: em memória, se não houver arquivo.
+            uri = path + '|layername=monitoria_vetorial'
+            name = tr('Monitoria vetorial') if temporary else Path(path).stem
+            layer = (materialize_in_memory(uri, name) if temporary
+                     else QgsVectorLayer(uri, name, 'ogr'))
+            if layer is not None and layer.isValid():
+                self._style_layer(layer)
+                QgsProject.instance().addMapLayer(layer)
+            else:
+                QMessageBox.warning(self, tr('Resultado concluído'),
+                                    tr('Os arquivos foram gravados, mas a camada não pôde ser carregada.'))
         except (ValueError, OSError, RuntimeError, InterruptedError) as exc:
             self.status.setText(tr('Monitoria vetorial não concluída.'))
             QMessageBox.warning(self, tr('Monitoria vetorial'), tr(str(exc)))

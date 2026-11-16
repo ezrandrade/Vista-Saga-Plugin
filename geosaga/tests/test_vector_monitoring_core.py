@@ -73,7 +73,7 @@ class VectorMonitoringCoreTests(unittest.TestCase):
                 matrix = list(csv.reader(file, delimiter=';'))
             self.assertEqual('4.000000', matrix[-1][-1])
             body = c.read_text(encoding='utf-8')
-            self.assertIn('Mann–Kendall', body)
+            self.assertNotIn('Mann–Kendall', body)  # retirado da Monitoria na 1.2.0
             self.assertIn('Área comum', body)
 
     def test_groups_by_named_classes(self):

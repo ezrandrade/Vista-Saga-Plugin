@@ -10,8 +10,8 @@ import csv
 import numpy as np
 
 from .core import NODATA_OUT, pixel_area_ha, transition_counts, valid_mask
-from .monitoring_core import (transitions_summary, write_monitoring_reports,
-                              write_mk_csv, append_mk_txt)
+from .monitoring_core import transitions_summary, write_monitoring_reports
+# Reservado para o módulo de tendências (2.0): usado só por _temporal_analysis.
 from .monitoring_trends import MIN_DATES, temporal_rows
 
 TILE = 512
@@ -136,7 +136,7 @@ def _read_legend_lookup(csv_path, initial_label, final_label):
     return initial, final
 
 
-def _temporal_analysis(before, after, extras, before_label, after_label,
+def _temporal_analysis(  # reservado para o módulo de tendências (2.0)before, after, extras, before_label, after_label,
                        reference, osr, progress, cancelled):
     """MK de áreas por classe usando área espacial comparável em todas as datas."""
     # 'Inicial'/'Final' são descritores válidos para a comparação, mas não anos.
@@ -200,8 +200,11 @@ def _temporal_analysis(before, after, extras, before_label, after_label,
 
 def run_monitoring(before, after, output, *, before_label='Inicial', after_label='Final',
                    title='', progress=None, cancelled=None,
-                   descriptive_legend=True, temporal_files=None, legend_lookup=''):
+                   descriptive_legend=True, legend_lookup=''):
     """Cria GeoTIFF Int32 de transições + CSV detalhado + matriz + TXT.
+
+    Desde a 1.2.0 a Monitoria não executa Mann–Kendall (volta como módulo próprio
+    na 2.0); _temporal_analysis e monitoring_trends ficam reservados para isso.
 
     Todas as operações de I/O são feitas por caminhos locais na thread da tarefa.
     A codificação é reproduzível: pares ordenados por código de classe.
@@ -216,7 +219,7 @@ def run_monitoring(before, after, output, *, before_label='Inicial', after_label
         raise ValueError('Selecione dois rasters existentes em arquivos locais.')
     stem = str(Path(destination).with_suffix(''))
     outputs = [destination, stem + '_transicoes.csv', stem + '_matriz.csv',
-               stem + '_resumo.txt', stem + '_tendencias_mk.csv']
+               stem + '_resumo.txt']
     for path in paths:
         if os.path.realpath(path) in [os.path.realpath(o) for o in outputs]:
             raise ValueError('Os arquivos de saída não podem substituir os mapas de entrada.')
@@ -306,17 +309,11 @@ def run_monitoring(before, after, output, *, before_label='Inicial', after_label
                                  resolution=f'{abs(res[1]):g} x {abs(res[5]):g} (unidades do SRC)',
                                  use_descriptive=descriptive_legend)
         _check_cancel(cancelled)
-        temporal = _temporal_analysis(paths[0], paths[1], temporal_files or [],
-                                      before_label, after_label, ds_a, osr, progress, cancelled)
-        write_mk_csv(temporary[4], temporal)
-        append_mk_txt(temporary[3], temporal)
-        _check_cancel(cancelled)
         _install_outputs(temporary, outputs)
         if progress:
             progress(100)
         return {**summary, 'mapa': outputs[0], 'transicoes': outputs[1],
-                'matriz': outputs[2], 'resumo': outputs[3],
-                'tendencias': outputs[4], 'temporal': temporal}
+                'matriz': outputs[2], 'resumo': outputs[3]}
     finally:
         dst = None
         ds_a = None

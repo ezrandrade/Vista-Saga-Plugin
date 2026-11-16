@@ -138,6 +138,7 @@ def write_mk_csv(path, series):
 
 
 def append_mk_txt(path, series):
+    """Reservado para o módulo de tendências (2.0); a Monitoria não o usa desde a 1.2.0."""
     with open(path, 'a', encoding='utf-8') as out:
         out.write('\n\nANÁLISE TEMPORAL - MANN–KENDALL (bilateral)\n')
         if not series or series.get('status') != 'calculado':

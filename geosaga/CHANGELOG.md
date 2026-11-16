@@ -1,4 +1,4 @@
-## 1.2.0 — Conversor de Formatos, Combinação de Mapas e Sequenciador (em desenvolvimento)
+## 1.2.0 — Conversor de Formatos, Combinação, Sequenciador e Monitoria (em desenvolvimento)
 
 Versão de interface dos módulos Conversor de Formatos e Combinação de Mapas. Outras alterações
 serão acrescentadas antes do lançamento.
@@ -19,6 +19,23 @@ serão acrescentadas antes do lançamento.
   campos de cada operação, o lote e as opções avançadas, até 90% da altura útil da tela (acima
   disso, aparece a rolagem). A largura escolhida pelo usuário é mantida.
 - Nenhum algoritmo de conversão foi alterado.
+
+**Monitoria**
+
+- **Resultado no padrão dos demais módulos:** saem as caixas “Resultado temporário no QGIS” e
+  “Adicionar … ao projeto QGIS”, nas guias Raster e Vetorial. Campo “Salvar em” vazio: mapa de
+  transições raster em arquivo temporário; resultado vetorial como camada temporária em memória.
+  Com um arquivo indicado, salvo e carregado. Sempre carregado no QGIS.
+- **Mesmos rótulos nas duas guias:** seção “Resultado”, “Título do estudo:”, “Salvar em:”,
+  “Camada no QGIS:”, “Ou arquivo:” e “Executar monitoria”.
+- **Mann–Kendall retirado (por enquanto).** Saem a série temporal das opções avançadas, o arquivo
+  `_tendencias_mk.csv` e a seção de Mann–Kendall do `_resumo.txt` (raster) e a nota sobre ele
+  no resumo vetorial. O teste volta como módulo próprio na 2.0; o código do cálculo
+  (`monitoring_trends.py` e as funções de relatório) e os testes unitários dele foram mantidos.
+  Transições, matriz e áreas não mudaram.
+- Correções: na guia Vetorial embutida, o botão “Fechar” interno era escondido comparando o
+  texto em português (falhava em inglês e espanhol); o “Fechar” da janela não ocupa mais a linha
+  inteira nessa guia.
 
 **Sequenciador de Mapas**
 
