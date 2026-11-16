@@ -103,3 +103,33 @@ class SliverGeometryTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ResidueRuleTests(unittest.TestCase):
+    """Resíduos do cruzamento (opção C da 1.2.0): incorporados ao vizinho."""
+
+    def test_is_residue(self):
+        from geosaga.combination_core import is_residue
+        self.assertTrue(is_residue(700 * 4e-5, 2 * (700 + 4e-5), SLIVER_WIDTH_M))
+        self.assertTrue(is_residue(0.0, 0.0, SLIVER_WIDTH_M))
+        # menor pedaço real nos dados do autor: 512 m², largura média 4,9 m
+        self.assertFalse(is_residue(512.467, 2 * 512.467 / 4.875, SLIVER_WIDTH_M))
+
+    def test_report_lines(self):
+        from geosaga.combination_core import residue_report_lines
+        none = residue_report_lines({'count': 0, 'merged': 0, 'merged_m2': 0.0,
+                                     'removed': 0, 'removed_m2': 0.0})
+        self.assertIn('maior fronteira comum', none[0])
+        self.assertEqual(none[1], 'Nenhum resíduo encontrado.')
+        some = residue_report_lines({'count': 225, 'merged': 224, 'merged_m2': 0.0007,
+                                     'removed': 1, 'removed_m2': 0.0000001})
+        self.assertIn('Resíduos incorporados: 224', some[1])
+        self.assertIn('sem vizinho, excluídos: 1', some[2])
+
+    def test_engine_wiring(self):
+        src = (ROOT / 'combination_vector.py').read_text(encoding='utf-8')
+        self.assertIn("native:multiparttosingleparts", src)
+        self.assertIn("eliminateselectedpolygons", src)
+        self.assertIn("'MODE': 2", src)            # maior fronteira comum
+        self.assertIn('_absorb_residues(joined, staging', src)
+        self.assertIn('residue_report_lines(residue_stats)', src)

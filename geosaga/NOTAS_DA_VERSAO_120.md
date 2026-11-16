@@ -18,6 +18,10 @@ Inclui tudo da 1.1.0.
 - A altura da janela acompanha o conteúdo de cada operação, sem espaço vazio na parte inferior;
   ao abrir as opções avançadas ou ativar o lote, ela cresce (até 90% da altura da tela).
 
+### Sequenciador de Mapas
+
+- Os botões de ordem chamam-se **Mover para cima** e **Mover para baixo**.
+
 ### Combinação de Mapas
 
 - As guias chamam-se **Raster** e **Vetorial**, como nos demais módulos.
@@ -38,6 +42,10 @@ Inclui tudo da 1.1.0.
   são e a área duplicada. Sobreposições mais espessas continuam bloqueando, e a mensagem lista
   todos os pares com área e largura. Registre a tolerância na metodologia, se a usar.
 
+- **Resíduos do cruzamento não viram mais combinações falsas.** Tiras com menos de 1 cm de largura
+  média, criadas por fronteiras quase coincidentes entre os mapas, são fundidas ao vizinho de maior
+  fronteira comum; a área total não muda. O `_resumo.txt` informa quantos resíduos foram tratados.
+  O mapa vetorial passa a ter uma feição por parte simples.
 - No mapa vetorial combinado, os campos `C01`/`L01`, `C02`/`L02`… chamam-se agora
   **`COD_01`/`LEG_01`, `COD_02`/`LEG_02`…**: código e legenda da classe de cada mapa, na ordem da
   lista (a correspondência mapa ↔ camada está no `_resumo.txt`).

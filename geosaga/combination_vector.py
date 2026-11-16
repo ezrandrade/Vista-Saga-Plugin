@@ -10,7 +10,8 @@ from collections import defaultdict
 
 from .combination_core import (normalized_code, combination_index,
                                composition_rows, write_combination_reports,
-                               classify_overlap, sliver_report_lines, SLIVER_WIDTH_M)
+                               classify_overlap, sliver_report_lines, SLIVER_WIDTH_M,
+                               is_residue, residue_report_lines)
 from .errors import log_exception
 from .i18n import tr
 
@@ -163,6 +164,74 @@ def _overlap_message(name, rejected, factor):
     return '\n'.join(lines)
 
 
+def _absorb_residues(layer, staging, crs, feedback):
+    """Incorpora os resíduos do cruzamento ao vizinho de maior fronteira comum.
+
+    Decisão de método da 1.2.0 (opção C). Separa as partes do resultado, marca as
+    de largura média < SLIVER_WIDTH_M e usa "Eliminar polígonos selecionados" do
+    QGIS (modo: maior fronteira comum), que funde cada resíduo ao vizinho e mantém
+    os atributos do vizinho. Assim, a área total não muda e não sobram combinações
+    que só existem em tiras microscópicas. Resíduos sem vizinho são excluídos.
+    """
+    from qgis.core import Qgis, QgsApplication, QgsUnitTypes, QgsVectorLayer
+    import processing
+
+    factor = QgsUnitTypes.fromUnitToUnitFactor(Qgis.DistanceUnit.Meters, crs.mapUnits())
+    if not factor or factor <= 0:
+        factor = 1.0
+    tolerance = SLIVER_WIDTH_M * factor
+    area_m2 = 1.0 / (factor * factor)
+    stats = {'count': 0, 'merged': 0, 'merged_m2': 0.0, 'removed': 0, 'removed_m2': 0.0}
+
+    single_path = os.path.join(staging, 'partes.gpkg')
+    processing.run('native:multiparttosingleparts',
+                   {'INPUT': layer, 'OUTPUT': single_path}, feedback=feedback)
+    singles = QgsVectorLayer(single_path, 'Partes', 'ogr')
+    if not singles.isValid():
+        raise RuntimeError('Falha ao separar as partes do resultado.')
+    residues = {}
+    for feat in singles.getFeatures():
+        geom = feat.geometry()
+        if geom.isNull() or is_residue(geom.area(), geom.length(), tolerance):
+            residues[feat.id()] = 0.0 if geom.isNull() else geom.area()
+    stats['count'] = len(residues)
+    if not residues:
+        return singles, stats
+    if len(residues) == singles.featureCount():
+        raise ValueError('Todas as partes do resultado têm menos de 1 cm de largura média; '
+                         'confira o SRC e as unidades das camadas.')
+
+    registry = QgsApplication.processingRegistry()
+    algorithm = next((name for name in ('native:eliminateselectedpolygons',
+                                        'qgis:eliminateselectedpolygons')
+                      if registry.algorithmById(name) is not None), None)
+    if algorithm is None:
+        raise RuntimeError('Ferramenta "Eliminar polígonos selecionados" indisponível no QGIS.')
+    singles.selectByIds(list(residues))
+    merged_path = os.path.join(staging, 'sem_residuos.gpkg')
+    processing.run(algorithm, {'INPUT': singles, 'MODE': 2, 'OUTPUT': merged_path},
+                   feedback=feedback)                      # 2 = maior fronteira comum
+    merged = QgsVectorLayer(merged_path, 'Sem resíduos', 'ogr')
+    if not merged.isValid():
+        raise RuntimeError('Falha ao incorporar os resíduos.')
+
+    # O que não pôde ser fundido (resíduo isolado) é excluído e registrado.
+    leftover = {}
+    for feat in merged.getFeatures():
+        geom = feat.geometry()
+        if geom.isNull() or is_residue(geom.area(), geom.length(), tolerance):
+            leftover[feat.id()] = 0.0 if geom.isNull() else geom.area()
+    if leftover:
+        if not merged.dataProvider().deleteFeatures(list(leftover)):
+            raise OSError('Falha ao excluir resíduos sem vizinho.')
+    total = sum(residues.values())
+    stats['removed'] = len(leftover)
+    stats['removed_m2'] = sum(leftover.values()) * area_m2
+    stats['merged'] = len(residues) - len(leftover)
+    stats['merged_m2'] = max(total - sum(leftover.values()), 0.0) * area_m2
+    return merged, stats
+
+
 def run_vector_combination(sources, fields, labels, destination, *, progress=None, cancelled=None):
     """Cria GPKG e relatórios, combinando polígonos por interseção de N mapas."""
     from qgis.PyQt.QtCore import QMetaType
@@ -211,6 +280,8 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
             if any(col not in joined.fields().names() for col in required):
                 raise RuntimeError('Campos das classes não foram preservados pela interseção.')
             if progress:progress(15+int(45*(idx-1)/(len(sources)-1)))
+        joined, residue_stats = _absorb_residues(joined, staging, sources[0].crs(), Feedback())
+        if progress:progress(62)
         gpkg = os.path.join(staging, 'combinacao.gpkg')
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.driverName = 'GPKG'
@@ -283,14 +354,16 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
                                   [layer.name() for layer in sources], mode='Vetorial',
                                   crs=sources[0].crs().authid(),
                                   area_method='QgsDistanceArea para CRS geográfico; unidades projetadas convertidas para m².',
-                                  notes=sliver_report_lines(sliver_stats))
+                                  notes=sliver_report_lines(sliver_stats)
+                                  + residue_report_lines(residue_stats))
         if cancelled and cancelled():
             raise InterruptedError('Combinação cancelada.')
         _publish_set(list(zip((gpkg,staged_csv,staged_txt), destinations)), parent)
         if progress:progress(100)
         return {'output':destinations[0], 'csv':destinations[1],'txt':destinations[2],
                 'combinations':len(rows),'features':len(feature_data),
-                'area_ha':total_area/10000,'rows':rows,'slivers':sliver_stats}
+                'area_ha':total_area/10000,'rows':rows,'slivers':sliver_stats,
+                'residues':residue_stats}
     finally:
         output = None
         joined = None

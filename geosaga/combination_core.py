@@ -42,6 +42,30 @@ def classify_overlap(pieces, tolerance):
     return tolerated_area, slivers, rejected_area, widest
 
 
+def is_residue(area, perimeter, tolerance):
+    """Pedaço do resultado com largura média abaixo da tolerância (ou área nula).
+
+    Resíduos nascem de fronteiras quase coincidentes entre mapas diferentes:
+    tiras microscópicas que formariam combinações inexistentes no terreno.
+    """
+    return area <= NEGLIGIBLE_AREA or mean_width(area, perimeter) < tolerance
+
+
+def residue_report_lines(stats):
+    """Linhas do _resumo.txt sobre os resíduos incorporados aos vizinhos."""
+    lines = [f'Resíduos: pedaços do resultado com largura média inferior a '
+             f'{SLIVER_WIDTH_M * 100:g} cm (fronteiras quase coincidentes entre os mapas) '
+             'foram incorporados ao vizinho com a maior fronteira comum.']
+    if not stats['count']:
+        lines.append('Nenhum resíduo encontrado.')
+        return lines
+    lines.append(f"Resíduos incorporados: {stats['merged']} ({stats['merged_m2']:.6f} m²).")
+    if stats['removed']:
+        lines.append(f"Resíduos sem vizinho, excluídos: {stats['removed']} "
+                     f"({stats['removed_m2']:.6f} m²).")
+    return lines
+
+
 def sliver_report_lines(stats):
     """Linhas do _resumo.txt sobre as lascas toleradas em cada mapa vetorial."""
     lines = [f'Tolerância de lascas: sobreposições entre polígonos de um mesmo mapa com '

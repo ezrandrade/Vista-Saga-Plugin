@@ -487,6 +487,13 @@ class CombinationDialog(QDialog):
                 for item in slivers:
                     message += '\n' + tr('{0}: {1} lascas, {2} m² de área duplicada').format(
                         item['name'], item['count'], f"{item['area_m2']:.4f}")
+            residues = result.get('residues') or {}
+            if residues.get('count'):
+                message += '\n\n' + tr('Resíduos (largura média abaixo de 1 cm) incorporados ao vizinho: '
+                                        '{0} ({1} m²).').format(residues['merged'], f"{residues['merged_m2']:.4f}")
+                if residues.get('removed'):
+                    message += '\n' + tr('Resíduos sem vizinho, excluídos: {0} ({1} m²).').format(
+                        residues['removed'], f"{residues['removed_m2']:.4f}")
             QMessageBox.information(self,tr('Combinação concluída'), message)
         except InterruptedError:
             self.status.setText(tr('Processamento cancelado, sem alterar as entradas.'))

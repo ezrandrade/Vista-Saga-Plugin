@@ -1,4 +1,4 @@
-## 1.2.0 — Conversor de Formatos e Combinação de Mapas (em desenvolvimento)
+## 1.2.0 — Conversor de Formatos, Combinação de Mapas e Sequenciador (em desenvolvimento)
 
 Versão de interface dos módulos Conversor de Formatos e Combinação de Mapas. Outras alterações
 serão acrescentadas antes do lançamento.
@@ -19,6 +19,10 @@ serão acrescentadas antes do lançamento.
   campos de cada operação, o lote e as opções avançadas, até 90% da altura útil da tela (acima
   disso, aparece a rolagem). A largura escolhida pelo usuário é mantida.
 - Nenhum algoritmo de conversão foi alterado.
+
+**Sequenciador de Mapas**
+
+- **“Mover para cima” e “Mover para baixo”** no lugar de “Subir” e “Descer”.
 
 **Combinação de Mapas**
 
@@ -52,11 +56,23 @@ serão acrescentadas antes do lançamento.
   real independentemente do tamanho dos polígonos, e 1 cm fica muito abaixo da precisão
   cartográfica de bases municipais. Em SRC geográfico, 1 cm é convertido para graus pela
   conversão aproximada do QGIS. Teste de regressão: `test_120_sliver_tolerance.py`.
+- **Resíduos do cruzamento incorporados ao vizinho (decisão de método, opção C).** Mapas
+  traçados sobre a mesma base têm fronteiras quase coincidentes; o cruzamento gerava tiras
+  microscópicas que criavam combinações inexistentes no terreno (caso real Renda × Escolaridade:
+  225 a 462 resíduos, 0,0007 a 0,07 m², e 8 a 9 combinações falsas em 23 a 24; o menor pedaço
+  real tinha 512 m² e 4,9 m de largura média). Agora o resultado é separado em partes simples, as
+  partes com largura média abaixo de 1 cm são marcadas como resíduos e fundidas ao vizinho de
+  maior fronteira comum pela ferramenta “Eliminar polígonos selecionados” do QGIS, que mantém os
+  atributos do vizinho. A área total não muda e as combinações falsas desaparecem (simulação no
+  caso real: 15 combinações). Resíduos sem vizinho são excluídos. O `_resumo.txt` e a janela de
+  conclusão registram quantos resíduos foram incorporados ou excluídos e a área. Com isso, o mapa
+  vetorial passa a ter uma feição por parte simples (antes, por par de feições cruzadas). Teste
+  de regressão em `test_120_sliver_tolerance.py`.
 - **Campos do mapa vetorial combinado renomeados:** `C01`/`L01`, `C02`/`L02`… passam a
   `COD_01`/`LEG_01`, `COD_02`/`LEG_02`… (código e legenda da classe de cada mapa, na ordem da
   lista), com o mesmo prefixo `COD_` do `_combinacoes.csv`. Estilos, expressões ou modelos feitos
   sobre resultados antigos precisam usar os nomes novos; arquivos já gerados não mudam.
-- Fora a tolerância de lascas, nenhum algoritmo de combinação foi alterado.
+- Fora a tolerância de lascas e a incorporação de resíduos, nenhum algoritmo de combinação foi alterado.
 
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)
 
