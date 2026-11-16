@@ -51,6 +51,10 @@ serão acrescentadas antes do lançamento.
   real independentemente do tamanho dos polígonos, e 1 cm fica muito abaixo da precisão
   cartográfica de bases municipais. Em SRC geográfico, 1 cm é convertido para graus pela
   conversão aproximada do QGIS. Teste de regressão: `test_120_sliver_tolerance.py`.
+- **Campos do mapa vetorial combinado renomeados:** `C01`/`L01`, `C02`/`L02`… passam a
+  `COD_01`/`LEG_01`, `COD_02`/`LEG_02`… (código e legenda da classe de cada mapa, na ordem da
+  lista), com o mesmo prefixo `COD_` do `_combinacoes.csv`. Estilos, expressões ou modelos feitos
+  sobre resultados antigos precisam usar os nomes novos; arquivos já gerados não mudam.
 - Fora a tolerância de lascas, nenhum algoritmo de combinação foi alterado.
 
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)

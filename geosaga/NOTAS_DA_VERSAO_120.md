@@ -37,11 +37,17 @@ Inclui tudo da 1.1.0.
   são e a área duplicada. Sobreposições mais espessas continuam bloqueando, e a mensagem lista
   todos os pares com área e largura. Registre a tolerância na metodologia, se a usar.
 
+- No mapa vetorial combinado, os campos `C01`/`L01`, `C02`/`L02`… chamam-se agora
+  **`COD_01`/`LEG_01`, `COD_02`/`LEG_02`…**: código e legenda da classe de cada mapa, na ordem da
+  lista (a correspondência mapa ↔ camada está no `_resumo.txt`).
+
 ## Compatibilidade
 
 - Nenhum algoritmo de conversão foi alterado. Na combinação vetorial, a única mudança é a
   tolerância de lascas: camadas sem sobreposições internas geram os mesmos mapas e relatórios da
   1.1.0 (o `_resumo.txt` ganha as linhas da tolerância); camadas antes recusadas por lascas
   passam a ser combinadas.
+- Resultados vetoriais da Combinação gerados pela 1.2.0 usam `COD_nn`/`LEG_nn`; estilos e
+  expressões feitos sobre `Cnn`/`Lnn` precisam ser ajustados.
 - Os identificadores internos e os algoritmos Processing `geosaga:*` não mudam; projetos e modelos
   antigos continuam funcionando.

@@ -17,6 +17,18 @@ from .i18n import tr
 MAX_LISTED_OVERLAPS = 10
 
 
+def code_field(position):
+    """Campo do código da classe do mapa na posição dada (COD_01, COD_02…).
+
+    Mesmo prefixo das colunas do _combinacoes.csv. Até a 1.1.0: C01, C02…"""
+    return f'COD_{position:02d}'
+
+
+def legend_field(position):
+    """Campo da legenda da classe do mapa na posição dada (LEG_01…). Até a 1.1.0: L01…"""
+    return f'LEG_{position:02d}'
+
+
 def validate_vector_sources(sources, fields, labels, destination):
     from qgis.core import Qgis, QgsVectorLayer
     if len(sources) < 2 or len(sources) != len(fields) or len(sources) != len(labels):
@@ -63,7 +75,7 @@ def _make_thematic(source, field, label_field, index, cancelled):
     temporary.setCrs(source.crs())
     if not temporary.isValid():
         raise RuntimeError('Falha na criação da camada temporária.')
-    code_name, label_name = f'C{index:02d}', f'L{index:02d}'
+    code_name, label_name = code_field(index), legend_field(index)
     provider = temporary.dataProvider()
     if not provider.addAttributes([QgsField(code_name, QMetaType.Type.QString),
                                    QgsField(label_name, QMetaType.Type.QString)]):
@@ -195,7 +207,7 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
             joined = QgsVectorLayer(str(processed['OUTPUT']), 'Mapas combinados', 'ogr')
             if not joined.isValid() or joined.featureCount() == 0:
                 raise ValueError('Não existe cobertura comum aos mapas selecionados.')
-            required = [f'C{j:02d}' for j in range(1,idx+1)]
+            required = [code_field(j) for j in range(1,idx+1)]
             if any(col not in joined.fields().names() for col in required):
                 raise RuntimeError('Campos das classes não foram preservados pela interseção.')
             if progress:progress(15+int(45*(idx-1)/(len(sources)-1)))
@@ -219,7 +231,7 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
         for feat in output.getFeatures():
             if cancelled and cancelled():
                 raise InterruptedError('Combinação cancelada.')
-            key = tuple(normalized_code(feat[f'C{j:02d}']) for j in range(1,len(fields)+1))
+            key = tuple(normalized_code(feat[code_field(j)]) for j in range(1,len(fields)+1))
             if any(v is None for v in key):
                 continue
             area = float(measure(feat.geometry()))
@@ -231,9 +243,9 @@ def run_vector_combination(sources, fields, labels, destination, *, progress=Non
             counts[key] += area
             for j,(code, legend_map) in enumerate(zip(key,names),1):
                 if code not in legend_map:
-                    legend = feat[f'L{j:02d}']
+                    legend = feat[legend_field(j)]
                     legend_map[code] = str(legend) if legend else f'Classe {code}'
-                elif feat[f'L{j:02d}'] and legend_map[code] != str(feat[f'L{j:02d}']):
+                elif feat[legend_field(j)] and legend_map[code] != str(feat[legend_field(j)]):
                     raise ValueError(f'Mapa {j}: código {code} possui legendas inconsistentes.')
         ids = combination_index(counts)
         rows = composition_rows(counts, names, vector=True)
