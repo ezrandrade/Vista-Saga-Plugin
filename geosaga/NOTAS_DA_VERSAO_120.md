@@ -25,6 +25,9 @@ Inclui tudo da 1.1.0.
 - **Resultado sempre carregado no QGIS.** Sem arquivo em “Salvar em”: camada temporária em memória
   (vetor) ou arquivo temporário (raster). Salve-o antes de fechar o QGIS. Sem arquivo indicado, os
   relatórios `_combinacoes.csv` e `_resumo.txt` ficam na pasta temporária do QGIS.
+- Cada camada entra **uma única vez**, com o campo de classe escolhido para ela. Se a mesma camada
+  for adicionada de novo, um aviso mostra o campo já usado; para trocar o atributo, remova-a da
+  lista e adicione-a outra vez.
 
 ## Compatibilidade
 

@@ -30,6 +30,10 @@ serão acrescentadas antes do lançamento.
   memória; raster em arquivo temporário (o QGIS não mantém rasters em memória). Com um arquivo
   indicado, o resultado é salvo e carregado no QGIS. Os relatórios `_combinacoes.csv` e
   `_resumo.txt` continuam sendo gerados (na pasta temporária do QGIS quando não há arquivo).
+- **Aviso de camada repetida mais claro:** cada camada entra uma única vez na combinação (com um
+  campo de classe próprio). Ao repetir uma camada, o aviso informa o nome e o campo já usado e
+  explica como trocar o atributo. Em “Adicionar várias do QGIS…” e “Adicionar arquivos…”, a
+  repetição é detectada antes de perguntar o campo.
 - Nenhum algoritmo de combinação foi alterado.
 
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)

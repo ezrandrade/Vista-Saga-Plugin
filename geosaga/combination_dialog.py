@@ -184,6 +184,8 @@ class CombinationDialog(QDialog):
         layers = choose_project_layers(self, 'raster' if mode == 0 else 'vector',
                                        'Adicionar vários mapas à combinação')
         for layer in layers:
+            if self._already_listed(mode, layer):
+                continue
             if mode == 1:
                 fields = layer.fields().names()
                 if not fields:
@@ -211,6 +213,8 @@ class CombinationDialog(QDialog):
                      QgsVectorLayer(path,Path(path).stem,'ogr'))
             if not layer.isValid():
                 QMessageBox.warning(self,tr('Arquivo inválido'),tr(f'Não foi possível abrir: {path}'))
+                continue
+            if self._already_listed(mode, layer):
                 continue
             if mode == 1:
                 # Para arquivos escolhidos no disco, oferecer escolha de campos.
@@ -249,11 +253,31 @@ class CombinationDialog(QDialog):
         if mode == 1 and not field:
             QMessageBox.warning(self,tr('Combinação'),tr('Escolha um campo de classe antes de adicionar.'))
             return
-        if any(record[0].source() == layer.source() for record in self._sources[mode]):
-            QMessageBox.warning(self,tr('Combinação'),tr('Esta camada já está na lista.'))
+        if self._already_listed(mode, layer):
             return
         self._sources[mode].append((layer,field,legend or ''))
         self._refresh(mode)
+
+    def _already_listed(self, mode, layer):
+        """Cada camada entra uma única vez na combinação; avisa e devolve True se repetida.
+
+        A comparação é pela fonte, e não pelo objeto: a mesma camada adicionada
+        pelo projeto e pelo arquivo em disco também é recusada.
+        """
+        for listed, field, _legend in self._sources[mode]:
+            if listed.source() != layer.source():
+                continue
+            if mode == 1:
+                message = tr('A camada “{name}” já está na combinação, com o campo {field}. '
+                             'Cada camada pode entrar uma única vez. Para usar outro atributo, '
+                             'remova-a da lista e adicione-a de novo escolhendo o campo desejado.'
+                             ).format(name=layer.name(), field=field)
+            else:
+                message = tr('A camada “{name}” já está na combinação. '
+                             'Cada camada pode entrar uma única vez.').format(name=layer.name())
+            QMessageBox.warning(self, tr('Camada repetida'), message)
+            return True
+        return False
 
     def _refresh(self,mode):
         widget = getattr(self, f'list_{mode}')
