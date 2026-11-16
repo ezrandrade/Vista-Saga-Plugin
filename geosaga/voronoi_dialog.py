@@ -24,7 +24,7 @@ from qgis.gui import QgsMapLayerComboBox
 from .ui_shared import use_tab_background, temporary_destination
 from .voronoi_core import Generator
 from .voronoi_engine import grid_from_extent, run_voronoi
-from .voronoi_vector import save_simple_voronoi
+from .voronoi_vector import save_vector_voronoi
 from .voronoi_output import VECTOR_FORMATS, layer_uri
 from .errors import log_exception
 
@@ -242,7 +242,7 @@ class VoronoiDialog(QDialog):
         self.resolution_label=QLabel(tr('Resolução raster:'))
         form.addRow(self.resolution_label,self.resolution)
         self.grid_note = QLabel(tr('O Voronoi vetorial direto é limitado pela extensão escolhida; '
-                                'não exige massa, raster de referência nem resolução.'))
+                                'não exige raster de referência nem resolução.'))
         self.grid_note.setWordWrap(True)
         form.addRow('',self.grid_note)
         content_layout.addWidget(inputs)
@@ -251,7 +251,7 @@ class VoronoiDialog(QDialog):
         outform = QFormLayout(output)
         self.output_type=QComboBox()
         self.output_type.addItem(tr('GeoTIFF (raster)'), 'raster')
-        self.output_type.addItem(tr('Vetor direto (somente Simples)'), 'direct')
+        self.output_type.addItem(tr('Vetor direto (Simples e Com Massa)'), 'direct')
         self.output_type.addItem(tr('Vetor (poligonização)'), 'vector')
         self.output_type.addItem(tr('GeoTIFF + vetor (poligonização)'), 'both')
         self.output_type.currentIndexChanged.connect(self._update_output)
@@ -485,9 +485,9 @@ class VoronoiDialog(QDialog):
             self.method_note.setText(tr('Com Massa: maximiza M/d; selecione campo numérico positivo.'))
         else:
             self.method_note.setText(tr('Simples: menor distância euclidiana; sem massa nem atrito.'))
-        self.output_type.model().item(1).setEnabled(not (weighted or friction))
-        if (weighted or friction) and self.output_type.currentData() == 'direct':
-            # O vetor direto só existe no Simples; a poligonização mantém a saída vetorial.
+        self.output_type.model().item(1).setEnabled(not friction)
+        if friction and self.output_type.currentData() == 'direct':
+            # Com atrito não há vetor direto; a poligonização mantém a saída vetorial.
             self.output_type.setCurrentIndex(self.output_type.findData('vector'))
         self._update_output()
 
@@ -534,7 +534,10 @@ class VoronoiDialog(QDialog):
             self.path_output.clear()
         self.grid_note.setText(tr('Com Atrito: extensão, resolução e SRC herdados do raster de resistência; '
                                'a grade não será reprojetada.' if friction else
-                               ('Vetor direto: polígonos exatos recortados à extensão e à área poligonal.'
+                               (('Vetor direto com massa: fronteiras exatas (círculos de Apolônio), arcos com '
+                                 'desvio máximo de 1 cm, recortadas à extensão e à área poligonal.'
+                                 if self.mode.currentIndex()==1 else
+                                 'Vetor direto: polígonos exatos recortados à extensão e à área poligonal.')
                                 if direct else
                                 'Poligonização: o cálculo é feito na grade raster e convertido em polígonos; '
                                 'as bordas seguem os pixels, e a resolução define o detalhe.'
@@ -768,9 +771,10 @@ class VoronoiDialog(QDialog):
                 dialog.setValue(int(value))
                 QApplication.processEvents()
             if direct:
-                if self.mode.currentIndex()!=0:
-                    raise ValueError('Vetor direto disponível somente para Voronoi Simples nesta versão.')
-                result=save_simple_voronoi(points,bounds,destination,crs.toWkt(),
+                if self.mode.currentIndex() not in (0,1):
+                    raise ValueError('Vetor direto disponível para Voronoi Simples e Com Massa.')
+                result=save_vector_voronoi(points,bounds,destination,crs.toWkt(),
+                    mode='mass' if self.mode.currentIndex()==1 else 'simple',
                     study_geometry=study,progress=progress,cancelled=dialog.wasCanceled)
             else:
                 if reference is not None:

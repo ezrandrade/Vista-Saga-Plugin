@@ -802,7 +802,6 @@
   "O Voronoi com Atrito aceita até 500 centros nesta etapa.": "Voronoi with Friction accepts up to 500 centres at this stage.",
   "O Voronoi exige SRC projetado; use uma projeção adequada.": "Voronoi requires a projected CRS; use a suitable projection.",
   "O Voronoi necessita de uma camada de pontos; geometrias não pontuais não são aceitas.": "Voronoi requires a points layer; non-point geometries are not accepted.",
-  "O Voronoi vetorial direto é limitado pela extensão escolhida; não exige massa, raster de referência nem resolução.": "Direct vector Voronoi is restricted to the selected extent; it does not require mass, a reference raster or resolution.",
   "O algoritmo {algorithm} não está registrado.": "The algorithm {algorithm} is not registered.",
   "O arquivo RS2 de referência não existe.": "The reference RS2 file does not exist.",
   "O arquivo de saída não pode substituir nenhum mapa de entrada.": "The output file cannot replace any input map.",
@@ -1202,7 +1201,6 @@
   "Validação - Vista Saga": "Validation - Vista Saga",
   "Valores decimais não finitos não são admitidos.": "Non-finite decimal values are not accepted.",
   "Valores inteiros negativos ou superiores a Int32 não são suportados nesta conversão categórica.": "Negative integer values or values above Int32 are not supported in this categorical conversion.",
-  "Vetor direto disponível somente para Voronoi Simples nesta versão.": "Direct vector output is available only for Simple Voronoi in this version.",
   "Vetor direto: polígonos exatos recortados à extensão e à área poligonal.": "Direct vector: exact polygons clipped to the chosen extent and polygon study area.",
   "Vetor local (.gpkg, .shp, .geojson, .fgb)": "Local vector file (.gpkg, .shp, .geojson, .fgb)",
   "Vetor sobreposto:": "Overlay vector:",
@@ -1519,7 +1517,6 @@
   "Quadros PNG: {0}": "PNG frames: {0}",
   "GIF quantizado para 256 cores.": "GIF quantized to 256 colours.",
   "Paleta GIF preservada.": "GIF palette preserved.",
-  "Vetor direto (somente Simples)": "Direct vector (Simple only)",
   "Vetor (poligonização)": "Vector (polygonization)",
   "GeoTIFF + vetor (poligonização)": "GeoTIFF + vector (polygonization)",
   "GeoTIFF, camada vetorial ({0}), CSV e TXT produzidos.": "GeoTIFF, vector layer ({0}), CSV and TXT produced.",
@@ -1530,5 +1527,12 @@
   "Escolha um arquivo vetorial: GeoPackage (.gpkg), Shapefile (.shp), GeoJSON (.geojson) ou FlatGeobuf (.fgb).": "Choose a vector file: GeoPackage (.gpkg), Shapefile (.shp), GeoJSON (.geojson) or FlatGeobuf (.fgb).",
   "Sem GeoTIFF, a saída precisa ser vetorial.": "Without a GeoTIFF, the output must be vector.",
   "Saída não produzida: {0}": "Output not produced: {0}",
-  "Poligonização: o cálculo é feito na grade raster e convertido em polígonos; as bordas seguem os pixels, e a resolução define o detalhe.": "Polygonization: the calculation runs on the raster grid and is converted into polygons; edges follow the pixels, and the resolution sets the detail."
+  "Poligonização: o cálculo é feito na grade raster e convertido em polígonos; as bordas seguem os pixels, e a resolução define o detalhe.": "Polygonization: the calculation runs on the raster grid and is converted into polygons; edges follow the pixels, and the resolution sets the detail.",
+  "Vetor direto (Simples e Com Massa)": "Direct vector (Simple and Mass)",
+  "O Voronoi vetorial direto é limitado pela extensão escolhida; não exige raster de referência nem resolução.": "Direct vector Voronoi is restricted to the selected extent; it does not require a reference raster or resolution.",
+  "Vetor direto disponível para Voronoi Simples e Com Massa.": "Direct vector output is available for Simple and Mass Voronoi.",
+  "Vetor direto com massa: fronteiras exatas (círculos de Apolônio), arcos com desvio máximo de 1 cm, recortadas à extensão e à área poligonal.": "Direct vector with mass: exact boundaries (Apollonius circles), arcs with at most 1 cm deviation, clipped to the extent and the polygon area.",
+  "Arco de influência com vértices demais; aumente a tolerância ou reduza a extensão.": "Influence arc has too many vertices; increase the tolerance or reduce the extent.",
+  "Geometria inválida durante o Voronoi com Massa.": "Invalid geometry during Mass Voronoi.",
+  "Tolerância dos arcos inválida.": "Invalid arc tolerance."
 }

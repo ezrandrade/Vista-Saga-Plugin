@@ -1,5 +1,14 @@
 ## 1.3.0 — Voronoi: saída vetorial em todas as modalidades (em desenvolvimento)
 
+- **Análises Voronoi, vetor direto Com Massa (novo cálculo vetorial):** a opção “Vetor direto”
+  passa a valer também para a modalidade Com Massa. As fronteiras são calculadas exatamente,
+  sem grade: entre centros de massas diferentes, arcos de círculos de Apolônio (o mais leve
+  vence dentro do disco em que d_leve/d_pesado < M_leve/M_pesado); entre massas iguais,
+  bissetrizes. Os arcos são aproximados por segmentos com desvio máximo de 2/3 de 1 cm, sem
+  viés de área; vizinhos usam o mesmo arco, sem sobreposições nem lacunas. Uma região pode ter
+  mais de uma parte (multipolígono). O cálculo raster Com Massa não mudou; suas áreas convergem
+  para as do vetor direto quando a resolução diminui (25 centros: diferença média de 2,0% a
+  100 m, 0,5% a 30 m e 0,04% a 10 m).
 - **Análises Voronoi, nova saída “Vetor (poligonização)”:** disponível nas quatro modalidades
   (Simples, Com Massa, Com Atrito e Com Massa e Atrito). O cálculo é o mesmo da saída raster, feito
   na grade; o GeoTIFF intermediário é descartado e só a camada vetorial, o CSV e o TXT ficam.
@@ -7,7 +16,8 @@
   o GeoTIFF (“GeoTIFF + GeoPackage”).
 - **Formato vetorial à escolha:** GeoPackage, Shapefile, GeoJSON ou FlatGeobuf, os mesmos do
   Conversor de Formatos, nas três saídas vetoriais (“Vetor direto (somente Simples)”, “Vetor
-  (poligonização)” e “GeoTIFF + vetor (poligonização)”). O padrão continua GeoPackage.
+  (poligonização)” e “GeoTIFF + vetor (poligonização)”). O padrão continua GeoPackage. O vetor
+  direto (Simples e Com Massa) fica indisponível só nas modalidades com atrito.
 - Ao trocar do vetor direto para uma modalidade com massa ou atrito, a saída passa para “Vetor
   (poligonização)”, em vez de voltar ao GeoTIFF.
 - O `_resumo.txt` registra que os polígonos vêm da poligonização da grade (bordas nos pixels, com o

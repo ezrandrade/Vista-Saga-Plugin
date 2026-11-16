@@ -30,7 +30,7 @@ class VectorOutputHelpersTests(unittest.TestCase):
 
     def test_dialog_offers_vector_output_for_every_mode(self):
         content = (Path(__file__).resolve().parents[1] / 'voronoi_dialog.py').read_text(encoding='utf-8')
-        # Só o vetor direto é desabilitado fora do Simples; a poligonização segue disponível.
+        # Só o vetor direto é desabilitado com atrito; a poligonização segue disponível.
         self.assertIn("self.output_type.addItem(tr('Vetor (poligonização)'), 'vector')", content)
         self.assertIn('for extension, (_, label) in VECTOR_FORMATS.items():', content)
         self.assertIn("keep_raster=self.output_type.currentData()!='vector'", content)

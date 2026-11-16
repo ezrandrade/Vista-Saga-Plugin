@@ -82,10 +82,13 @@ essas bibliotecas faltam.
 - **Combinação vetorial (1.2.0, decisões de método):** sobreposições internas com largura média
   < 1 cm são toleradas (registradas no resumo); resíduos de cruzamento < 1 cm são incorporados ao
   vizinho de maior fronteira comum. Campos do mapa: `COD_nn`/`LEG_nn`.
-- **Voronoi (1.3.0):** saídas “GeoTIFF”, “Vetor direto (somente Simples)”, “Vetor
+- **Voronoi (1.3.0):** saídas “GeoTIFF”, “Vetor direto (Simples e Com Massa)”, “Vetor
   (poligonização)” (todas as modalidades, GeoTIFF descartado) e “GeoTIFF + vetor”; formatos
   vetoriais de `rs2_vector.VECTOR_FORMATS` via `voronoi_output.py` (GeoPackage de trabalho →
   `VectorTranslate`; publicação da família de arquivos com reversão). Padrão: GeoPackage.
+  Vetor direto Com Massa (`mass_voronoi_polygons`, decisão de método do autor na 1.3.0): discos
+  de Apolônio e bissetrizes em OGR/GEOS, arcos com tolerância de 1 cm (desvio máximo 2/3 cm, sem
+  viés), polígono do disco gerado sobre a extensão inteira para os vizinhos coincidirem.
 - **Mann–Kendall** saiu da Monitoria na 1.2.0 e volta como módulo próprio na 2.0;
   `monitoring_trends.py` e as funções de relatório ficam reservadas.
 - **Avaliação:** as três guias têm o mesmo leiaute (projeto, escala, critérios e pesos, classes,
