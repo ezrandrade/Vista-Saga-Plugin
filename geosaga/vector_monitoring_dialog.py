@@ -259,6 +259,7 @@ class VectorMonitoringDialog(QWidget):
             else:
                 QMessageBox.warning(self, tr('Resultado concluído'),
                                     tr('Os arquivos foram gravados, mas a camada não pôde ser carregada.'))
+            self._warn_omitted(result, fa, fb)
         except (ValueError, OSError, RuntimeError, InterruptedError) as exc:
             self.status.setText(tr('Monitoria vetorial não concluída.'))
             QMessageBox.warning(self, tr('Monitoria vetorial'), tr(str(exc)))
@@ -271,6 +272,26 @@ class VectorMonitoringDialog(QWidget):
             dialog.close()
             self._busy = False
             self.run_button.setEnabled(True)
+
+    def _warn_omitted(self, result, field_before, field_after):
+        """Avisa quando feições ficaram fora por não terem classe (ou geometria).
+
+        Essas áreas não entram na monitoria e aparecem como vazios no mapa
+        resultante; antes, isso só constava do _resumo.txt.
+        """
+        lines = []
+        for count, field, caption in ((result.get('omitidas_inicial', 0), field_before, tr('mapa inicial')),
+                                      (result.get('omitidas_final', 0), field_after, tr('mapa final'))):
+            if count:
+                lines.append(tr('{0}: {1} feição(ões) sem valor no campo de classe “{2}” '
+                                '(ou sem geometria).').format(caption, count, field))
+        if lines:
+            QMessageBox.warning(
+                self, tr('Feições sem classe ignoradas'),
+                '\n'.join(lines) + '\n\n' + tr(
+                    'Essas áreas ficaram fora da monitoria e aparecem como vazios no mapa '
+                    'resultante. Preencha o campo de classe ou escolha outro campo (por exemplo, '
+                    'o campo com os nomes das classes) e execute de novo.'))
 
     def _show_result(self, summary):
         host = getattr(self, '_embedded_results_host', None)

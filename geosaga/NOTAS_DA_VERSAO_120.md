@@ -23,6 +23,9 @@ Inclui tudo da 1.1.0.
 - **Resultado sempre carregado no QGIS**, nas guias Raster e Vetorial: sem arquivo em “Salvar em”,
   arquivo temporário (raster) ou camada temporária em memória (vetor).
 - As duas guias usam os mesmos rótulos.
+- **Monitoria vetorial avisa feições sem classe:** se alguma feição não tiver valor no campo de
+  classe escolhido, ela fica fora da análise (vazio no mapa), e agora uma mensagem informa
+  quantas foram ignoradas em cada mapa.
 - **O teste de Mann–Kendall saiu da Monitoria** e volta como módulo próprio na versão 2.0. Não
   são mais gerados `_tendencias_mk.csv` nem a seção de Mann–Kendall no `_resumo.txt`. Transições,
   matrizes e áreas são as mesmas da 1.1.0.

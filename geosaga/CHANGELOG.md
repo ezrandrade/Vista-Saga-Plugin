@@ -33,6 +33,11 @@ serão acrescentadas antes do lançamento.
   no resumo vetorial. O teste volta como módulo próprio na 2.0; o código do cálculo
   (`monitoring_trends.py` e as funções de relatório) e os testes unitários dele foram mantidos.
   Transições, matriz e áreas não mudaram.
+- **Aviso de feições sem classe na monitoria vetorial:** feições sem valor no campo de classe
+  (ou sem geometria) ficam fora da monitoria e viravam vazios no mapa sem nenhum alerta (só uma
+  linha no `_resumo.txt`). Agora a conclusão avisa quantas feições de cada mapa foram ignoradas,
+  com o nome do campo, e sugere preenchê-lo ou usar outro campo. Caso real: classe
+  MATA ATLANTICA com `CODIGO` vazio nos dois anos, 1.474 ha (35% da área) fora do resultado.
 - Correções: na guia Vetorial embutida, o botão “Fechar” interno era escondido comparando o
   texto em português (falhava em inglês e espanhol); o “Fechar” da janela não ocupa mais a linha
   inteira nessa guia.
