@@ -1,6 +1,7 @@
 """Interface QGIS 4 para Análises Voronoi (quatro modalidades)."""
 from .i18n import tr
 from pathlib import Path
+import os
 from math import isfinite
 
 from qgis.PyQt.QtCore import Qt, pyqtSlot
@@ -24,6 +25,7 @@ from .ui_shared import use_tab_background, temporary_destination
 from .voronoi_core import Generator
 from .voronoi_engine import grid_from_extent, run_voronoi
 from .voronoi_vector import save_simple_voronoi
+from .voronoi_output import VECTOR_FORMATS, layer_uri
 from .errors import log_exception
 
 
@@ -33,7 +35,8 @@ class VoronoiRasterTask(QgsTask):
     Signals/progress são administrados pelo QgsTask; a UI é atualizada apenas
     no método finished(), que o QGIS invoca na thread principal.
     """
-    def __init__(self, points, destination, wkt, transform, width, height, mode, vectorize, friction_path=None, friction_components=None):
+    def __init__(self, points, destination, wkt, transform, width, height, mode, vectorize, friction_path=None, friction_components=None,
+                 vector_format='.gpkg', keep_raster=True):
         super().__init__('Vista Saga - Voronoi raster', QgsTask.Flag.CanCancel)
         self.points = tuple(points)  # Generator é uma dataclass simples, sem QObject.
         self.destination = str(destination)
@@ -43,6 +46,8 @@ class VoronoiRasterTask(QgsTask):
         self.height = int(height)
         self.mode = str(mode)
         self.vectorize = bool(vectorize)
+        self.vector_format = str(vector_format)
+        self.keep_raster = bool(keep_raster)
         self.friction_path = str(friction_path) if friction_path else None
         self.friction_components = tuple(dict(spec) for spec in friction_components) if friction_components else None
         self.result = None
@@ -56,6 +61,7 @@ class VoronoiRasterTask(QgsTask):
                 self.width, self.height, mode=self.mode, vectorize=self.vectorize,
                 progress=self.setProgress, cancelled=self.isCanceled,
                 friction_path=self.friction_path, friction_components=self.friction_components,
+                vector_format=self.vector_format, keep_raster=self.keep_raster,
             )
             return not self.isCanceled()
         except InterruptedError:
@@ -245,10 +251,18 @@ class VoronoiDialog(QDialog):
         outform = QFormLayout(output)
         self.output_type=QComboBox()
         self.output_type.addItem(tr('GeoTIFF (raster)'), 'raster')
-        self.output_type.addItem(tr('GeoPackage (vetor direto - Simples)'), 'direct')
-        self.output_type.addItem(tr('GeoTIFF + GeoPackage (poligonização)'), 'both')
+        self.output_type.addItem(tr('Vetor direto (somente Simples)'), 'direct')
+        self.output_type.addItem(tr('Vetor (poligonização)'), 'vector')
+        self.output_type.addItem(tr('GeoTIFF + vetor (poligonização)'), 'both')
         self.output_type.currentIndexChanged.connect(self._update_output)
         outform.addRow(tr('Formato de saída:'),self.output_type)
+        # Mesmos formatos vetoriais do Conversor de Formatos.
+        self.vector_format = QComboBox()
+        for extension, (_, label) in VECTOR_FORMATS.items():
+            self.vector_format.addItem(f'{label} (*{extension})', extension)
+        self.vector_format.currentIndexChanged.connect(self._update_output)
+        self.vector_format_label = QLabel(tr('Formato vetorial:'))
+        outform.addRow(self.vector_format_label, self.vector_format)
         self.temp_output = QCheckBox(tr('Resultado temporário (adicionar ao QGIS)'))
         self.temp_output.setChecked(True)
         self.temp_output.toggled.connect(self._update_output)
@@ -473,7 +487,8 @@ class VoronoiDialog(QDialog):
             self.method_note.setText(tr('Simples: menor distância euclidiana; sem massa nem atrito.'))
         self.output_type.model().item(1).setEnabled(not (weighted or friction))
         if (weighted or friction) and self.output_type.currentData() == 'direct':
-            self.output_type.setCurrentIndex(0)
+            # O vetor direto só existe no Simples; a poligonização mantém a saída vetorial.
+            self.output_type.setCurrentIndex(self.output_type.findData('vector'))
         self._update_output()
 
     def _update_grid(self, *_):
@@ -490,8 +505,17 @@ class VoronoiDialog(QDialog):
             label.setVisible(manual)
         self._update_output()
 
+    def _output_suffix(self):
+        """Extensão do arquivo escolhido pelo usuário em "Arquivo de saída"."""
+        kind=self.output_type.currentData()
+        return '.tif' if kind in ('raster','both') else self.vector_format.currentData()
+
     def _update_output(self, *_):
         direct=self.output_type.currentData()=='direct'
+        vector_output=self.output_type.currentData()!='raster'
+        self.vector_format.setVisible(vector_output)
+        self.vector_format_label.setVisible(vector_output)
+        suffix=self._output_suffix()
         friction=self.mode.currentIndex() in (2,3)
         raster=not direct
         reference=self.extent_mode.currentData()=='reference' if hasattr(self,'extent_mode') else False
@@ -502,23 +526,26 @@ class VoronoiDialog(QDialog):
         self.resolution.setEnabled(raster and not reference and not friction)
         self.path_output.setEnabled(not self.temp_output.isChecked())
         self.path_button.setEnabled(not self.temp_output.isChecked())
-        self.path_output.setPlaceholderText('Analises_Voronoi.gpkg' if direct else 'Analises_Voronoi.tif')
+        self.path_output.setPlaceholderText('Analises_Voronoi'+suffix)
         self.extent_mode.model().item(4).setEnabled(raster)
         if direct and reference:
             self.extent_mode.setCurrentIndex(0)
-        if self.path_output.text() and (self.path_output.text().lower().endswith('.gpkg') != direct):
+        if self.path_output.text() and not self.path_output.text().lower().endswith(suffix):
             self.path_output.clear()
         self.grid_note.setText(tr('Com Atrito: extensão, resolução e SRC herdados do raster de resistência; '
                                'a grade não será reprojetada.' if friction else
                                ('Vetor direto: polígonos exatos recortados à extensão e à área poligonal.'
-                                if direct else 'Raster: resolução necessária. A extensão poligonal define o retângulo envolvente.')))
+                                if direct else
+                                'Poligonização: o cálculo é feito na grade raster e convertido em polígonos; '
+                                'as bordas seguem os pixels, e a resolução define o detalhe.'
+                                if self.output_type.currentData()=='vector' else
+                                'Raster: resolução necessária. A extensão poligonal define o retângulo envolvente.')))
 
     def _choose_output(self):
-        direct=self.output_type.currentData()=='direct'
-        suffix='.gpkg' if direct else '.tif'
+        suffix=self._output_suffix()
         path,_=QFileDialog.getSaveFileName(self,tr('Salvar Voronoi'),
                    self.path_output.text().strip() or 'Analises_Voronoi'+suffix,
-                   'GeoPackage (*.gpkg)' if direct else 'GeoTIFF (*.tif)')
+                   'GeoTIFF (*.tif)' if suffix=='.tif' else self.vector_format.currentText())
         if path:
             if not path.lower().endswith(suffix): path+=suffix
             self.path_output.setText(path)
@@ -679,7 +706,6 @@ class VoronoiDialog(QDialog):
                             max(p.x for p in points),max(p.y for p in points))
                     margin=max(1.0,.10*max(bounds[2]-bounds[0],bounds[3]-bounds[1]))
                     bounds=(bounds[0]-margin,bounds[1]-margin,bounds[2]+margin,bounds[3]+margin)
-                suffix='.gpkg'
             else:
                 friction_mode = self.mode.currentIndex() in (2,3)
                 friction_path = None
@@ -715,44 +741,53 @@ class VoronoiDialog(QDialog):
                         raise ValueError('A análise exige SRC projetado. Reprojete os dados.')
                     points=self._get_generators(crs)
                     transform,width,height,crs,wkt=self._get_grid(layer,points)
-                suffix='.tif'
+            suffix=self._output_suffix()
             destination=(temporary_destination('voronoi_espacial',suffix) if self.temp_output.isChecked()
                          else self.path_output.text().strip())
             if not destination or not destination.lower().endswith(suffix):
                 raise ValueError(f'Escolha um arquivo de saída {suffix}.')
+            kind=self.output_type.currentData()
+            prefix=os.path.splitext(destination)[0]
+            # Saída só vetorial: o GeoTIFF de cálculo usa o mesmo nome-base e é descartado.
+            raster_destination=None if direct else (prefix+'.tif' if kind=='vector' else destination)
+            vector_destination=(destination if kind in ('direct','vector') else
+                                prefix+self.vector_format.currentData() if kind=='both' else None)
+            outputs=[path for path in (vector_destination,
+                                       raster_destination if kind in ('raster','both') else None) if path]
+            def same_file(first, second):
+                return os.path.normcase(os.path.realpath(first))==os.path.normcase(os.path.realpath(second))
+            forbidden=[layer.source().split('|')[0]]
+            if self.extent_mode.currentData()=='polygon' and not (self.mode.currentIndex() in (2,3)):
+                study_layer=self.area_layer.currentLayer()
+                if study_layer is not None:
+                    forbidden.append(study_layer.source().split('|')[0])
+            for source in forbidden:
+                if source and os.path.isfile(source) and any(same_file(source,path) for path in outputs):
+                    raise ValueError('A saída não pode substituir uma camada de entrada.')
             def progress(value):
                 dialog.setValue(int(value))
                 QApplication.processEvents()
             if direct:
                 if self.mode.currentIndex()!=0:
                     raise ValueError('Vetor direto disponível somente para Voronoi Simples nesta versão.')
-                import os
-                forbidden=[layer.source().split('|')[0]]
-                if self.extent_mode.currentData()=='polygon':
-                    study_layer=self.area_layer.currentLayer()
-                    if study_layer is not None:
-                        forbidden.append(study_layer.source().split('|')[0])
-                for source in forbidden:
-                    if source and os.path.isfile(source) and (
-                      os.path.normcase(os.path.realpath(source))==os.path.normcase(os.path.realpath(destination))):
-                        raise ValueError('A saída não pode substituir uma camada de entrada.')
                 result=save_simple_voronoi(points,bounds,destination,crs.toWkt(),
                     study_geometry=study,progress=progress,cancelled=dialog.wasCanceled)
             else:
-                if not self.temp_output.isChecked() and reference is not None:
+                if reference is not None:
                     from .raster_engine import file_source
-                    import os
                     input_path=file_source(reference.source())
-                    if os.path.normcase(os.path.realpath(input_path))==os.path.normcase(os.path.realpath(destination)):
+                    if any(same_file(input_path,path) for path in outputs):
                         raise ValueError('O resultado não pode substituir o raster de referência.')
                 task = VoronoiRasterTask(
-                    points, destination, wkt, transform, width, height,
+                    points, raster_destination, wkt, transform, width, height,
                     mode=('mass_friction' if self.mode.currentIndex()==3 else
                           'friction' if self.mode.currentIndex()==2 else
                           'mass' if self.mode.currentIndex()==1 else 'simple'),
-                    vectorize=self.output_type.currentData()=='both',
+                    vectorize=self.output_type.currentData() in ('both','vector'),
                     friction_path=friction_path if friction_mode else None,
-                    friction_components=friction_components if friction_mode else None)
+                    friction_components=friction_components if friction_mode else None,
+                    vector_format=self.vector_format.currentData(),
+                    keep_raster=self.output_type.currentData()!='vector')
                 # Recebe o resultado na thread principal; NUNCA processEvents()
                 # nem acesso ao QGIS/Qt no worker raster.
                 task.ui_callback = self._on_raster_task_finished
@@ -776,11 +811,7 @@ class VoronoiDialog(QDialog):
             else:
                 self.status.setText(tr(f'Voronoi concluído: {len(points)} centros; '
                                     f'{result["pixels_valid"]:,} pixels classificados.'))
-            QMessageBox.information(self,tr('Voronoi concluído'),
-                 tr(('GeoPackage vetorial direto, CSV e TXT produzidos.' if direct else
-                  'GeoTIFF, CSV e TXT produzidos. '+('GeoPackage gerado.' if result['gpkg'] else ''))+
-                 ('\nSaída temporária: salve antes de fechar o QGIS.' if self.temp_output.isChecked()
-                  else '\nResultado: '+destination)))
+            QMessageBox.information(self,tr('Voronoi concluído'),self._result_message(result))
         except InterruptedError:
             self.status.setText(tr('Processamento cancelado; os dados de entrada foram preservados.'))
         except Exception as exc:
@@ -793,6 +824,20 @@ class VoronoiDialog(QDialog):
                 self._busy=False
                 self.run_button.setEnabled(True)
                 self.close_button.setEnabled(True)
+
+    def _result_message(self, result):
+        """Resumo das saídas produzidas (GeoTIFF e/ou camada vetorial, CSV e TXT)."""
+        vector=result.get('vector') or result.get('gpkg')
+        label=VECTOR_FORMATS[os.path.splitext(vector)[1].lower()][1] if vector else ''
+        if result.get('output') and vector:
+            text=tr('GeoTIFF, camada vetorial ({0}), CSV e TXT produzidos.').format(label)
+        elif vector:
+            text=tr('Camada vetorial ({0}), CSV e TXT produzidos.').format(label)
+        else:
+            text=tr('GeoTIFF, CSV e TXT produzidos.')
+        if self.temp_output.isChecked():
+            return text+'\n'+tr('Saída temporária: salve antes de fechar o QGIS.')
+        return text+'\n'+tr('Resultado: {0}').format(result.get('output') or vector)
 
     def _on_raster_task_finished(self, task, success):
         """QgsTask.finished chama este método na thread principal do QGIS."""
@@ -814,11 +859,7 @@ class VoronoiDialog(QDialog):
                 self.status.setText(
                     tr(f'Voronoi concluído: {len(task.points)} centros; '
                     f'{task.result["pixels_valid"]:,} pixels classificados.'))
-                QMessageBox.information(self,tr('Voronoi concluído'),
-                    tr('GeoTIFF, CSV e TXT produzidos. '
-                    + ('GeoPackage gerado.' if task.result.get('gpkg') else '')
-                    + ('\nSaída temporária: salve antes de fechar o QGIS.'
-                       if self.temp_output.isChecked() else '\nResultado: '+task.destination)))
+                QMessageBox.information(self,tr('Voronoi concluído'),self._result_message(task.result))
             except Exception as exc:
                 log_exception()
                 self.status.setText(tr('Resultado criado, mas não foi possível carregar no QGIS.'))
@@ -858,8 +899,9 @@ class VoronoiDialog(QDialog):
                     categories.append(QgsPalettedRasterRenderer.Class(r['ID'],c,r['CENTRO'][:120]))
                 raster.setRenderer(QgsPalettedRasterRenderer(raster.dataProvider(),1,categories))
             QgsProject.instance().addMapLayer(raster)
-        if result['gpkg']:
-            vector = QgsVectorLayer(result['gpkg']+'|layername=voronoi_espacial',
+        vector_path = result.get('vector') or result.get('gpkg')
+        if vector_path:
+            vector = QgsVectorLayer(layer_uri(vector_path),
                                     'Análises Voronoi - polígonos','ogr')
             if vector.isValid():
                 if len(result['rows']) <= 75:

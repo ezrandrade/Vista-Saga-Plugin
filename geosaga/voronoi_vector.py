@@ -9,6 +9,7 @@ import os
 import shutil
 import tempfile
 from .voronoi_core import validate_generators
+from .voronoi_output import LAYER_NAME, VECTOR_FORMATS, export_vector, publish_outputs
 
 
 def _clip_halfplane(polygon, sx, sy, tx, ty, eps=1e-10):
@@ -85,8 +86,9 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
     if study_geometry is not None and (study_geometry.isNull() or study_geometry.isEmpty() or not study_geometry.isGeosValid()):
         raise ValueError('Polígonos da área de estudo inválidos. Corrija a geometria.')
     destination=os.path.abspath(str(destination))
-    if not destination.lower().endswith('.gpkg'):
-        raise ValueError('Escolha um arquivo GeoPackage (.gpkg).')
+    if os.path.splitext(destination)[1].lower() not in VECTOR_FORMATS:
+        raise ValueError('Escolha um arquivo vetorial: GeoPackage (.gpkg), Shapefile (.shp), '
+                         'GeoJSON (.geojson) ou FlatGeobuf (.fgb).')
     folder=os.path.dirname(destination)
     if not os.path.isdir(folder):
         raise ValueError('Diretório de saída inexistente.')
@@ -98,10 +100,12 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
     datasource=None
     try:
         local=os.path.join(stage,os.path.basename(destination))
-        datasource=ogr.GetDriverByName('GPKG').CreateDataSource(local)
+        # GeoPackage de trabalho; outros formatos são exportados dele no fim.
+        work=local if local.lower().endswith('.gpkg') else os.path.splitext(local)[0]+'_trabalho.gpkg'
+        datasource=ogr.GetDriverByName('GPKG').CreateDataSource(work)
         if datasource is None:
             raise OSError('Falha ao criar o GeoPackage.')
-        layer=datasource.CreateLayer('voronoi_espacial',srs=srs,geom_type=ogr.wkbMultiPolygon)
+        layer=datasource.CreateLayer(LAYER_NAME,srs=srs,geom_type=ogr.wkbMultiPolygon)
         if layer is None:
             raise OSError('Falha ao criar camada GeoPackage.')
         for name,kind in [('CENTRO_ID',ogr.OFTInteger),('CENTRO',ogr.OFTString),
@@ -151,6 +155,9 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
                 progress(75+int((idx+1)*20/len(records)))
         layer=None
         datasource=None
+        if work!=local:
+            export_vector(work,local)
+            os.remove(work)
         csv_path=os.path.join(stage,os.path.basename(outputs[1]))
         txt_path=os.path.join(stage,os.path.basename(outputs[2]))
         with open(csv_path,'w',encoding='utf-8-sig',newline='') as report:
@@ -160,6 +167,7 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
         with open(txt_path,'w',encoding='utf-8') as report:
             report.write('Vista Saga Plugin - Análises Voronoi\n')
             report.write('Modalidade: Simples; saída vetorial direta (sem rasterização)\n')
+            report.write(f'Formato: {VECTOR_FORMATS[os.path.splitext(destination)[1].lower()][1]}\n')
             report.write('Extensão finita definida pelo usuário; distâncias euclidianas no SRC projetado.\n')
             report.write('Áreas métricas planares calculadas nas unidades lineares do SRC.\n\n')
             report.write('ID | Centro | Massa | Área (m²) | Área (ha) | % da área avaliada\n')
@@ -167,28 +175,11 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
                 report.write(f"{row['ID']} | {row['CENTRO']} | {row['MASSA']:.3f} | "
                              f"{row['AREA_M2']:.3f} | {row['AREA_HA']:.6f} | {row['PCT_AREA']:.4f}\n")
             report.write('\nA equivalência com o Vista SAGA original depende de validação comparativa.\n')
-        # Usa o mesmo padrão de backup/rollback do módulo raster.
-        backup=os.path.join(stage,'_backup')
-        os.makedirs(backup)
-        originals=[]
-        created=[]
-        try:
-            for destination_path in outputs:
-                if os.path.isfile(destination_path):
-                    saved=os.path.join(backup,str(len(originals)))
-                    os.replace(destination_path,saved)
-                    originals.append((saved,destination_path))
-            for destination_path in outputs:
-                os.replace(os.path.join(stage,os.path.basename(destination_path)),destination_path)
-                created.append(destination_path)
-        except Exception:
-            for path in created:
-                if os.path.exists(path): os.remove(path)
-            for saved,original in originals:
-                if os.path.exists(saved): os.replace(saved,original)
-            raise
+        # Mesmo padrão de backup/rollback do módulo raster (família vetorial inteira).
+        publish_outputs(stage,outputs)
         if progress: progress(100)
-        return {'output':None,'gpkg':destination,'csv':outputs[1],
+        return {'output':None,'vector':destination,
+                'gpkg':destination if destination.lower().endswith('.gpkg') else None,'csv':outputs[1],
                 'txt':outputs[2],'rows':rows,'pixels_valid':None,
                 'pixels_excluded':None,'vector_direct':True}
     finally:

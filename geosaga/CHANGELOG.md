@@ -1,3 +1,22 @@
+## 1.3.0 — Voronoi: saída vetorial em todas as modalidades (em desenvolvimento)
+
+- **Análises Voronoi, nova saída “Vetor (poligonização)”:** disponível nas quatro modalidades
+  (Simples, Com Massa, Com Atrito e Com Massa e Atrito). O cálculo é o mesmo da saída raster, feito
+  na grade; o GeoTIFF intermediário é descartado e só a camada vetorial, o CSV e o TXT ficam.
+  Antes, nas modalidades com massa ou atrito, a única forma de obter polígonos era gravar também
+  o GeoTIFF (“GeoTIFF + GeoPackage”).
+- **Formato vetorial à escolha:** GeoPackage, Shapefile, GeoJSON ou FlatGeobuf, os mesmos do
+  Conversor de Formatos, nas três saídas vetoriais (“Vetor direto (somente Simples)”, “Vetor
+  (poligonização)” e “GeoTIFF + vetor (poligonização)”). O padrão continua GeoPackage.
+- Ao trocar do vetor direto para uma modalidade com massa ou atrito, a saída passa para “Vetor
+  (poligonização)”, em vez de voltar ao GeoTIFF.
+- O `_resumo.txt` registra que os polígonos vêm da poligonização da grade (bordas nos pixels, com o
+  tamanho da célula) e o formato gravado.
+- Mensagens de conclusão do Voronoi traduzidas para inglês e espanhol (antes ficavam em português).
+- **Nenhum algoritmo de cálculo foi alterado:** com a saída padrão, o GeoTIFF, os polígonos
+  GeoPackage e o CSV são idênticos byte a byte aos da 1.2.1 (conferido nas modalidades Simples e
+  Com Massa).
+
 ## 1.2.1 — Correções de interface (2026-11-16)
 
 Correções encontradas ao escrever o manual de uso da 1.2.0. Nenhum algoritmo foi alterado.

@@ -82,6 +82,10 @@ essas bibliotecas faltam.
 - **Combinação vetorial (1.2.0, decisões de método):** sobreposições internas com largura média
   < 1 cm são toleradas (registradas no resumo); resíduos de cruzamento < 1 cm são incorporados ao
   vizinho de maior fronteira comum. Campos do mapa: `COD_nn`/`LEG_nn`.
+- **Voronoi (1.3.0):** saídas “GeoTIFF”, “Vetor direto (somente Simples)”, “Vetor
+  (poligonização)” (todas as modalidades, GeoTIFF descartado) e “GeoTIFF + vetor”; formatos
+  vetoriais de `rs2_vector.VECTOR_FORMATS` via `voronoi_output.py` (GeoPackage de trabalho →
+  `VectorTranslate`; publicação da família de arquivos com reversão). Padrão: GeoPackage.
 - **Mann–Kendall** saiu da Monitoria na 1.2.0 e volta como módulo próprio na 2.0;
   `monitoring_trends.py` e as funções de relatório ficam reservadas.
 - **Avaliação:** as três guias têm o mesmo leiaute (projeto, escala, critérios e pesos, classes,
@@ -113,8 +117,12 @@ essas bibliotecas faltam.
 
 ## Pendências registradas
 
-- **Na versão final:** criar as tags e Releases no GitHub (v1.0.5, v1.0.6, v1.0.8, v1.0.9, v1.1.0, v1.2.0, v1.2.1…)
-  e apagar as branches já incorporadas; conferir antes `fix/testes-desatualizados` e
-  `docs/logo-readme`, que têm 1 commit fora da `main`. Não fazer isso antes.
+- **Tags (adiadas pelo autor em 16/11/2026):** commits já conferidos (último merge de cada versão
+  na `main`): v1.0.5 `0063fe2`, v1.0.6 `27b06e5`, v1.0.8 `760620e`, v1.0.9 `1ee4d8c`, v1.1.0
+  `bcb08fb` (PR #9: README do ZIP já na 1.1.0), v1.2.0 `92d35ea`, v1.2.1 `4b165de`. **O proxy das
+  sessões do Claude recusa criar tags** (por `git push` e pela API REST): o autor cria pelo GitHub
+  Codespaces, com o comando registrado na sessão de 16/11/2026. Releases também ficam com o autor.
+- **Na versão final:** Releases no GitHub e limpeza das branches já incorporadas; conferir antes
+  `fix/testes-desatualizados` e `docs/logo-readme`, que têm 1 commit fora da `main`.
 - **QRibbonSkin:** erro ao descarregar o plugin (barra de ferramentas apagada); tratar só quando o
   trabalho for no próprio QRibbonSkin.
