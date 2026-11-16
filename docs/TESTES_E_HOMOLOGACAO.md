@@ -74,3 +74,9 @@ retirado (sem série temporal, sem `_tendencias_mk.csv`, sem seção no resumo);
 classe (caso real Uso 1997 × 2011: com `CODIGO`, aviso; com `CLASSE`, área comum completa de
 cerca de 4.225 ha); cópia das tabelas Raster e Vetorial para planilhas com Ctrl+A/Ctrl+C e decimal
 do idioma. Suítes locais: `geosaga/tests` OK (16 pulados); `tests/unit` 36/36.
+
+## Versão 1.2.0 fechada (16/11/2026)
+
+Conversor de Formatos (dev6), Combinação de Mapas e Sequenciador (dev12) e Monitoria (dev15)
+homologados pelo autor no QGIS para Windows. Pendente: revisão nativa das frases novas em inglês
+e espanhol.

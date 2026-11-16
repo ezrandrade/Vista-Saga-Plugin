@@ -1,7 +1,8 @@
-## 1.2.0 — Conversor de Formatos, Combinação, Sequenciador e Monitoria (em desenvolvimento)
+## 1.2.0 — Conversor de Formatos, Combinação, Sequenciador e Monitoria (2026-11-16)
 
-Versão de interface dos módulos Conversor de Formatos e Combinação de Mapas. Outras alterações
-serão acrescentadas antes do lançamento.
+Interface dos módulos Conversor de Formatos, Combinação de Mapas, Sequenciador de Mapas e
+Monitoria, com duas decisões de método na combinação vetorial (tolerância de lascas e
+incorporação de resíduos) e a retirada temporária do Mann–Kendall da Monitoria.
 
 **Conversor de Formatos**
 

@@ -72,6 +72,18 @@ essas bibliotecas faltam.
 - **Rótulos** com maiúscula só na primeira palavra (“Escala das notas”, não “Escala das Notas”).
 - **Tabelas:** números alinhados à direita e textos à esquerda (`table_item`, `weight_spin`,
   `score_spin`, `centered_check` em `ui_shared.py`).
+- **Resultado (Avaliação, Combinação e Monitoria):** sem caixas “temporário” ou “adicionar ao
+  projeto”. Campo “Salvar em” vazio: vetor como camada temporária em memória
+  (`materialize_in_memory`), raster em arquivo temporário; preenchido: salvo. Sempre carregado.
+  O **Conversor de Formatos mantém** as caixas, o lote vetorial desligado e as opções avançadas
+  ocultas, por decisão do autor na 1.2.0 (não reabrir sem pedido).
+- **Tabelas de resultado** copiáveis para planilhas com `enable_table_copy` (Ctrl+A/Ctrl+C, decimal
+  do idioma); botões de ordem “Mover para cima/baixo”; guias “Raster” e “Vetorial”.
+- **Combinação vetorial (1.2.0, decisões de método):** sobreposições internas com largura média
+  < 1 cm são toleradas (registradas no resumo); resíduos de cruzamento < 1 cm são incorporados ao
+  vizinho de maior fronteira comum. Campos do mapa: `COD_nn`/`LEG_nn`.
+- **Mann–Kendall** saiu da Monitoria na 1.2.0 e volta como módulo próprio na 2.0;
+  `monitoring_trends.py` e as funções de relatório ficam reservadas.
 - **Avaliação:** as três guias têm o mesmo leiaute (projeto, escala, critérios e pesos, classes,
   resultado). A nota “—” bloqueia a execução, e o plugin nunca supõe nota 0 nem exclui classes
   sozinho; pesos novos entram em branco, e a divisão igual só ocorre pelo botão. Campo “Salvar
@@ -89,7 +101,8 @@ essas bibliotecas faltam.
 
 ## Fluxo de trabalho
 
-1. Cada melhoria numa **branch nova** a partir da `main`.
+1. Cada versão numa **branch nova** a partir da `main`; as melhorias da mesma versão acumulam-se
+   nessa branch e num único PR, com ZIPs `-devN` a cada lote, até o fechamento.
 2. Rodar as suítes; gerar um **ZIP de teste** para o autor validar no QGIS (e no Vista SAGA, quando
    couber). Não declarar algo homologado sem esse teste.
 3. Abrir o **pull request**; **o merge é feito pelo autor**, depois da validação, ou pelo Claude
@@ -100,7 +113,7 @@ essas bibliotecas faltam.
 
 ## Pendências registradas
 
-- **Na versão final:** criar as tags e Releases no GitHub (v1.0.5, v1.0.6, v1.0.8, v1.0.9, v1.1.0…)
+- **Na versão final:** criar as tags e Releases no GitHub (v1.0.5, v1.0.6, v1.0.8, v1.0.9, v1.1.0, v1.2.0…)
   e apagar as branches já incorporadas; conferir antes `fix/testes-desatualizados` e
   `docs/logo-readme`, que têm 1 commit fora da `main`. Não fazer isso antes.
 - **QRibbonSkin:** erro ao descarregar o plugin (barra de ferramentas apagada); tratar só quando o

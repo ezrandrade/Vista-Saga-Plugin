@@ -1,7 +1,7 @@
 # Vista Saga Plugin 1.2.0 — notas da versão
 
-> **Em desenvolvimento.** Esta versão reúne as alterações dos módulos **Conversor de Formatos**,
-> **Combinação de Mapas**, **Sequenciador de Mapas** e **Monitoria**; outras mudanças serão acrescentadas antes do lançamento.
+> Versão de 16/11/2026. Reúne as alterações dos módulos **Conversor de Formatos**, **Combinação de
+> Mapas**, **Sequenciador de Mapas** e **Monitoria**, homologadas pelo autor no QGIS para Windows.
 
 Inclui tudo da 1.1.0.
 
