@@ -1,4 +1,4 @@
-## 1.2.1 — Correções de interface (em desenvolvimento)
+## 1.2.1 — Correções de interface (2026-11-16)
 
 Correções encontradas ao escrever o manual de uso da 1.2.0. Nenhum algoritmo foi alterado.
 

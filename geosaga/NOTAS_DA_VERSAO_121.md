@@ -1,6 +1,6 @@
 # Vista Saga Plugin 1.2.1 — notas da versão
 
-> Versão de correções de interface. Inclui tudo da 1.2.0. Nenhum algoritmo foi alterado.
+> Versão de 16/11/2026, de correções de interface. Inclui tudo da 1.2.0. Nenhum algoritmo foi alterado.
 
 ## O que muda para quem usa
 
