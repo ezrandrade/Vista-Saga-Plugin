@@ -335,7 +335,7 @@ def eng_scan_float_nodata():
 
 def eng_monitoring():
     return monitoring_engine.run_monitoring(ras_a, ras_b, os.path.join(OUT, 'eng_monit.tif'), before_label='2000', after_label='2020',
-                                            title='Teste', temporal_files=[(2005, ras_t1), (2010, ras_t2), (2015, ras_t3)])
+                                            title='Teste')
 
 
 def eng_signature_raster():
@@ -446,7 +446,7 @@ def eng_gif():
 for name, fn in [
     ('motor: avaliação raster', eng_evaluation),
     ('motor: classes com NoData float', eng_scan_float_nodata),
-    ('motor: monitoria raster + tendências', eng_monitoring),
+    ('motor: monitoria raster', eng_monitoring),
     ('motor: assinatura raster', eng_signature_raster),
     ('motor: assinatura vetorial', eng_signature_vector),
     ('motor: combinação raster', eng_comb_raster),

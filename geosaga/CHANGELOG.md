@@ -1,3 +1,107 @@
+## 1.2.0 — Conversor de Formatos, Combinação, Sequenciador e Monitoria (2026-11-16)
+
+Interface dos módulos Conversor de Formatos, Combinação de Mapas, Sequenciador de Mapas e
+Monitoria, com duas decisões de método na combinação vetorial (tolerância de lascas e
+incorporação de resíduos) e a retirada temporária do Mann–Kendall da Monitoria.
+
+**Conversor de Formatos**
+
+
+- **Novo nome do módulo:** “Conversão de Formatos” passou a “Conversor de Formatos” no menu e no
+  título da janela (inglês: “Format converter”; espanhol: “Conversor de
+  formatos”). Os identificadores internos (`rs2_dialog`, `open_rs2_converter`, `geosaga:*`) não
+  mudam, e projetos e modelos antigos continuam funcionando.
+- **Aparência igual à dos demais módulos:** a área com rolagem da janela passa a ter a moldura
+  padrão, como no Sequenciador de Mapas; as seções deixam de aparecer com outros tons de cinza e
+  outra linha de contorno no Windows.
+- **Sem título no topo da tela:** como nos demais módulos, a janela começa pelo texto de
+  apresentação; o nome do módulo fica na barra de título.
+- **Altura da janela ajustada ao conteúdo:** sem espaço vazio embaixo. A janela acompanha os
+  campos de cada operação, o lote e as opções avançadas, até 90% da altura útil da tela (acima
+  disso, aparece a rolagem). A largura escolhida pelo usuário é mantida.
+- Nenhum algoritmo de conversão foi alterado.
+
+**Monitoria**
+
+- **Resultado no padrão dos demais módulos:** saem as caixas “Resultado temporário no QGIS” e
+  “Adicionar … ao projeto QGIS”, nas guias Raster e Vetorial. Campo “Salvar em” vazio: mapa de
+  transições raster em arquivo temporário; resultado vetorial como camada temporária em memória.
+  Com um arquivo indicado, salvo e carregado. Sempre carregado no QGIS.
+- **Mesmos rótulos nas duas guias:** seção “Resultado”, “Título do estudo:”, “Salvar em:”,
+  “Camada no QGIS:”, “Ou arquivo:” e “Executar monitoria”.
+- **Mann–Kendall retirado (por enquanto).** Saem a série temporal das opções avançadas, o arquivo
+  `_tendencias_mk.csv` e a seção de Mann–Kendall do `_resumo.txt` (raster) e a nota sobre ele
+  no resumo vetorial. O teste volta como módulo próprio na 2.0; o código do cálculo
+  (`monitoring_trends.py` e as funções de relatório) e os testes unitários dele foram mantidos.
+  Transições, matriz e áreas não mudaram.
+- **Aviso de feições sem classe na monitoria vetorial:** feições sem valor no campo de classe
+  (ou sem geometria) ficam fora da monitoria e viravam vazios no mapa sem nenhum alerta (só uma
+  linha no `_resumo.txt`). Agora a conclusão avisa quantas feições de cada mapa foram ignoradas,
+  com o nome do campo, e sugere preenchê-lo ou usar outro campo. Caso real: classe
+  MATA ATLANTICA com `CODIGO` vazio nos dois anos, 1.474 ha (35% da área) fora do resultado.
+- **Copiar resultados para planilhas:** nas subguias Raster e Vetorial de Resultados, Ctrl+A
+  seleciona a tabela inteira e Ctrl+C copia as linhas selecionadas (ou todas), com o cabeçalho,
+  em texto separado por tabulação; também pelo botão direito do mouse. Os números saem com o
+  separador decimal do idioma do QGIS (em português, “548,808”), para não serem lidos como
+  milhares na planilha. A prévia continua limitada a 500 linhas; o CSV traz tudo.
+- Correções: na guia Vetorial embutida, o botão “Fechar” interno era escondido comparando o
+  texto em português (falhava em inglês e espanhol); o “Fechar” da janela não ocupa mais a linha
+  inteira nessa guia.
+
+**Sequenciador de Mapas**
+
+- **“Mover para cima” e “Mover para baixo”** no lugar de “Subir” e “Descer”.
+
+**Combinação de Mapas**
+
+- **Guias “Raster” e “Vetorial”**, como nos demais módulos (antes “Combinação raster” e
+  “Combinação vetorial”).
+- **“Adicionar camada selecionada”** no lugar de “Adicionar camada”, nas duas guias.
+- **“Mover para cima” e “Mover para baixo”** no lugar de “Subir” e “Descer”, nas duas guias.
+- **Resultado sempre carregado no QGIS:** saíram as caixas “Saída temporária no QGIS” e
+  “Carregar resultado no projeto QGIS”. Campo “Salvar em” vazio: vetor como camada temporária em
+  memória; raster em arquivo temporário (o QGIS não mantém rasters em memória). Com um arquivo
+  indicado, o resultado é salvo e carregado no QGIS. Os relatórios `_combinacoes.csv` e
+  `_resumo.txt` continuam sendo gerados (na pasta temporária do QGIS quando não há arquivo).
+- **Campo de classe editável para qualquer camada da lista:** ao selecionar uma camada em
+  “Camadas adicionadas”, a seção “Campos de classe e legenda” (antes “Classificação da próxima
+  camada vetorial”) mostra os campos dela, e a troca vale na hora; a lista mostra o campo novo.
+  Sem seleção na lista, a seção volta a valer para a camada do menu suspenso, a ser adicionada.
+  Com várias camadas selecionadas, os campos ficam desativados.
+- **Aviso de camada repetida mais claro:** cada camada entra uma única vez na combinação (com um
+  campo de classe próprio). Ao repetir uma camada, o aviso informa o nome e o campo já usado e
+  indica como trocar o atributo. Em “Adicionar várias do QGIS…” e “Adicionar arquivos…”, a
+  repetição é detectada antes de perguntar o campo.
+- **Tolerância de lascas na combinação vetorial (decisão de método).** Antes, qualquer
+  sobreposição entre polígonos de uma mesma camada maior que 10⁻¹⁰ da área do menor polígono
+  bloqueava a combinação, inclusive lascas de precisão invisíveis (casos reais: lascas de até
+  0,04 mm de largura e 0,03 m² no total, em camadas de 2.343 ha). Agora o critério é a
+  **largura média** de cada pedaço sobreposto (2 × área ÷ perímetro): abaixo de **1 cm**, o
+  pedaço é tratado como imprecisão de coordenadas e **mantido**, e o `_resumo.txt` registra, por
+  mapa, o número de lascas e a área duplicada (a janela de conclusão também informa). A partir
+  de 1 cm, a combinação continua bloqueada, e a mensagem lista **todos** os pares (até 10), com
+  classes, área e largura média. Justificativa: a largura separa ruído de coordenadas de erro
+  real independentemente do tamanho dos polígonos, e 1 cm fica muito abaixo da precisão
+  cartográfica de bases municipais. Em SRC geográfico, 1 cm é convertido para graus pela
+  conversão aproximada do QGIS. Teste de regressão: `test_120_sliver_tolerance.py`.
+- **Resíduos do cruzamento incorporados ao vizinho (decisão de método, opção C).** Mapas
+  traçados sobre a mesma base têm fronteiras quase coincidentes; o cruzamento gerava tiras
+  microscópicas que criavam combinações inexistentes no terreno (caso real Renda × Escolaridade:
+  225 a 462 resíduos, 0,0007 a 0,07 m², e 8 a 9 combinações falsas em 23 a 24; o menor pedaço
+  real tinha 512 m² e 4,9 m de largura média). Agora o resultado é separado em partes simples, as
+  partes com largura média abaixo de 1 cm são marcadas como resíduos e fundidas ao vizinho de
+  maior fronteira comum pela ferramenta “Eliminar polígonos selecionados” do QGIS, que mantém os
+  atributos do vizinho. A área total não muda e as combinações falsas desaparecem (simulação no
+  caso real: 15 combinações). Resíduos sem vizinho são excluídos. O `_resumo.txt` e a janela de
+  conclusão registram quantos resíduos foram incorporados ou excluídos e a área. Com isso, o mapa
+  vetorial passa a ter uma feição por parte simples (antes, por par de feições cruzadas). Teste
+  de regressão em `test_120_sliver_tolerance.py`.
+- **Campos do mapa vetorial combinado renomeados:** `C01`/`L01`, `C02`/`L02`… passam a
+  `COD_01`/`LEG_01`, `COD_02`/`LEG_02`… (código e legenda da classe de cada mapa, na ordem da
+  lista), com o mesmo prefixo `COD_` do `_combinacoes.csv`. Estilos, expressões ou modelos feitos
+  sobre resultados antigos precisam usar os nomes novos; arquivos já gerados não mudam.
+- Fora a tolerância de lascas e a incorporação de resíduos, nenhum algoritmo de combinação foi alterado.
+
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)
 
 Nenhum algoritmo de cálculo foi alterado: notas, pesos, interseção e relatórios usam os mesmos

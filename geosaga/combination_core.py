@@ -4,6 +4,82 @@ import math
 
 MAX_COMBINATIONS = 100000
 
+# Tolerância de lascas (1.2.0). Duas feições da mesma camada que se sobrepõem
+# só bloqueiam a combinação se algum pedaço da sobreposição tiver largura média
+# de pelo menos 1 cm. Lascas mais finas são imprecisão de coordenadas (fronteiras
+# comuns com vértices ligeiramente diferentes, por reprojeção ou dissolução):
+# ficam no mapa, e a área que duplicam é registrada no _resumo.txt.
+# Largura média de um pedaço = 2 × área ÷ perímetro (para uma faixa longa e
+# estreita, tende à própria largura; para um quadrado de lado s, vale s/2).
+SLIVER_WIDTH_M = 0.01
+NEGLIGIBLE_AREA = 1e-14
+
+
+def mean_width(area, perimeter):
+    """Largura média de um pedaço poligonal (mesma unidade das coordenadas)."""
+    return 2.0 * area / perimeter if perimeter > 0 else 0.0
+
+
+def classify_overlap(pieces, tolerance):
+    """Separa os pedaços de uma sobreposição em lascas toleradas e excesso.
+
+    ``pieces``: pares (área, perímetro) dos pedaços poligonais da interseção.
+    Devolve (área tolerada, nº de lascas, área rejeitada, maior largura rejeitada).
+    Pedaços de área desprezível (ruído numérico do GEOS) são ignorados.
+    """
+    tolerated_area = rejected_area = widest = 0.0
+    slivers = 0
+    for area, perimeter in pieces:
+        if area <= NEGLIGIBLE_AREA:
+            continue
+        width = mean_width(area, perimeter)
+        if width < tolerance:
+            tolerated_area += area
+            slivers += 1
+        else:
+            rejected_area += area
+            widest = max(widest, width)
+    return tolerated_area, slivers, rejected_area, widest
+
+
+def is_residue(area, perimeter, tolerance):
+    """Pedaço do resultado com largura média abaixo da tolerância (ou área nula).
+
+    Resíduos nascem de fronteiras quase coincidentes entre mapas diferentes:
+    tiras microscópicas que formariam combinações inexistentes no terreno.
+    """
+    return area <= NEGLIGIBLE_AREA or mean_width(area, perimeter) < tolerance
+
+
+def residue_report_lines(stats):
+    """Linhas do _resumo.txt sobre os resíduos incorporados aos vizinhos."""
+    lines = [f'Resíduos: pedaços do resultado com largura média inferior a '
+             f'{SLIVER_WIDTH_M * 100:g} cm (fronteiras quase coincidentes entre os mapas) '
+             'foram incorporados ao vizinho com a maior fronteira comum.']
+    if not stats['count']:
+        lines.append('Nenhum resíduo encontrado.')
+        return lines
+    lines.append(f"Resíduos incorporados: {stats['merged']} ({stats['merged_m2']:.6f} m²).")
+    if stats['removed']:
+        lines.append(f"Resíduos sem vizinho, excluídos: {stats['removed']} "
+                     f"({stats['removed_m2']:.6f} m²).")
+    return lines
+
+
+def sliver_report_lines(stats):
+    """Linhas do _resumo.txt sobre as lascas toleradas em cada mapa vetorial."""
+    lines = [f'Tolerância de lascas: sobreposições entre polígonos de um mesmo mapa com '
+             f'largura média inferior a {SLIVER_WIDTH_M * 100:g} cm foram consideradas '
+             'imprecisão de coordenadas e mantidas; a área correspondente entra em duas '
+             'combinações.']
+    for i, item in enumerate(stats, 1):
+        if item['count']:
+            lines.append(f"Mapa {i:02d} ({item['name']}): {item['count']} lascas, "
+                         f"{item['area_m2']:.6f} m² de área duplicada.")
+        else:
+            lines.append(f"Mapa {i:02d} ({item['name']}): nenhuma lasca.")
+    return lines
+
 
 def normalized_code(value):
     """Chave estável: códigos numéricos inteiros ou categorias textuais."""
@@ -63,7 +139,8 @@ def composition_rows(counts, names, *, pixel_area_m2=None, vector=False):
     return rows
 
 
-def write_combination_reports(csv_path, txt_path, rows, sources, *, mode, crs, area_method):
+def write_combination_reports(csv_path, txt_path, rows, sources, *, mode, crs, area_method,
+                              notes=None):
     """Arquivos independentes das geometrias, uma linha por combinação observada."""
     columns = ['ID_COMB', 'LEGENDA', 'PIXELS', 'AREA_M2', 'AREA_HA', 'PCT_AREA']
     for i in range(len(sources)):
@@ -84,6 +161,8 @@ def write_combination_reports(csv_path, txt_path, rows, sources, *, mode, crs, a
         stream.write(f'Modalidade: {mode}\nSRC: {crs}\nCálculo de área: {area_method}\n')
         for i, source in enumerate(sources, 1):
             stream.write(f'Mapa {i:02d}: {source}\n')
+        for note in notes or ():
+            stream.write(f'{note}\n')
         stream.write(f'Combinações observadas: {len(rows)}\n')
         stream.write(f'Soma percentual: {sum(r["percent"] for r in rows):.6f}%\n\n')
         for row in rows:

@@ -19,7 +19,7 @@ sem atribuir pesos ou notas. Não é uma avaliação multicritério.
 
 - Raster: GeoTIFF **Int32**, com ID positivo distinto por combinação presente e 0 reservado a NoData de saída.
   Entradas com código 0 válido não são descartadas indevidamente.
-- Vetor: GeoPackage com `C01`, `L01`, `C02`, `L02` etc. (código/legenda de cada mapa),
+- Vetor: GeoPackage com `COD_01`, `LEG_01`, `COD_02`, `LEG_02` etc. (código/legenda de cada mapa; até a 1.1.0, `C01`, `L01`…),
   `ID_COMB`, `LEGENDA`, `AREA_M2`, `AREA_HA`, `PCT_AREA`.
 - Em ambas as modalidades: CSV UTF-8 com colunas por critério e resumo TXT.
 - O conversor **GeoTIFF → Vetor** reconhece os arquivos gerados pelo módulo e recupera

@@ -1,10 +1,13 @@
-"""Integração com GeoTIFF reais e adaptador GDAL para validar a série."""
+"""Integração com GeoTIFF reais e adaptador GDAL.
+
+Desde a 1.2.0 a Monitoria não executa Mann–Kendall (volta como módulo na 2.0):
+os testes da série ficam pulados, e o de duas datas confere que nada de MK é gerado.
+"""
 import importlib.util as _ilu
 import unittest as _ut
 for _dep in ('rasterio',):
     if _ilu.find_spec(_dep) is None:
         raise _ut.SkipTest(f'dependência opcional ausente: {_dep} (não incluída no QGIS)')
-import csv
 from pathlib import Path
 import sys
 import tempfile
@@ -35,12 +38,13 @@ class TrendIntegration(unittest.TestCase):
             with patch.dict(sys.modules, adapter()):
                 out=run_monitoring(paths[0],paths[1],d/'result.tif',
                                    before_label='1986',after_label='2016')
-            self.assertEqual(out['temporal']['status'],'nao_aplicavel')
-            with open(out['tendencias'], encoding='utf-8-sig', newline='') as f:
-                row=list(csv.DictReader(f,delimiter=';'))[0]
-            self.assertEqual(row['MK_P_BILATERAL'],'')
+            self.assertNotIn('temporal', out)
+            self.assertNotIn('tendencias', out)
+            self.assertFalse((d/'result_tendencias_mk.csv').exists())
+            self.assertNotIn('MANN', Path(out['resumo']).read_text('utf8').upper())
             self.assertEqual(out['mudancas'],100)
 
+    @unittest.skip('Mann–Kendall retirado da Monitoria na 1.2.0; volta como módulo na 2.0')
     def test_five_dates_class_trend(self):
         with tempfile.TemporaryDirectory() as d:
             d=Path(d)
@@ -67,6 +71,7 @@ class TrendIntegration(unittest.TestCase):
             self.assertEqual(rows[0]['N_DATAS'],'5')
             self.assertIn('CUIDADO',Path(out['resumo']).read_text('utf8'))
 
+    @unittest.skip('Mann–Kendall retirado da Monitoria na 1.2.0; volta como módulo na 2.0')
     def test_invalid_third_grid_is_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             d=Path(d)

@@ -80,8 +80,8 @@ class ImageSequenceDialog(QDialog):
         sf.addWidget(self.listbox)
         controls = QHBoxLayout()
         for label, callback in (
-            ('Remover', self._remove), ('Subir', lambda: self._move(-1)),
-            ('Descer', lambda: self._move(1)), ('Editar data…', self._edit_date),
+            ('Remover', self._remove), ('Mover para cima', lambda: self._move(-1)),
+            ('Mover para baixo', lambda: self._move(1)), ('Editar data…', self._edit_date),
             ('Ordenar por data', self._sort),
         ):
             button = QPushButton(tr(label))

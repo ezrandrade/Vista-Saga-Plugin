@@ -549,3 +549,85 @@ PENDING_HEADER = ('Atribua uma nota ou marque “Não avaliar” nas classes aba
                   'A avaliação não é executada com classes pendentes.')
 EMPTY_FIELD_HEADER = ('Aviso: campos vazios não são classes e não podem receber nota. '
                       'Corrija a camada ou aceite que essas feições fiquem sem nota.')
+
+
+# ---------------------------------------------------------------------------
+# Copiar tabelas de resultado para planilhas (Ctrl+A / Ctrl+C e menu de contexto).
+# ---------------------------------------------------------------------------
+_PLAIN_NUMBER = _re.compile(r'^-?\d+(?:\.\d+)?%?$')
+
+
+def spreadsheet_cell(text, decimal_point='.'):
+    """Texto de célula pronto para colar numa planilha.
+
+    Números escritos com ponto ("3.940", "0.143%") ganham o separador decimal do
+    idioma: numa planilha em português, "3.940" colado seria lido como três mil
+    novecentos e quarenta. Tabulações e quebras de linha viram espaço.
+    """
+    value = str(text if text is not None else '').replace('\t', ' ').replace('\r', ' ').replace('\n', ' ')
+    if decimal_point != '.' and _PLAIN_NUMBER.match(value.strip()):
+        value = value.strip().replace('.', decimal_point)
+    return value
+
+
+def table_to_tsv(headers, rows, decimal_point='.'):
+    """Cabeçalho + linhas em texto separado por tabulação (formato das planilhas)."""
+    lines = ['\t'.join(spreadsheet_cell(h) for h in headers)]
+    lines.extend('\t'.join(spreadsheet_cell(c, decimal_point) for c in row) for row in rows)
+    return '\n'.join(lines) + '\n'
+
+
+def enable_table_copy(table):
+    """Permite selecionar tudo (Ctrl+A) e copiar (Ctrl+C) a tabela para planilhas.
+
+    Copia as linhas selecionadas (ou a tabela inteira, se nada estiver
+    selecionado), sempre com o cabeçalho, no separador decimal do idioma do QGIS.
+    """
+    from qgis.PyQt.QtCore import QLocale, Qt
+    from qgis.PyQt.QtGui import QAction, QKeySequence
+    from qgis.PyQt.QtWidgets import QAbstractItemView, QApplication
+
+    table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+    def copy():
+        selected = sorted({index.row() for index in table.selectedIndexes()})
+        rows = selected or list(range(table.rowCount()))
+        columns = [c for c in range(table.columnCount()) if not table.isColumnHidden(c)]
+        headers = [table.horizontalHeaderItem(c).text() if table.horizontalHeaderItem(c) else ''
+                   for c in columns]
+        data = [[table.item(r, c).text() if table.item(r, c) else '' for c in columns]
+                for r in rows]
+        QApplication.clipboard().setText(table_to_tsv(headers, data, QLocale().decimalPoint()))
+
+    select_all = QAction(tr('Selecionar tudo'), table)
+    select_all.setShortcut(QKeySequence(QKeySequence.StandardKey.SelectAll))
+    select_all.setShortcutContext(Qt.ShortcutContext.WidgetShortcut)
+    select_all.triggered.connect(table.selectAll)
+    copy_action = QAction(tr('Copiar para planilha'), table)
+    copy_action.setShortcut(QKeySequence(QKeySequence.StandardKey.Copy))
+    copy_action.setShortcutContext(Qt.ShortcutContext.WidgetShortcut)
+    copy_action.triggered.connect(copy)
+    table.addAction(select_all)
+    table.addAction(copy_action)
+    # A própria tabela trata Ctrl+C antes do atalho (copiaria só a célula atual):
+    # o filtro intercepta a tecla e usa a cópia completa.
+    from qgis.PyQt.QtCore import QEvent, QObject
+
+    class _CopyKeys(QObject):
+        def eventFilter(self, watched, event):
+            kind = event.type()
+            if kind in (QEvent.Type.ShortcutOverride, QEvent.Type.KeyPress) and \
+                    event.matches(QKeySequence.StandardKey.Copy):
+                if kind == QEvent.Type.KeyPress:
+                    copy()
+                event.accept()
+                return True
+            return False
+
+    table._copy_filter = _CopyKeys(table)
+    table.installEventFilter(table._copy_filter)
+    table.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
+    table.setToolTip(tr('Ctrl+A seleciona tudo; Ctrl+C copia (com o cabeçalho) para colar em '
+                        'planilhas. Também pelo botão direito do mouse.'))
+    table._copy_to_clipboard = copy  # usado nos testes
+    return copy

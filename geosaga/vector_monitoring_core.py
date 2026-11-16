@@ -125,7 +125,6 @@ def write_reports(csv_path, matrix_path, txt_path, summary, *, title='', initial
                    '- A matriz representa hectares, não contagens de pixels.\n'
                    '- Sem rótulos temáticos nos dois períodos, a permanência usa igualdade '
                    'dos códigos; confira a equivalência das classes.\n'
-                   '- O procedimento não executa Mann–Kendall para apenas duas datas.\n'
                    '- Sobreposições internas de feições em uma mesma camada podem duplicar '
                    'áreas; verificar previamente a topologia dos mapas.\n')
         if excluded:

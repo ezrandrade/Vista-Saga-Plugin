@@ -8,7 +8,7 @@ class UIModules061(unittest.TestCase):
                   'monitoring_dialog.py', 'signature_dialog.py'):
             text = src(f)
             self.assertIn('Raster', text, f)
-            self.assertIn('vetorial' if f == 'combination_dialog.py' else 'Vetorial', text, f)
+            self.assertIn('Vetorial', text, f)
     def test_temporary_mode_supported_across_main_modules(self):
         for f in ('combination_dialog.py','evaluation_dialog.py',
                   'vector_evaluation_dialog.py',

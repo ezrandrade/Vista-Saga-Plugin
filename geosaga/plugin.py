@@ -18,7 +18,7 @@ MODULES = (
     ('dialog', 'evaluation_dialog', 'EvaluationDialog', 'Avaliação', 'open_interactive'),
     ('voronoi_dialog', 'voronoi_dialog', 'VoronoiDialog', 'Análises Voronoi', 'open_voronoi'),
     ('combination_dialog', 'combination_dialog', 'CombinationDialog', 'Combinação de Mapas', 'open_combination'),
-    ('rs2_dialog', 'rs2_dialog', 'RS2ConverterDialog', 'Conversão de Formatos', 'open_rs2_converter'),
+    ('rs2_dialog', 'rs2_dialog', 'RS2ConverterDialog', 'Conversor de Formatos', 'open_rs2_converter'),
     ('sequence_dialog', 'image_sequence_dialog', 'ImageSequenceDialog', 'Sequenciador de Mapas', 'open_sequence'),
 )
 

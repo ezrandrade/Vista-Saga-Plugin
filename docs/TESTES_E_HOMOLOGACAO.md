@@ -39,3 +39,44 @@ Ambiente: QGIS 4.2.3, Qt 6.11, PyQt 6.11, GDAL 3.13 (conda-forge), modo `offscre
 | `tests/qgis/gui_monkey.py` em `pt_BR` e `en_US` | 0 exceções não tratadas |
 
 Pendente: execução das mesmas suítes no QGIS para Windows (OSGeo4W) e comparação numérica com o Vista SAGA/UFRJ. Instruções em [`tests/README.md`](../tests/README.md).
+
+## Homologação da versão 1.1.0 (12/11/2026)
+
+Módulo Avaliação (guias Raster, Vetorial (Atributos) e Vetorial (Sobreposição)). Build de teste
+`1.1.0-dev6` aprovado pelo autor no QGIS para Windows, com a interface em português, inglês e
+espanhol. Suítes locais: `geosaga/tests` OK (23 pulados por falta de GDAL/Shapely/rasterio no
+contêiner); `tests/unit` 36/36. Nenhum algoritmo de cálculo alterado.
+
+## Homologação parcial da versão 1.2.0 (build `1.2.0-dev6`)
+
+Conversor de Formatos, só alterações de interface: novo nome do módulo ("Conversor de
+Formatos"), aparência igual à dos demais módulos (área com rolagem com moldura), título do topo
+da tela retirado e altura da janela ajustada ao conteúdo. Aprovado pelo autor no QGIS para
+Windows. Suítes locais: `geosaga/tests` OK (23 pulados); `tests/unit` 36/36. Nenhum algoritmo de
+conversão alterado; não exige validação no Vista SAGA original. A 1.2.0 segue em
+desenvolvimento: novas alterações exigirão nova homologação.
+
+### Build `1.2.0-dev12` — Combinação vetorial com tolerância de lascas e incorporação de resíduos
+
+Caso real do autor (Renda × Escolaridade, EPSG:31985, 2.343,27 ha; dados fora do repositório):
+no QGIS para Windows, a combinação das camadas originais concluiu com **15 combinações**, o mesmo
+número previsto pela simulação com GEOS (antes: 24, das quais 9 formadas só por resíduos).
+Regras cobertas por `test_120_sliver_tolerance.py` e `test_120_combination_fields.py`.
+Conferido e homologado pelo autor: área total de 2.343,27 ha no `_resumo.txt`; linhas de lascas
+toleradas e resíduos incorporados presentes no resumo; campos `COD_nn`/`LEG_nn` sem feições de
+área quase nula na tabela; botões “Mover para cima/baixo” na Combinação e no Sequenciador.
+
+### Build `1.2.0-dev15` — Monitoria
+
+Homologado pelo autor no QGIS para Windows: resultado sempre carregado (raster em arquivo
+temporário, vetor em memória) ou salvo; rótulos iguais nas guias Raster e Vetorial; Mann–Kendall
+retirado (sem série temporal, sem `_tendencias_mk.csv`, sem seção no resumo); aviso de feições sem
+classe (caso real Uso 1997 × 2011: com `CODIGO`, aviso; com `CLASSE`, área comum completa de
+cerca de 4.225 ha); cópia das tabelas Raster e Vetorial para planilhas com Ctrl+A/Ctrl+C e decimal
+do idioma. Suítes locais: `geosaga/tests` OK (16 pulados); `tests/unit` 36/36.
+
+## Versão 1.2.0 fechada (16/11/2026)
+
+Conversor de Formatos (dev6), Combinação de Mapas e Sequenciador (dev12) e Monitoria (dev15)
+homologados pelo autor no QGIS para Windows. Pendente: revisão nativa das frases novas em inglês
+e espanhol.

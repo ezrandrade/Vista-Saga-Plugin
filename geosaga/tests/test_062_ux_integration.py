@@ -11,7 +11,7 @@ class TabsUX062(unittest.TestCase):
     def test_five_cards_share_identical_factory(self):
         panel = source('home_dialog.py')
         for module in ('Avaliação', 'Monitoria', 'Assinatura',
-                       'Combinação de Mapas', 'Conversão de Formatos'):
+                       'Combinação de Mapas', 'Conversor de Formatos'):
             self.assertIn(module, panel)
         self.assertIn('self._add_card(cards, index // 3, index % 3', panel)
         self.assertEqual(panel.count('self._add_card('), 1)

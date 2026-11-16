@@ -59,7 +59,7 @@ class HomeDialog(QDialog):
             ('05', 'Combinação de Mapas',
              'Combine categorias de mapas raster ou vetoriais e calcule áreas e percentuais.',
              'Abrir combinação', self.plugin.open_combination),
-            ('06', 'Conversão de Formatos',
+            ('06', 'Conversor de Formatos',
              'Converta RS2, GeoTIFF e vetores; rasterize ou vetorize mapas.',
              'Abrir conversor', self.plugin.open_rs2_converter),
             ('07', 'Sequenciador de Mapas',
