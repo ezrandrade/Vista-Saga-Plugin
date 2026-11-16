@@ -106,15 +106,26 @@ class CombinationDialog(QDialog):
             body.addWidget(source_group)
 
             if idx == 1:
-                fields = QGroupBox(tr('Classificação da próxima camada vetorial'))
+                # Os campos valem para a camada selecionada na lista (alteração
+                # imediata) ou, sem seleção na lista, para a camada do menu
+                # suspenso que será adicionada em seguida.
+                fields = QGroupBox(tr('Campos de classe e legenda'))
                 ff = QFormLayout(fields)
+                self.fields_target = QLabel()
+                self.fields_target.setWordWrap(True)
                 field = QComboBox()
                 legend = QComboBox()
                 setattr(self, 'class_field', field)
                 setattr(self, 'legend_field', legend)
+                ff.addRow(tr('Camada:'), self.fields_target)
                 ff.addRow(tr('Campo de classe:'), field)
                 ff.addRow(tr('Campo da legenda (opcional):'), legend)
-                choose.layerChanged.connect(self._update_fields)
+                self._editing_row = None
+                self._filling_fields = False
+                choose.layerChanged.connect(self._dropdown_changed)
+                stack.itemSelectionChanged.connect(self._list_selection_changed)
+                field.currentIndexChanged.connect(self._field_edited)
+                legend.currentIndexChanged.connect(self._field_edited)
                 body.insertWidget(2, fields)
                 self._update_fields()
             output_group = QGroupBox(tr('Resultado'))
@@ -150,31 +161,98 @@ class CombinationDialog(QDialog):
         control.addWidget(self.close_button)
         layout.addLayout(control)
 
-    def _update_fields(self, *args):
-        if not hasattr(self, 'class_field'):
-            return
-        self.class_field.clear()
-        self.legend_field.clear()
-        self.legend_field.addItem(tr('(usar classe como legenda)'), '')
-        layer = self.select_1.currentLayer()
-        if isinstance(layer, QgsVectorLayer) and layer.isValid():
+    def _fill_fields(self, layer, field=None, legend=None):
+        """Preenche as listas de campos; sem campo dado, usa os nomes preferidos."""
+        self._filling_fields = True
+        try:
+            self.class_field.clear()
+            self.legend_field.clear()
+            self.legend_field.addItem(tr('(usar classe como legenda)'), '')
+            if not (isinstance(layer, QgsVectorLayer) and layer.isValid()):
+                return
             names = layer.fields().names()
             self.class_field.addItems(names)
             for name in names:
                 self.legend_field.addItem(name, name)
-            for name in ('CODIGO','CLASSE','USO','TIPO_USO','TIPOS_USO'):
-                if name in names:
-                    self.class_field.setCurrentText(name)
-                    break
-            for name in ('LEGENDA','NOME','DESCRICAO'):
-                if name in names:
-                    self.legend_field.setCurrentIndex(self.legend_field.findData(name))
-                    break
+            if field is None:
+                field = next((n for n in ('CODIGO','CLASSE','USO','TIPO_USO','TIPOS_USO')
+                              if n in names), None)
+                legend = next((n for n in ('LEGENDA','NOME','DESCRICAO') if n in names), '')
+            if field in names:
+                self.class_field.setCurrentText(field)
+            index = self.legend_field.findData(legend or '')
+            self.legend_field.setCurrentIndex(max(index, 0))
+        finally:
+            self._filling_fields = False
+
+    def _update_fields(self, *args):
+        """Campos da camada do menu suspenso (próxima a ser adicionada)."""
+        if not hasattr(self, 'class_field'):
+            return
+        self._editing_row = None
+        layer = self.select_1.currentLayer()
+        self._fill_fields(layer)
+        valid = isinstance(layer, QgsVectorLayer) and layer.isValid()
+        self.fields_target.setText(
+            tr('{name} (próxima a adicionar)').format(name=layer.name()) if valid
+            else tr('Selecione uma camada no menu acima ou na lista de camadas adicionadas.'))
+        self.class_field.setEnabled(valid)
+        self.legend_field.setEnabled(valid)
+
+    def _dropdown_changed(self, *args):
+        listbox = self.list_1
+        listbox.blockSignals(True)
+        listbox.clearSelection()
+        listbox.blockSignals(False)
+        self._update_fields()
+
+    def _list_selection_changed(self):
+        rows = sorted({self.list_1.row(item) for item in self.list_1.selectedItems()})
+        if not rows:
+            self._update_fields()
+            return
+        if len(rows) > 1:
+            self._editing_row = None
+            self._fill_fields(None)
+            self.fields_target.setText(tr('Selecione uma única camada da lista para alterar seus campos.'))
+            self.class_field.setEnabled(False)
+            self.legend_field.setEnabled(False)
+            return
+        row = rows[0]
+        layer, field, legend = self._sources[1][row]
+        self._editing_row = row
+        self._fill_fields(layer, field, legend)
+        self.fields_target.setText(tr('{name} (na lista; a alteração vale imediatamente)').format(
+            name=layer.name()))
+        self.class_field.setEnabled(True)
+        self.legend_field.setEnabled(True)
+
+    def _field_edited(self, *args):
+        row = getattr(self, '_editing_row', None)
+        if self._filling_fields or row is None or row >= len(self._sources[1]):
+            return
+        field = self.class_field.currentText()
+        if not field:
+            return
+        layer = self._sources[1][row][0]
+        legend = self.legend_field.currentData() or ''
+        self._sources[1][row] = (layer, field, legend)
+        item = self.list_1.item(row)
+        if item is not None:
+            item.setText(self._item_label(1, row + 1, layer, field, legend))
 
     def _add_project(self, mode):
         layer = getattr(self, f'select_{mode}').currentLayer()
         if layer is None:
             QMessageBox.warning(self,tr('Combinação'),tr('Selecione uma camada carregada no QGIS.'))
+            return
+        if mode and self._editing_row is not None:
+            # Os campos mostrados são de uma camada da lista: volta para a camada
+            # do menu e pede a conferência antes de adicionar.
+            self._dropdown_changed()
+            QMessageBox.information(self, tr('Combinação'),
+                tr('Os campos agora são os da camada “{name}”. Confira o campo de classe e '
+                   'clique de novo em “Adicionar camada selecionada”.').format(name=layer.name()))
             return
         field = self.class_field.currentText() if mode else ''
         legend = self.legend_field.currentData() if mode else ''
@@ -270,7 +348,7 @@ class CombinationDialog(QDialog):
             if mode == 1:
                 message = tr('A camada “{name}” já está na combinação, com o campo {field}. '
                              'Cada camada pode entrar uma única vez. Para usar outro atributo, '
-                             'remova-a da lista e adicione-a de novo escolhendo o campo desejado.'
+                             'selecione-a na lista e troque o campo de classe.'
                              ).format(name=layer.name(), field=field)
             else:
                 message = tr('A camada “{name}” já está na combinação. '
@@ -279,14 +357,20 @@ class CombinationDialog(QDialog):
             return True
         return False
 
+    @staticmethod
+    def _item_label(mode, index, layer, field, legend):
+        label = f'{index:02d} - {layer.name()}'
+        if mode:
+            label += f'  •  {field}' + (f'  •  {legend}' if legend else '')
+        return label
+
     def _refresh(self,mode):
         widget = getattr(self, f'list_{mode}')
         widget.clear()
         for index, (layer,field,legend) in enumerate(self._sources[mode],1):
-            label = f'{index:02d} - {layer.name()}'
-            if mode:
-                label += f'  •  {field}' + (f'  •  {legend}' if legend else '')
-            widget.addItem(QListWidgetItem(label))
+            widget.addItem(QListWidgetItem(self._item_label(mode, index, layer, field, legend)))
+        if mode == 1:
+            self._list_selection_changed()
         self.status.setText(tr('{count} mapas na modalidade selecionada.').format(count=len(self._sources[mode])))
 
     def _remove(self,mode):

@@ -30,9 +30,14 @@ serão acrescentadas antes do lançamento.
   memória; raster em arquivo temporário (o QGIS não mantém rasters em memória). Com um arquivo
   indicado, o resultado é salvo e carregado no QGIS. Os relatórios `_combinacoes.csv` e
   `_resumo.txt` continuam sendo gerados (na pasta temporária do QGIS quando não há arquivo).
+- **Campo de classe editável para qualquer camada da lista:** ao selecionar uma camada em
+  “Camadas adicionadas”, a seção “Campos de classe e legenda” (antes “Classificação da próxima
+  camada vetorial”) mostra os campos dela, e a troca vale na hora; a lista mostra o campo novo.
+  Sem seleção na lista, a seção volta a valer para a camada do menu suspenso, a ser adicionada.
+  Com várias camadas selecionadas, os campos ficam desativados.
 - **Aviso de camada repetida mais claro:** cada camada entra uma única vez na combinação (com um
   campo de classe próprio). Ao repetir uma camada, o aviso informa o nome e o campo já usado e
-  explica como trocar o atributo. Em “Adicionar várias do QGIS…” e “Adicionar arquivos…”, a
+  indica como trocar o atributo. Em “Adicionar várias do QGIS…” e “Adicionar arquivos…”, a
   repetição é detectada antes de perguntar o campo.
 - Nenhum algoritmo de combinação foi alterado.
 

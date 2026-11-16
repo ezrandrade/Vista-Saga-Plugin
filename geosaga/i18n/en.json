@@ -334,7 +334,6 @@
   "Classes": "Classes",
   "Classes com códigos superiores a 2^53 não são suportadas.": "Classes with codes greater than 2^53 are not supported.",
   "Classes para TIFF contínuo:": "Classes for continuous TIFF:",
-  "Classificação da próxima camada vetorial": "Classification of the next vector layer",
   "Clique nas notas para editá-las. A nota “—” significa não definida. Marcar “Não avaliar” transforma os pixels da classe em NoData.": "Click scores to edit them. A score of “—” means undefined. Selecting “Do not evaluate” sets pixels of that class to NoData.",
   "Com Atrito (experimental)": "With friction (experimental)",
   "Com Atrito: extensão, resolução e SRC herdados do raster de resistência; a grade não será reprojetada.": "With friction: extent, resolution and CRS are inherited from the resistance raster; the grid is not reprojected.",
@@ -1502,6 +1501,12 @@
   "Em branco, o mapa é gravado num arquivo temporário e carregado no QGIS (o QGIS não mantém rasters em memória; salve-o antes de fechar o QGIS). Com um arquivo indicado, ele é salvo em disco e carregado no QGIS. Além do mapa, são gerados _combinacoes.csv e _resumo.txt; sem arquivo indicado, eles ficam na pasta temporária do QGIS. Os dados de entrada permanecem inalterados.": "If left blank, the map is written to a temporary file and loaded into QGIS (QGIS does not keep rasters in memory; save it before closing QGIS). If a file is given, it is saved to disk and loaded into QGIS. Besides the map, _combinacoes.csv and _resumo.txt are generated; without a file, they are stored in the QGIS temporary folder. Input data remain unchanged.",
   "Em branco, o resultado é carregado no QGIS como camada temporária em memória (salve-a antes de fechar o QGIS). Com um arquivo indicado, ele é salvo em disco e carregado no QGIS. Além do mapa, são gerados _combinacoes.csv e _resumo.txt; sem arquivo indicado, eles ficam na pasta temporária do QGIS. Somente a cobertura comum é combinada. Os dados de entrada permanecem inalterados.": "If left blank, the result is loaded into QGIS as a temporary in-memory layer (save it before closing QGIS). If a file is given, it is saved to disk and loaded into QGIS. Besides the map, _combinacoes.csv and _resumo.txt are generated; without a file, they are stored in the QGIS temporary folder. Only the common coverage is combined. Input data remain unchanged.",
   "Camada repetida": "Repeated layer",
-  "A camada “{name}” já está na combinação, com o campo {field}. Cada camada pode entrar uma única vez. Para usar outro atributo, remova-a da lista e adicione-a de novo escolhendo o campo desejado.": "The layer “{name}” is already in the combination, with the field {field}. Each layer can be added only once. To use another attribute, remove it from the list and add it again choosing the desired field.",
-  "A camada “{name}” já está na combinação. Cada camada pode entrar uma única vez.": "The layer “{name}” is already in the combination. Each layer can be added only once."
+  "A camada “{name}” já está na combinação, com o campo {field}. Cada camada pode entrar uma única vez. Para usar outro atributo, selecione-a na lista e troque o campo de classe.": "The layer “{name}” is already in the combination, with the field {field}. Each layer can be added only once. To use another attribute, select it in the list and change the class field.",
+  "A camada “{name}” já está na combinação. Cada camada pode entrar uma única vez.": "The layer “{name}” is already in the combination. Each layer can be added only once.",
+  "Campos de classe e legenda": "Class and legend fields",
+  "{name} (próxima a adicionar)": "{name} (next to be added)",
+  "Selecione uma camada no menu acima ou na lista de camadas adicionadas.": "Select a layer in the menu above or in the list of added layers.",
+  "Selecione uma única camada da lista para alterar seus campos.": "Select a single layer in the list to change its fields.",
+  "{name} (na lista; a alteração vale imediatamente)": "{name} (in the list; changes apply immediately)",
+  "Os campos agora são os da camada “{name}”. Confira o campo de classe e clique de novo em “Adicionar camada selecionada”.": "The fields now belong to the layer “{name}”. Check the class field and click “Add selected layer” again."
 }
