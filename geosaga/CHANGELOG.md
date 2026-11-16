@@ -25,6 +25,7 @@ serão acrescentadas antes do lançamento.
 - **Guias “Raster” e “Vetorial”**, como nos demais módulos (antes “Combinação raster” e
   “Combinação vetorial”).
 - **“Adicionar camada selecionada”** no lugar de “Adicionar camada”, nas duas guias.
+- **“Mover para cima” e “Mover para baixo”** no lugar de “Subir” e “Descer”, nas duas guias.
 - **Resultado sempre carregado no QGIS:** saíram as caixas “Saída temporária no QGIS” e
   “Carregar resultado no projeto QGIS”. Campo “Salvar em” vazio: vetor como camada temporária em
   memória; raster em arquivo temporário (o QGIS não mantém rasters em memória). Com um arquivo

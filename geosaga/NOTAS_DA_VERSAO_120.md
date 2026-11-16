@@ -21,7 +21,8 @@ Inclui tudo da 1.1.0.
 ### Combinação de Mapas
 
 - As guias chamam-se **Raster** e **Vetorial**, como nos demais módulos.
-- O botão que inclui a camada escolhida no menu suspenso chama-se **Adicionar camada selecionada**.
+- O botão que inclui a camada escolhida no menu suspenso chama-se **Adicionar camada selecionada**;
+  os botões de ordem chamam-se **Mover para cima** e **Mover para baixo**.
 - **Resultado sempre carregado no QGIS.** Sem arquivo em “Salvar em”: camada temporária em memória
   (vetor) ou arquivo temporário (raster). Salve-o antes de fechar o QGIS. Sem arquivo indicado, os
   relatórios `_combinacoes.csv` e `_resumo.txt` ficam na pasta temporária do QGIS.

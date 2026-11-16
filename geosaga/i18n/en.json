@@ -1512,5 +1512,7 @@
   "- feições {0} e {1} (classes {2} e {3}): {4} m², largura média {5} m": "- features {0} and {1} (classes {2} and {3}): {4} m², mean width {5} m",
   "… e mais {0} pares.": "… and {0} more pairs.",
   "Lascas toleradas (largura média abaixo de 1 cm), registradas no resumo:": "Tolerated slivers (mean width below 1 cm), recorded in the summary:",
-  "{0}: {1} lascas, {2} m² de área duplicada": "{0}: {1} slivers, {2} m² of duplicated area"
+  "{0}: {1} lascas, {2} m² de área duplicada": "{0}: {1} slivers, {2} m² of duplicated area",
+  "Mover para cima": "Move up",
+  "Mover para baixo": "Move down"
 }
