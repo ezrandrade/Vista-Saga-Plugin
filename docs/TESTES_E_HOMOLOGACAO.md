@@ -62,3 +62,6 @@ Caso real do autor (Renda × Escolaridade, EPSG:31985, 2.343,27 ha; dados fora d
 no QGIS para Windows, a combinação das camadas originais concluiu com **15 combinações**, o mesmo
 número previsto pela simulação com GEOS (antes: 24, das quais 9 formadas só por resíduos).
 Regras cobertas por `test_120_sliver_tolerance.py` e `test_120_combination_fields.py`.
+Conferido e homologado pelo autor: área total de 2.343,27 ha no `_resumo.txt`; linhas de lascas
+toleradas e resíduos incorporados presentes no resumo; campos `COD_nn`/`LEG_nn` sem feições de
+área quase nula na tabela; botões “Mover para cima/baixo” na Combinação e no Sequenciador.
