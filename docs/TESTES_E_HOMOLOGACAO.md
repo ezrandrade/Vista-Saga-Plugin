@@ -80,3 +80,9 @@ do idioma. Suítes locais: `geosaga/tests` OK (16 pulados); `tests/unit` 36/36.
 Conversor de Formatos (dev6), Combinação de Mapas e Sequenciador (dev12) e Monitoria (dev15)
 homologados pelo autor no QGIS para Windows. Pendente: revisão nativa das frases novas em inglês
 e espanhol.
+
+## Versão 1.2.1 fechada (16/11/2026)
+
+Correções de interface (traduções do Sequenciador e texto do botão de opções avançadas do
+Conversor). Fechada e incorporada a pedido do autor, com o build `1.2.1-dev1`. Suítes locais:
+`geosaga/tests` OK (16 pulados); `tests/unit` 36/36; `test_121_i18n_fixes.py` novo.

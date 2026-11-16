@@ -207,6 +207,8 @@ class RS2ConverterDialog(QDialog):
 
         self.advanced_toggle = QToolButton()
         self.advanced_toggle.setText(tr('Mostrar opções avançadas'))
+        # Sem este estilo, o QToolButton mostra só a seta e esconde o texto.
+        self.advanced_toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.advanced_toggle.setCheckable(True)
         self.advanced_toggle.setChecked(False)
         self.advanced_toggle.setArrowType(Qt.ArrowType.RightArrow)

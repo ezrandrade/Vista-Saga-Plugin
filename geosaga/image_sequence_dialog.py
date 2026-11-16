@@ -384,9 +384,10 @@ class ImageSequenceDialog(QDialog):
     def _refresh(self):
         self.listbox.clear()
         for index, entry in enumerate(self.entries, 1):
-            names = ' sobre '.join(layer.name() for layer in entry.get('layers', (entry['layer'],)))
-            period = entry['date'] or 'Sem data'
-            suffix = ' [campo temporal]' if entry.get('temporal') else ''
+            joiner = ' ' + tr('sobre') + ' '
+            names = joiner.join(layer.name() for layer in entry.get('layers', (entry['layer'],)))
+            period = entry['date'] or tr('Sem data')
+            suffix = ' ' + tr('[campo temporal]') if entry.get('temporal') else ''
             self.listbox.addItem(f'{index:02d}.  {period} - {names}{suffix}')
         self.status.setText(tr('{count} quadros na aba {tab}.').format(count=len(self.entries), tab=self.tabs.tabText(self.tabs.currentIndex())))
 
@@ -660,17 +661,18 @@ class ImageSequenceDialog(QDialog):
             self._movie.setScaledSize(QSize(min(400, width), min(225, height)))
             self.preview.setMovie(self._movie)
             self._movie.start()
-            note = 'com quantização GIF' if result['palette_quantized'] else 'com cores preservadas'
-            self.status.setText(tr(f'GIF criado com {len(frames)} quadros ({note}); '
-                                f'{len(png_paths)} PNGs individuais.'))
-            QMessageBox.information(self, tr('Sequenciador de Mapas'),
-                tr('GIF salvo em:\n'+str(result['path'])+'\n'+
-                (f'Quadros PNG: {png_folder}\n' if png_folder is not None else '')+
-                ('GIF quantizado para 256 cores.' if result['palette_quantized']
-                 else 'Paleta GIF preservada.')))
+            note = tr('com quantização GIF' if result['palette_quantized'] else 'com cores preservadas')
+            self.status.setText(tr('GIF criado com {0} quadros ({1}); {2} PNGs individuais.').format(
+                len(frames), note, len(png_paths)))
+            lines = [tr('GIF salvo em:'), str(result['path'])]
+            if png_folder is not None:
+                lines.append(tr('Quadros PNG: {0}').format(png_folder))
+            lines.append(tr('GIF quantizado para 256 cores.' if result['palette_quantized']
+                            else 'Paleta GIF preservada.'))
+            QMessageBox.information(self, tr('Sequenciador de Mapas'), '\n'.join(lines))
         except InterruptedError:
-            self.status.setText(tr(f'Exportação cancelada. {len(png_paths)} PNGs podem permanecer '
-                                'na pasta de destino; dados do projeto preservados.'))
+            self.status.setText(tr('Exportação cancelada. {0} PNGs podem permanecer na pasta de '
+                                   'destino; dados do projeto preservados.').format(len(png_paths)))
         except Exception as exc:
             log_exception()
             self.status.setText(tr('Falha na exportação; dados do projeto preservados.'))

@@ -113,7 +113,7 @@ essas bibliotecas faltam.
 
 ## Pendências registradas
 
-- **Na versão final:** criar as tags e Releases no GitHub (v1.0.5, v1.0.6, v1.0.8, v1.0.9, v1.1.0, v1.2.0…)
+- **Na versão final:** criar as tags e Releases no GitHub (v1.0.5, v1.0.6, v1.0.8, v1.0.9, v1.1.0, v1.2.0, v1.2.1…)
   e apagar as branches já incorporadas; conferir antes `fix/testes-desatualizados` e
   `docs/logo-readme`, que têm 1 commit fora da `main`. Não fazer isso antes.
 - **QRibbonSkin:** erro ao descarregar o plugin (barra de ferramentas apagada); tratar só quando o

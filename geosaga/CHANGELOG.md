@@ -1,3 +1,15 @@
+## 1.2.1 — Correções de interface (2026-11-16)
+
+Correções encontradas ao escrever o manual de uso da 1.2.0. Nenhum algoritmo foi alterado.
+
+- **Sequenciador de Mapas:** a lista de quadros mostrava “Sem data”, “sobre” e “[campo temporal]”
+  em português com o QGIS em inglês ou espanhol; agora esses textos são traduzidos. A observação
+  da exportação (“com quantização GIF” / “com cores preservadas”) e a mensagem “GIF salvo em”
+  também passam a ser traduzidas.
+- **Conversor de Formatos:** o botão de opções avançadas mostrava só a seta; agora exibe o texto
+  “Mostrar opções avançadas” / “Ocultar opções avançadas” ao lado dela.
+- Teste de regressão: `test_121_i18n_fixes.py`.
+
 ## 1.2.0 — Conversor de Formatos, Combinação, Sequenciador e Monitoria (2026-11-16)
 
 Interface dos módulos Conversor de Formatos, Combinação de Mapas, Sequenciador de Mapas e
