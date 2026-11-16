@@ -11,15 +11,30 @@ from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication, QComboBox, QDialog, QFileDialog, QFormLayout, QGroupBox,
     QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
-    QProgressDialog, QPushButton, QTabWidget, QVBoxLayout, QWidget, QCheckBox, QAbstractItemView,
+    QProgressDialog, QPushButton, QTabWidget, QVBoxLayout, QWidget, QAbstractItemView,
 )
 from qgis.core import (Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer,
                        QgsPalettedRasterRenderer, QgsCategorizedSymbolRenderer,
                        QgsRendererCategory, QgsFillSymbol)
 from qgis.gui import QgsMapLayerComboBox
 
-from .ui_shared import choose_project_layers, temporary_destination
+from .ui_shared import choose_project_layers, materialize_in_memory, temporary_destination
 from .errors import log_exception
+
+
+RASTER_RESULT_HINT = (
+    'Em branco, o mapa é gravado num arquivo temporário e carregado no QGIS (o QGIS não '
+    'mantém rasters em memória; salve-o antes de fechar o QGIS). Com um arquivo indicado, '
+    'ele é salvo em disco e carregado no QGIS. Além do mapa, são gerados _combinacoes.csv e '
+    '_resumo.txt; sem arquivo indicado, eles ficam na pasta temporária do QGIS. Os dados de '
+    'entrada permanecem inalterados.')
+
+VECTOR_RESULT_HINT = (
+    'Em branco, o resultado é carregado no QGIS como camada temporária em memória (salve-a '
+    'antes de fechar o QGIS). Com um arquivo indicado, ele é salvo em disco e carregado no '
+    'QGIS. Além do mapa, são gerados _combinacoes.csv e _resumo.txt; sem arquivo indicado, '
+    'eles ficam na pasta temporária do QGIS. Somente a cobertura comum é combinada. Os '
+    'dados de entrada permanecem inalterados.')
 
 
 class CombinationDialog(QDialog):
@@ -41,7 +56,7 @@ class CombinationDialog(QDialog):
         self.tabs = QTabWidget()
         layout.addWidget(self.tabs, 1)
         self.pages = []
-        for idx, title in enumerate(('Combinação raster', 'Combinação vetorial')):
+        for idx, title in enumerate(('Raster', 'Vetorial')):
             page = QWidget()
             self.pages.append(page)
             self.tabs.addTab(page, tr(title))
@@ -59,7 +74,7 @@ class CombinationDialog(QDialog):
             sf.addRow(tr('Camada no QGIS:'), choose)
             setattr(self, f'select_{idx}', choose)
             input_buttons = QHBoxLayout()
-            append = QPushButton(tr('Adicionar camada'))
+            append = QPushButton(tr('Adicionar camada selecionada'))
             append.clicked.connect(lambda checked=False, i=idx: self._add_project(i))
             load = QPushButton(tr('Adicionar arquivos…'))
             load.clicked.connect(lambda checked=False, i=idx: self._add_files(i))
@@ -105,33 +120,24 @@ class CombinationDialog(QDialog):
             output_group = QGroupBox(tr('Resultado'))
             out = QFormLayout(output_group)
             path = QLineEdit()
-            path.setPlaceholderText(tr('GeoTIFF com IDs de combinação' if idx == 0 else 'GeoPackage de polígonos combinados'))
+            # Em branco: resultado temporário (vetor em memória; raster em arquivo
+            # temporário, pois o QGIS não mantém rasters em memória). Preenchido:
+            # salvo nesse arquivo. Nos dois casos, o resultado é carregado no QGIS.
+            path.setPlaceholderText(tr('[Arquivo temporário]' if idx == 0
+                                       else '[Camada temporária em memória]'))
+            path.setClearButtonEnabled(True)
             setattr(self, f'output_{idx}', path)
             row = QHBoxLayout()
             row.addWidget(path,1)
             browse = QPushButton(tr('Salvar como…'))
             browse.clicked.connect(lambda checked=False,i=idx: self._save_as(i))
             row.addWidget(browse)
-            out.addRow(tr('Arquivo:'),row)
-            note = QLabel(tr('Além do mapa, serão gerados _combinacoes.csv e _resumo.txt. '
-                          'No modo vetorial, somente a cobertura comum será combinada. '
-                          'Os dados de entrada permanecerão inalterados.'))
+            out.addRow(tr('Salvar em:'),row)
+            note = QLabel(tr(RASTER_RESULT_HINT if idx == 0 else VECTOR_RESULT_HINT))
             note.setWordWrap(True)
             out.addRow('', note)
             body.addWidget(output_group)
-            temporary = QCheckBox(tr('Saída temporária no QGIS (salvar depois se desejar)'))
-            temporary.setChecked(True)
-            temporary.setToolTip(tr('Raster e GeoPackage ficam no diretório temporário da sessão, não apenas na RAM.'))
-            setattr(self, f'temporary_{idx}', temporary)
-            body.addWidget(temporary)
-            path.setEnabled(False)
-            browse.setEnabled(False)
-            temporary.toggled.connect(lambda active, p=path, b=browse:
-                                     (p.setEnabled(not active), b.setEnabled(not active)))
             body.addStretch(1)
-        self.add_project = QCheckBox(tr('Carregar resultado no projeto QGIS'))
-        self.add_project.setChecked(True)
-        layout.addWidget(self.add_project)
         control = QHBoxLayout()
         self.status = QLabel(tr('Adicione pelo menos dois mapas para combinar.'))
         self.status.setWordWrap(True)
@@ -293,11 +299,12 @@ class CombinationDialog(QDialog):
             return
         mode = self.tabs.currentIndex()
         selected = self._sources[mode]
-        temporary = getattr(self, f'temporary_{mode}').isChecked()
+        chosen = getattr(self,f'output_{mode}').text().strip()
+        temporary = not chosen
         dest = (temporary_destination('combinacao', '.tif' if mode == 0 else '.gpkg')
-                if temporary else getattr(self,f'output_{mode}').text().strip())
-        if len(selected)<2 or not dest:
-            QMessageBox.warning(self,tr('Combinação'),tr('Adicione dois ou mais mapas e informe a saída.'))
+                if temporary else chosen)
+        if len(selected)<2:
+            QMessageBox.warning(self,tr('Combinação'),tr('Adicione pelo menos dois mapas para combinar.'))
             return
         stem = str(Path(dest).with_suffix(''))
         targets = (dest,stem+'_combinacoes.csv',stem+'_resumo.txt')
@@ -332,33 +339,38 @@ class CombinationDialog(QDialog):
                 result = run_vector_combination([x[0] for x in selected],
                     [x[1] for x in selected],[x[2] for x in selected],dest,
                     progress=notify,cancelled=cancelled)
-            if self.add_project.isChecked() or temporary:
-                if mode == 0:
-                    layer = QgsRasterLayer(result['output'],'Combinação de Mapas','gdal')
-                    if layer.isValid() and len(result['rows']) <= 75:
-                        import colorsys
-                        classes = []
-                        for row in result['rows']:
-                            rgb = colorsys.hsv_to_rgb((row['id']*.61803398875)%1,.48,.85)
-                            col = QColor(*[int(x*255) for x in rgb])
-                            classes.append(QgsPalettedRasterRenderer.Class(row['id'],col,row['legend'][:120]))
-                        layer.setRenderer(QgsPalettedRasterRenderer(layer.dataProvider(),1,classes))
-                else:
-                    layer = QgsVectorLayer(result['output']+'|layername=combinacao_mapas',
-                                           'Combinação de Mapas','ogr')
-                    if layer.isValid() and len(result['rows']) <= 75:
-                        import colorsys
-                        classes = []
-                        for row in result['rows']:
-                            rgb = colorsys.hsv_to_rgb((row['id']*.61803398875)%1,.48,.85)
-                            c = '#'+''.join(f'{int(255*v):02X}' for v in rgb)
-                            sym = QgsFillSymbol.createSimple({'color':c, 'outline_width':'0.12'})
-                            classes.append(QgsRendererCategory(row['id'],sym,row['legend'][:120]))
-                        layer.setRenderer(QgsCategorizedSymbolRenderer('ID_COMB',classes))
-                if layer.isValid():
-                    QgsProject.instance().addMapLayer(layer)
-            self.status.setText(f"Concluído: {result['combinations']} combinações. "
-                                + ('Resultado temporário no QGIS.' if temporary else f'Arquivo: {dest}'))
+            # O resultado é sempre carregado no QGIS.
+            if mode == 0:
+                layer = QgsRasterLayer(result['output'],'Combinação de Mapas','gdal')
+                if layer.isValid() and len(result['rows']) <= 75:
+                    import colorsys
+                    classes = []
+                    for row in result['rows']:
+                        rgb = colorsys.hsv_to_rgb((row['id']*.61803398875)%1,.48,.85)
+                        col = QColor(*[int(x*255) for x in rgb])
+                        classes.append(QgsPalettedRasterRenderer.Class(row['id'],col,row['legend'][:120]))
+                    layer.setRenderer(QgsPalettedRasterRenderer(layer.dataProvider(),1,classes))
+            else:
+                uri = result['output']+'|layername=combinacao_mapas'
+                layer = (materialize_in_memory(uri, 'Combinação de Mapas') if temporary
+                         else QgsVectorLayer(uri,'Combinação de Mapas','ogr'))
+                if layer is None:
+                    raise RuntimeError('Não foi possível carregar o resultado no QGIS.')
+                if layer.isValid() and len(result['rows']) <= 75:
+                    import colorsys
+                    classes = []
+                    for row in result['rows']:
+                        rgb = colorsys.hsv_to_rgb((row['id']*.61803398875)%1,.48,.85)
+                        c = '#'+''.join(f'{int(255*v):02X}' for v in rgb)
+                        sym = QgsFillSymbol.createSimple({'color':c, 'outline_width':'0.12'})
+                        classes.append(QgsRendererCategory(row['id'],sym,row['legend'][:120]))
+                    layer.setRenderer(QgsCategorizedSymbolRenderer('ID_COMB',classes))
+            if layer.isValid():
+                QgsProject.instance().addMapLayer(layer)
+            where = (tr('camada temporária em memória') if temporary and mode == 1 else
+                     tr('arquivo temporário') if temporary else dest)
+            self.status.setText(tr('Concluído: {count} combinações. Resultado: {where}.').format(
+                count=result['combinations'], where=where))
             QMessageBox.information(self,tr('Combinação concluída'),
                 tr(f"Combinações observadas: {result['combinations']}\n"
                 f"Relatórios: {result['csv']} e {result['txt']}"))

@@ -1,11 +1,13 @@
 # Vista Saga Plugin 1.2.0 — notas da versão
 
-> **Em desenvolvimento.** Esta versão reúne as alterações do módulo **Conversor de Formatos**;
-> outras mudanças serão acrescentadas antes do lançamento.
+> **Em desenvolvimento.** Esta versão reúne as alterações dos módulos **Conversor de Formatos** e
+> **Combinação de Mapas**; outras mudanças serão acrescentadas antes do lançamento.
 
 Inclui tudo da 1.1.0.
 
 ## O que muda para quem usa
+
+### Conversor de Formatos
 
 - O módulo **Conversão de Formatos** passa a se chamar **Conversor de Formatos** (menu e título
   da janela). Em inglês, “Format converter”; em espanhol, “Conversor de formatos”.
@@ -16,8 +18,17 @@ Inclui tudo da 1.1.0.
 - A altura da janela acompanha o conteúdo de cada operação, sem espaço vazio na parte inferior;
   ao abrir as opções avançadas ou ativar o lote, ela cresce (até 90% da altura da tela).
 
+### Combinação de Mapas
+
+- As guias chamam-se **Raster** e **Vetorial**, como nos demais módulos.
+- O botão que inclui a camada escolhida no menu suspenso chama-se **Adicionar camada selecionada**.
+- **Resultado sempre carregado no QGIS.** Sem arquivo em “Salvar em”: camada temporária em memória
+  (vetor) ou arquivo temporário (raster). Salve-o antes de fechar o QGIS. Sem arquivo indicado, os
+  relatórios `_combinacoes.csv` e `_resumo.txt` ficam na pasta temporária do QGIS.
+
 ## Compatibilidade
 
-- Nenhum algoritmo de conversão foi alterado: RS2, GeoTIFF e vetores gerados são os mesmos da 1.1.0.
+- Nenhum algoritmo de conversão ou de combinação foi alterado: RS2, GeoTIFF, vetores, mapas
+  combinados e relatórios gerados são os mesmos da 1.1.0.
 - Os identificadores internos e os algoritmos Processing `geosaga:*` não mudam; projetos e modelos
   antigos continuam funcionando.

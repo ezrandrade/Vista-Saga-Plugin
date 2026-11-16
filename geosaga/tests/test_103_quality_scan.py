@@ -10,14 +10,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class StyleScanRegressionTests(unittest.TestCase):
-    def test_qcheckbox_import_only_once_at_module_scope(self):
+    def test_qcheckbox_not_imported_twice(self):
+        # Desde a 1.2.0 a Combinação não usa caixas de seleção; o que importa é
+        # não voltar a haver importação duplicada (achado F811).
         tree = ast.parse((ROOT / 'combination_dialog.py').read_text(encoding='utf-8'))
         imports = [(node, alias) for node in ast.walk(tree)
                    if isinstance(node, ast.ImportFrom)
                    for alias in node.names if alias.name == 'QCheckBox']
-        self.assertEqual(len(imports), 1)
-        self.assertEqual(imports[0][0].module, 'qgis.PyQt.QtWidgets')
-        self.assertIn(imports[0][0], tree.body)
+        self.assertLessEqual(len(imports), 1)
+        for node, _alias in imports:
+            self.assertEqual(node.module, 'qgis.PyQt.QtWidgets')
+            self.assertIn(node, tree.body)
 
     def test_no_ambiguous_l_variable_in_evaluation_dialog(self):
         tree = ast.parse((ROOT / 'evaluation_dialog.py').read_text(encoding='utf-8'))

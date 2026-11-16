@@ -1,6 +1,10 @@
-## 1.2.0 — Conversor de Formatos (em desenvolvimento)
+## 1.2.0 — Conversor de Formatos e Combinação de Mapas (em desenvolvimento)
 
-Versão dedicada ao módulo de conversão. Outras alterações serão acrescentadas antes do lançamento.
+Versão de interface dos módulos Conversor de Formatos e Combinação de Mapas. Outras alterações
+serão acrescentadas antes do lançamento.
+
+**Conversor de Formatos**
+
 
 - **Novo nome do módulo:** “Conversão de Formatos” passou a “Conversor de Formatos” no menu e no
   título da janela (inglês: “Format converter”; espanhol: “Conversor de
@@ -15,6 +19,18 @@ Versão dedicada ao módulo de conversão. Outras alterações serão acrescenta
   campos de cada operação, o lote e as opções avançadas, até 90% da altura útil da tela (acima
   disso, aparece a rolagem). A largura escolhida pelo usuário é mantida.
 - Nenhum algoritmo de conversão foi alterado.
+
+**Combinação de Mapas**
+
+- **Guias “Raster” e “Vetorial”**, como nos demais módulos (antes “Combinação raster” e
+  “Combinação vetorial”).
+- **“Adicionar camada selecionada”** no lugar de “Adicionar camada”, nas duas guias.
+- **Resultado sempre carregado no QGIS:** saíram as caixas “Saída temporária no QGIS” e
+  “Carregar resultado no projeto QGIS”. Campo “Salvar em” vazio: vetor como camada temporária em
+  memória; raster em arquivo temporário (o QGIS não mantém rasters em memória). Com um arquivo
+  indicado, o resultado é salvo e carregado no QGIS. Os relatórios `_combinacoes.csv` e
+  `_resumo.txt` continuam sendo gerados (na pasta temporária do QGIS quando não há arquivo).
+- Nenhum algoritmo de combinação foi alterado.
 
 ## 1.1.0 — Avaliação: guias vetoriais no padrão da guia Raster (2026-11-12)
 
