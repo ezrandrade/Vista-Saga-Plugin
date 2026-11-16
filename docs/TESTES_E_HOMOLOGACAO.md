@@ -65,3 +65,12 @@ Regras cobertas por `test_120_sliver_tolerance.py` e `test_120_combination_field
 Conferido e homologado pelo autor: área total de 2.343,27 ha no `_resumo.txt`; linhas de lascas
 toleradas e resíduos incorporados presentes no resumo; campos `COD_nn`/`LEG_nn` sem feições de
 área quase nula na tabela; botões “Mover para cima/baixo” na Combinação e no Sequenciador.
+
+### Build `1.2.0-dev15` — Monitoria
+
+Homologado pelo autor no QGIS para Windows: resultado sempre carregado (raster em arquivo
+temporário, vetor em memória) ou salvo; rótulos iguais nas guias Raster e Vetorial; Mann–Kendall
+retirado (sem série temporal, sem `_tendencias_mk.csv`, sem seção no resumo); aviso de feições sem
+classe (caso real Uso 1997 × 2011: com `CODIGO`, aviso; com `CLASSE`, área comum completa de
+cerca de 4.225 ha); cópia das tabelas Raster e Vetorial para planilhas com Ctrl+A/Ctrl+C e decimal
+do idioma. Suítes locais: `geosaga/tests` OK (16 pulados); `tests/unit` 36/36.
