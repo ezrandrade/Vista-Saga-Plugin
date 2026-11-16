@@ -14,7 +14,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import (Qgis, QgsApplication, QgsPalettedRasterRenderer,
                        QgsProject, QgsRasterLayer, QgsMessageLog)
 from qgis.gui import QgsMapLayerComboBox
-from .ui_shared import use_tab_background, temporary_destination
+from .ui_shared import use_tab_background, temporary_destination, enable_table_copy
 
 
 RASTER_MONITORING_HINT = (
@@ -135,6 +135,7 @@ class MonitoringDialog(QDialog):
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        enable_table_copy(self.table)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         results.addWidget(self.table)
         results_layout = QVBoxLayout(self.raster_results_page)

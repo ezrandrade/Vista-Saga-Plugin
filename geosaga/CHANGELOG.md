@@ -38,6 +38,11 @@ serão acrescentadas antes do lançamento.
   linha no `_resumo.txt`). Agora a conclusão avisa quantas feições de cada mapa foram ignoradas,
   com o nome do campo, e sugere preenchê-lo ou usar outro campo. Caso real: classe
   MATA ATLANTICA com `CODIGO` vazio nos dois anos, 1.474 ha (35% da área) fora do resultado.
+- **Copiar resultados para planilhas:** nas subguias Raster e Vetorial de Resultados, Ctrl+A
+  seleciona a tabela inteira e Ctrl+C copia as linhas selecionadas (ou todas), com o cabeçalho,
+  em texto separado por tabulação; também pelo botão direito do mouse. Os números saem com o
+  separador decimal do idioma do QGIS (em português, “548,808”), para não serem lidos como
+  milhares na planilha. A prévia continua limitada a 500 linhas; o CSV traz tudo.
 - Correções: na guia Vetorial embutida, o botão “Fechar” interno era escondido comparando o
   texto em português (falhava em inglês e espanhol); o “Fechar” da janela não ocupa mais a linha
   inteira nessa guia.

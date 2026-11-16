@@ -23,6 +23,9 @@ Inclui tudo da 1.1.0.
 - **Resultado sempre carregado no QGIS**, nas guias Raster e Vetorial: sem arquivo em “Salvar em”,
   arquivo temporário (raster) ou camada temporária em memória (vetor).
 - As duas guias usam os mesmos rótulos.
+- **Copiar os resultados para planilhas:** na guia Resultados (Raster e Vetorial), Ctrl+A
+  seleciona a tabela e Ctrl+C copia, com o cabeçalho, para colar no Excel ou no LibreOffice;
+  também pelo botão direito do mouse. Os decimais seguem o idioma do QGIS.
 - **Monitoria vetorial avisa feições sem classe:** se alguma feição não tiver valor no campo de
   classe escolhido, ela fica fora da análise (vazio no mapa), e agora uma mensagem informa
   quantas foram ignoradas em cada mapa.

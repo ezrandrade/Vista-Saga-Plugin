@@ -14,7 +14,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.core import Qgis, QgsProject, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
-from .ui_shared import materialize_in_memory, temporary_destination
+from .ui_shared import enable_table_copy, materialize_in_memory, temporary_destination
 
 
 VECTOR_MONITORING_HINT = (
@@ -93,6 +93,7 @@ class VectorMonitoringDialog(QWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        enable_table_copy(self.table)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         result_layout.addWidget(self.table, 1)
 

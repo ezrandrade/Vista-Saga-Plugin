@@ -1508,5 +1508,8 @@
   "mapa final": "final map",
   "{0}: {1} feição(ões) sem valor no campo de classe “{2}” (ou sem geometria).": "{0}: {1} feature(s) without a value in the class field “{2}” (or without geometry).",
   "Feições sem classe ignoradas": "Features without class ignored",
-  "Essas áreas ficaram fora da monitoria e aparecem como vazios no mapa resultante. Preencha o campo de classe ou escolha outro campo (por exemplo, o campo com os nomes das classes) e execute de novo.": "These areas were left out of the monitoring and appear as gaps in the resulting map. Fill in the class field or choose another field (for example, the field with the class names) and run again."
+  "Essas áreas ficaram fora da monitoria e aparecem como vazios no mapa resultante. Preencha o campo de classe ou escolha outro campo (por exemplo, o campo com os nomes das classes) e execute de novo.": "These areas were left out of the monitoring and appear as gaps in the resulting map. Fill in the class field or choose another field (for example, the field with the class names) and run again.",
+  "Selecionar tudo": "Select all",
+  "Copiar para planilha": "Copy to spreadsheet",
+  "Ctrl+A seleciona tudo; Ctrl+C copia (com o cabeçalho) para colar em planilhas. Também pelo botão direito do mouse.": "Ctrl+A selects all; Ctrl+C copies (with the header) to paste into spreadsheets. Also available with the right mouse button."
 }
