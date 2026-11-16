@@ -1,72 +1,68 @@
 # Vista Saga Plugin 1.3.0 — notas da versão
 
 > Versão em desenvolvimento. Inclui tudo da 1.2.1. Os cálculos existentes não mudaram; a 1.3.0
-> acrescenta um cálculo novo, o vetor direto Com Massa.
+> acrescenta um cálculo novo, o vetor exato Com Massa.
 
 ## O que muda para quem usa
 
-### Análises Voronoi: saída vetorial em todas as modalidades
+### Análises Voronoi no padrão dos demais módulos
 
-Em **3. Resultado → Formato de saída** há agora quatro opções:
+- **Guias "Raster" e "Vetorial"**, como na Combinação de Mapas e na Monitoria. O modelo de
+  influência e os dados de entrada são os mesmos nas duas guias: o que foi preenchido acompanha a
+  troca de guia. Cada guia tem o próprio grupo "Resultado".
+- **"Salvar em"**, com o botão "Salvar como…":
+  - em branco, na guia Raster: arquivo temporário; na guia Vetorial: camada temporária em memória
+    (salve-a antes de fechar o QGIS);
+  - preenchido: o resultado é salvo nesse arquivo;
+  - nos dois casos, o resultado é carregado no QGIS. Saem as caixas "Resultado temporário" e
+    "Adicionar ao projeto".
+- **Formato vetorial:** escolhido no filtro do "Salvar como…", como no QGIS: GeoPackage,
+  Shapefile, GeoJSON ou FlatGeobuf. O Shapefile é gravado em UTF-8 (`.cpg`), com acentos.
+- Antes de substituir resultados existentes, o plugin pede confirmação.
+- `_centros.csv` e `_resumo.txt` continuam sendo gerados ao lado do resultado (sem arquivo
+  indicado, na pasta temporária do QGIS).
 
-| Opção | Modalidades | O que é gravado |
-|---|---|---|
-| GeoTIFF (raster) | todas | GeoTIFF, CSV e TXT |
-| Vetor direto (Simples e Com Massa) | Simples, Com Massa | polígonos exatos (sem grade), CSV e TXT |
-| **Vetor (poligonização)** (nova) | todas | camada vetorial, CSV e TXT |
-| GeoTIFF + vetor (poligonização) | todas | GeoTIFF, camada vetorial, CSV e TXT |
+### Guia Vetorial nas quatro modalidades
 
-- **Com Massa, Com Atrito e Com Massa e Atrito** passam a ter saída só vetorial. O cálculo continua
-  na grade raster, como antes; o GeoTIFF intermediário é descartado no fim.
-- **Formato vetorial:** GeoPackage (padrão), Shapefile, GeoJSON ou FlatGeobuf, os mesmos do
-  Conversor de Formatos. Vale para as três saídas vetoriais.
-- Os campos da camada não mudam: `CENTRO_ID`, `CENTRO`, `MASSA` e `AREA_HA` na poligonização;
-  no vetor direto, também `AREA_M2` e `PCT_AREA`. Todos têm até 10 caracteres, compatíveis com
-  Shapefile; o Shapefile é gravado em UTF-8 (arquivo `.cpg`), preservando acentos.
+| Modalidade | Como os polígonos são obtidos |
+|---|---|
+| Simples | fronteiras exatas (bissetrizes), sem grade |
+| **Com Massa** (cálculo novo) | fronteiras exatas (círculos de Apolônio), sem grade |
+| Com Atrito / Com Massa e Atrito | cálculo na grade da superfície de atrito, convertido em polígonos |
 
-### Vetor direto Com Massa (cálculo novo)
+**Com Massa.** Cada lugar pertence ao centro de maior M/d, a mesma regra do raster, calculada
+sobre a geometria. Entre centros de massas diferentes, a fronteira é um círculo de Apolônio: o
+mais leve fica com um disco ao redor de si, onde d_leve / d_pesado < M_leve / M_pesado. Entre
+massas iguais, a fronteira é a bissetriz (com todas as massas iguais, o resultado é idêntico ao
+Simples). Os arcos são gravados como segmentos com desvio de no máximo 2/3 de 1 cm, sem viés de
+área; vizinhos usam exatamente o mesmo arco, sem sobreposições nem lacunas. Uma região pode ter
+mais de uma parte (multipolígono). O `_resumo.txt` registra a tolerância.
 
-- Cada ponto do território pertence ao centro de **maior M/d**, a mesma regra do raster, mas
-  calculada sobre a geometria, sem pixels.
-- **Fronteiras:** entre dois centros de massas diferentes, a fronteira é um **círculo de
-  Apolônio**: o centro mais leve fica com um disco ao seu redor, onde
-  d_leve / d_pesado < M_leve / M_pesado. Entre massas iguais, a fronteira é a bissetriz, como no
-  Simples (com todas as massas iguais, o resultado é idêntico ao do Voronoi Simples).
-- **Arcos:** gravados como segmentos de reta com desvio de no máximo 2/3 de 1 cm do círculo
-  verdadeiro, posicionados para que a área não tenha viés. Vizinhos usam exatamente o mesmo
-  arco: não há sobreposições nem lacunas, e a soma das áreas é a área da extensão. O `_resumo.txt`
-  registra a tolerância.
-- **Uma região pode ter mais de uma parte:** fica numa única feição multipolígono por centro.
-- **Raster × vetor direto:** o raster Com Massa classifica o centro de cada pixel; suas áreas
-  convergem para as do vetor direto quando a resolução diminui. Num teste com 25 centros em
-  10 × 10 km, a diferença média de área foi de 2,0% a 100 m, 0,5% a 30 m e 0,04% a 10 m. Para
-  comparar com o **Vista SAGA original**, que trabalha por pixel, use a saída raster na mesma
-  grade; o vetor direto é a referência geométrica do modelo M/d.
-- Tempo: cerca de 12 s para 1.000 centros (o caso comum, dezenas de centros, leva frações de
-  segundo).
+**Raster × vetorial Com Massa.** O raster classifica o centro de cada pixel; suas áreas convergem
+para as do vetor quando a resolução diminui. Num teste com 25 centros em 10 × 10 km, a diferença
+média de área foi de 2,0% a 100 m, 0,5% a 30 m e 0,04% a 10 m (máxima: 15,5%, 4,0% e 0,27%). Para
+comparar com o **Vista SAGA original**, que trabalha por pixel, use a guia Raster na mesma grade;
+o vetor é a referência geométrica do modelo M/d.
 
-### O que observar ao usar a poligonização
+**Com atrito.** O atrito é uma superfície raster: o custo muda célula a célula, e não existe
+fronteira geométrica exata. A guia Vetorial calcula na grade da própria superfície de atrito
+(como a guia Raster) e converte o resultado em polígonos, com bordas nos pixels; o GeoTIFF
+intermediário não é guardado. O `_resumo.txt` registra o tamanho da célula.
 
-- **Os polígonos seguem os pixels.** Nas modalidades com massa ou atrito, a fronteira entre duas
-  áreas de influência é curva (com massa, arcos de circunferência); a poligonização a representa
-  em degraus do tamanho da célula. A área de cada polígono é exatamente a soma dos pixels do
-  centro, igual à do CSV. Para bordas mais finas, reduza a resolução raster.
-- **Um centro pode ter mais de um polígono.** Se a área de influência de um centro estiver dividida
-  em partes separadas, cada parte é uma feição, com o mesmo `CENTRO_ID`; some `AREA_HA` por centro.
-- O `_resumo.txt` registra que os polígonos vêm da poligonização, o tamanho da célula e o formato.
-- **GeoJSON:** a especificação atual do formato prevê coordenadas em WGS 84; o GDAL grava o SRC
-  projetado como extensão antiga do formato. Para a tese ou para troca de dados, prefira
-  GeoPackage.
+**Campos da camada:** `CENTRO_ID`, `CENTRO`, `MASSA`, `AREA_HA` (e, nas fronteiras exatas,
+`AREA_M2` e `PCT_AREA`), todos com até 10 caracteres.
+
+**GeoJSON:** a especificação atual prevê coordenadas em WGS 84; o GDAL grava o SRC projetado como
+extensão antiga do formato. Para a tese, prefira GeoPackage.
 
 ## Homologação pedida ao autor (QGIS para Windows)
 
-1. Voronoi **Com Massa** → "Vetor (poligonização)" → **Shapefile**, temporário: a camada abre no
-   QGIS com cores por centro; nomes com acento corretos na tabela de atributos.
-2. A mesma análise salva em pasta escolhida: conferir `.shp/.shx/.dbf/.prj/.cpg`, `_centros.csv`
-   e `_resumo.txt`, e que **nenhum** `.tif` foi deixado.
-3. "GeoTIFF + vetor" em FlatGeobuf: GeoTIFF e `.fgb` carregados.
-4. Simples → "Vetor direto" → GeoJSON: polígonos exatos carregados.
-5. **Com Massa → "Vetor direto" → GeoPackage:** fronteiras curvas (arcos), sem degraus; conferir
-   que a soma de `AREA_HA` é a área da extensão e comparar com "GeoTIFF" Com Massa em resolução
-   fina (as áreas devem ficar próximas). Repetir com "Polígono da área de estudo".
-6. Saída padrão (GeoTIFF + vetor em GeoPackage): resultado igual ao da 1.2.1 para os mesmos dados.
+1. Aparência: guias Raster e Vetorial iguais às da Combinação de Mapas; trocar de guia mantém o
+   preenchimento.
+2. Vetorial, **Com Massa**, "Salvar em" em branco: camada temporária em memória, com fronteiras
+   curvas; a soma de `AREA_HA` é a área da extensão.
+3. Vetorial, Com Massa, "Salvar como…" → Shapefile: `.shp/.shx/.dbf/.prj/.cpg`, `_centros.csv` e
+   `_resumo.txt`; acentos corretos.
+4. Vetorial, **Com Atrito** e **Com Massa e Atrito**: polígonos carregados, sem `.tif` na pasta.
+5. Raster, em branco e salvo: resultado igual ao da 1.2.1 para os mesmos dados.
+6. Salvar duas vezes no mesmo arquivo: o plugin pede confirmação antes de substituir.

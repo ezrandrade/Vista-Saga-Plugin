@@ -53,10 +53,9 @@ class DirectVectorTests(unittest.TestCase):
         from pathlib import Path
         content=(Path(__file__).resolve().parents[1]/'voronoi_dialog.py').read_text()
         self.assertIn('if self.mode.currentIndex() in (1,3) else None',content)
-        self.assertIn("'Vetor direto (Simples e Com Massa)'), 'direct')",content)
-        self.assertIn("'Vetor (poligonização)'), 'vector')",content)
+        self.assertIn("for title in ('Raster', 'Vetorial'):",content)
         self.assertIn('self.mass_field.setVisible(weighted)',content)
-        self.assertIn('self.output_type.model().item(1).setEnabled(not friction)',content)
+        self.assertIn("direct=kind=='vector' and self.mode.currentIndex() in (0,1)",content)
         self.assertIn('self.extent_mode.addItem',content)
 
 if __name__=='__main__': unittest.main()

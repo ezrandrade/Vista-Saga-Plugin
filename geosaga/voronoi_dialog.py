@@ -12,7 +12,7 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit, QMessageBox, QProgressDialog, QPushButton,
     QVBoxLayout, QListWidget, QListWidgetItem, QDialogButtonBox,
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView,
-    QScrollArea, QWidget, QFrame,
+    QScrollArea, QWidget, QFrame, QTabWidget,
 )
 from qgis.core import (
     Qgis, QgsApplication, QgsTask, QgsCoordinateTransform, QgsFillSymbol, QgsPalettedRasterRenderer,
@@ -21,12 +21,51 @@ from qgis.core import (
 )
 from qgis.gui import QgsMapLayerComboBox
 
-from .ui_shared import use_tab_background, temporary_destination
+from .ui_shared import use_tab_background, temporary_destination, materialize_in_memory
 from .voronoi_core import Generator
 from .voronoi_engine import grid_from_extent, run_voronoi
 from .voronoi_vector import save_vector_voronoi
-from .voronoi_output import VECTOR_FORMATS, layer_uri
+from .voronoi_output import VECTOR_FORMATS, layer_uri, output_family, vector_extension
 from .errors import log_exception
+
+
+RASTER_RESULT_HINT = (
+    'Em branco, o mapa é gravado num arquivo temporário e carregado no QGIS (o QGIS não '
+    'mantém rasters em memória; salve-o antes de fechar o QGIS). Com um arquivo indicado, '
+    'ele é salvo em disco e carregado no QGIS. Além do mapa, são gerados _centros.csv e '
+    '_resumo.txt; sem arquivo indicado, eles ficam na pasta temporária do QGIS.')
+
+VECTOR_RESULT_HINT = (
+    'Em branco, o resultado é carregado no QGIS como camada temporária em memória (salve-a '
+    'antes de fechar o QGIS). Com um arquivo indicado (GeoPackage, Shapefile, GeoJSON ou '
+    'FlatGeobuf), ele é salvo em disco e carregado no QGIS. Além do mapa, são gerados '
+    '_centros.csv e _resumo.txt; sem arquivo indicado, eles ficam na pasta temporária do QGIS.')
+
+
+class _WrapLabel(QLabel):
+    """Rótulo com quebra de linha cuja altura acompanha a largura real.
+
+    Dentro de QScrollArea, o QLabel comum informa a altura calculada para uma
+    largura estreita e deixa folgas grandes acima e abaixo do texto.
+    """
+    def __init__(self, text=''):
+        super().__init__(text)
+        self.setWordWrap(True)
+
+    def _fit(self, hint):
+        if self.width() > 50:
+            hint.setHeight(self.heightForWidth(self.width()))
+        return hint
+
+    def sizeHint(self):
+        return self._fit(super().sizeHint())
+
+    def minimumSizeHint(self):
+        return self._fit(super().minimumSizeHint())
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.updateGeometry()
 
 
 class VoronoiRasterTask(QgsTask):
@@ -95,29 +134,33 @@ class VoronoiDialog(QDialog):
 
     def _build(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(9)
-        intro = QLabel(tr('Delimite áreas de influência: Simples, com Massa, com Atrito e com Massa e Atrito. '
-                       'Os modelos que utilizam atrito ainda exigem validação com o Vista SAGA original.'))
-        intro.setWordWrap(True)
-        layout.addWidget(intro)
+        layout.setContentsMargins(10, 10, 10, 10)
+        # Guias "Raster" e "Vetorial", como na Combinação de Mapas e na Monitoria.
+        # Modelo e dados de entrada são os mesmos nas duas guias: os grupos
+        # acompanham a guia ativa (_tab_changed); só o resultado é próprio de cada uma.
+        # A área rolável impede controles comprimidos com o atrito múltiplo.
+        self.tabs = QTabWidget()
+        layout.addWidget(self.tabs, 1)
+        self._pages = []
+        for title in ('Raster', 'Vetorial'):
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            scroll.setFrameShape(QFrame.Shape.NoFrame)
+            holder = QWidget()
+            body = QVBoxLayout(holder)
+            body.setContentsMargins(9, 9, 9, 9)  # mesma margem interna das guias da Combinação
+            body.setSpacing(6)
+            scroll.setWidget(holder)
+            use_tab_background(scroll)
+            self.tabs.addTab(scroll, tr(title))
+            self._pages.append(body)
+        content_layout = self._pages[0]
+        self.intro = _WrapLabel(tr('Delimite áreas de influência: Simples, com Massa, com Atrito e com Massa e Atrito. '
+                            'Os modelos que utilizam atrito ainda exigem validação com o Vista SAGA original.'))
+        self.intro.setWordWrap(True)
+        content_layout.addWidget(self.intro)
 
-        # Na interface de atrito múltiplo, a altura natural dos controles
-        # ultrapassa a janela no Windows/Qt6. A área rolável impede que
-        # widgets fiquem comprimidos ou inacessíveis; os botões de execução
-        # permanecem visíveis fora dela.
-        scroll = QScrollArea(self)
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll_contents = QWidget(scroll)
-        content_layout = QVBoxLayout(scroll_contents)
-        content_layout.setContentsMargins(0, 0, 4, 0)
-        content_layout.setSpacing(9)
-        scroll.setWidget(scroll_contents)
-        use_tab_background(scroll)
-        layout.addWidget(scroll, 1)
-
-        options = QGroupBox(tr('1. Modelo de influência'))
+        options = QGroupBox(tr('Modelo de influência'))
         model_form = QFormLayout(options)
         self.mode = QComboBox()
         self.mode.addItems([tr('Simples'), tr('Com Massa'),
@@ -125,12 +168,12 @@ class VoronoiDialog(QDialog):
                             tr('Com Massa e Atrito (experimental)')])
         self.mode.currentIndexChanged.connect(self._update_mode)
         model_form.addRow(tr('Modalidade:'),self.mode)
-        self.method_note = QLabel(tr('Simples: o ponto mais próximo assume cada célula da grade.'))
+        self.method_note = _WrapLabel(tr('Simples: o ponto mais próximo assume cada célula da grade.'))
         self.method_note.setWordWrap(True)
         model_form.addRow(tr('Método:'),self.method_note)
         content_layout.addWidget(options)
 
-        inputs = QGroupBox(tr('2. Dados de entrada'))
+        inputs = QGroupBox(tr('Dados de entrada'))
         form = QFormLayout(inputs)
         self.point_layer = QgsMapLayerComboBox()
         self.point_layer.setAllowEmptyLayer(True)
@@ -241,68 +284,67 @@ class VoronoiDialog(QDialog):
         self.resolution.setSuffix(tr(' unidades do SRC'))
         self.resolution_label=QLabel(tr('Resolução raster:'))
         form.addRow(self.resolution_label,self.resolution)
-        self.grid_note = QLabel(tr('O Voronoi vetorial direto é limitado pela extensão escolhida; '
+        self.grid_note = _WrapLabel(tr('O Voronoi vetorial direto é limitado pela extensão escolhida; '
                                 'não exige raster de referência nem resolução.'))
         self.grid_note.setWordWrap(True)
         form.addRow('',self.grid_note)
         content_layout.addWidget(inputs)
 
-        output = QGroupBox(tr('3. Resultado'))
-        outform = QFormLayout(output)
-        self.output_type=QComboBox()
-        self.output_type.addItem(tr('GeoTIFF (raster)'), 'raster')
-        self.output_type.addItem(tr('Vetor direto (Simples e Com Massa)'), 'direct')
-        self.output_type.addItem(tr('Vetor (poligonização)'), 'vector')
-        self.output_type.addItem(tr('GeoTIFF + vetor (poligonização)'), 'both')
-        self.output_type.currentIndexChanged.connect(self._update_output)
-        outform.addRow(tr('Formato de saída:'),self.output_type)
-        # Mesmos formatos vetoriais do Conversor de Formatos.
-        self.vector_format = QComboBox()
-        for extension, (_, label) in VECTOR_FORMATS.items():
-            self.vector_format.addItem(f'{label} (*{extension})', extension)
-        self.vector_format.currentIndexChanged.connect(self._update_output)
-        self.vector_format_label = QLabel(tr('Formato vetorial:'))
-        outform.addRow(self.vector_format_label, self.vector_format)
-        self.temp_output = QCheckBox(tr('Resultado temporário (adicionar ao QGIS)'))
-        self.temp_output.setChecked(True)
-        self.temp_output.toggled.connect(self._update_output)
-        outform.addRow('',self.temp_output)
-        path_box = QHBoxLayout()
-        self.path_output = QLineEdit()
-        self.path_output.setPlaceholderText(tr('Voronoi_Espacial.tif'))
-        self.path_output.setEnabled(False)
-        path_box.addWidget(self.path_output,1)
-        self.path_button = QPushButton(tr('…'))
-        self.path_button.setEnabled(False)
-        self.path_button.clicked.connect(self._choose_output)
-        path_box.addWidget(self.path_button)
-        self.path_label=QLabel(tr('Arquivo de saída:'))
-        outform.addRow(self.path_label,path_box)
-        self.load_project = QCheckBox(tr('Adicionar resultados ao projeto QGIS'))
-        self.load_project.setChecked(True)
-        outform.addRow('',self.load_project)
-        hint = QLabel(tr('CSV e TXT são produzidos automaticamente. '
-                      'Resultados temporários precisam ser salvos antes de fechar o QGIS.'))
-        hint.setWordWrap(True)
-        outform.addRow('',hint)
-        content_layout.addWidget(output)
-        content_layout.addStretch(1)
+        self._shared = [self.intro, options, inputs]
+        self._shared_page = 0
+        # "Salvar em": em branco, resultado temporário (raster em arquivo
+        # temporário; vetor em camada temporária em memória); preenchido, salvo.
+        # Nos dois casos o resultado é carregado no QGIS.
+        self.output_edits = []
+        for idx in (0, 1):
+            group = QGroupBox(tr('Resultado'))
+            out = QFormLayout(group)
+            edit = QLineEdit()
+            edit.setPlaceholderText(tr('[Arquivo temporário]' if idx == 0
+                                       else '[Camada temporária em memória]'))
+            edit.setClearButtonEnabled(True)
+            row = QHBoxLayout()
+            row.addWidget(edit, 1)
+            browse = QPushButton(tr('Salvar como…'))
+            browse.clicked.connect(lambda checked=False, i=idx: self._choose_output(i))
+            row.addWidget(browse)
+            out.addRow(tr('Salvar em:'), row)
+            note = _WrapLabel(tr(RASTER_RESULT_HINT if idx == 0 else VECTOR_RESULT_HINT))
+            out.addRow('', note)
+            self._pages[idx].addWidget(group)
+            self._pages[idx].addStretch(1)
+            self.output_edits.append(edit)
+        self.tabs.currentChanged.connect(self._tab_changed)
+        control = QHBoxLayout()
         self.status = QLabel(tr('Selecione a camada de pontos geradores.'))
         self.status.setWordWrap(True)
-        layout.addWidget(self.status)
-        buttons = QHBoxLayout()
-        buttons.addStretch(1)
+        control.addWidget(self.status, 1)
         self.run_button = QPushButton(tr('Gerar Voronoi'))
         self.run_button.clicked.connect(self._run)
-        buttons.addWidget(self.run_button)
+        control.addWidget(self.run_button)
         self.close_button = QPushButton(tr('Fechar'))
         self.close_button.clicked.connect(self.close)
-        buttons.addWidget(self.close_button)
-        layout.addLayout(buttons)
+        control.addWidget(self.close_button)
+        layout.addLayout(control)
+        self._temporary = True
         self._refresh_fields()
         self._update_mode()
         self._update_extent()
         self._update_output()
+
+    def _tab_changed(self, index):
+        """Leva modelo e dados de entrada para a guia ativa, preservando o preenchimento."""
+        if index not in (0, 1) or index == self._shared_page:
+            return
+        for widget in self._shared:
+            self._pages[self._shared_page].removeWidget(widget)
+        for position, widget in enumerate(self._shared):
+            self._pages[index].insertWidget(position, widget)
+        self._shared_page = index
+        self._update_output()
+
+    def _kind(self):
+        return 'raster' if self.tabs.currentIndex() == 0 else 'vector'
 
     def _on_multi_friction_toggled(self, checked):
         self._update_mode()
@@ -485,10 +527,6 @@ class VoronoiDialog(QDialog):
             self.method_note.setText(tr('Com Massa: maximiza M/d; selecione campo numérico positivo.'))
         else:
             self.method_note.setText(tr('Simples: menor distância euclidiana; sem massa nem atrito.'))
-        self.output_type.model().item(1).setEnabled(not friction)
-        if friction and self.output_type.currentData() == 'direct':
-            # Com atrito não há vetor direto; a poligonização mantém a saída vetorial.
-            self.output_type.setCurrentIndex(self.output_type.findData('vector'))
         self._update_output()
 
     def _update_grid(self, *_):
@@ -506,52 +544,62 @@ class VoronoiDialog(QDialog):
         self._update_output()
 
     def _output_suffix(self):
-        """Extensão do arquivo escolhido pelo usuário em "Arquivo de saída"."""
-        kind=self.output_type.currentData()
-        return '.tif' if kind in ('raster','both') else self.vector_format.currentData()
+        """Extensão da saída da guia ativa (vetor temporário: GeoPackage)."""
+        if self._kind() == 'raster':
+            return '.tif'
+        chosen = self.output_edits[1].text().strip()
+        extension = os.path.splitext(chosen)[1].lower()
+        return extension if extension in VECTOR_FORMATS else '.gpkg'
 
     def _update_output(self, *_):
-        direct=self.output_type.currentData()=='direct'
-        vector_output=self.output_type.currentData()!='raster'
-        self.vector_format.setVisible(vector_output)
-        self.vector_format_label.setVisible(vector_output)
-        suffix=self._output_suffix()
-        friction=self.mode.currentIndex() in (2,3)
-        raster=not direct
-        reference=self.extent_mode.currentData()=='reference' if hasattr(self,'extent_mode') else False
-        self.grid_layer.setVisible(raster and reference and not friction)
-        self.grid_label.setVisible(raster and reference and not friction)
-        self.resolution.setVisible(raster and not reference and not friction)
-        self.resolution_label.setVisible(raster and not reference and not friction)
-        self.resolution.setEnabled(raster and not reference and not friction)
-        self.path_output.setEnabled(not self.temp_output.isChecked())
-        self.path_button.setEnabled(not self.temp_output.isChecked())
-        self.path_output.setPlaceholderText('Analises_Voronoi'+suffix)
-        self.extent_mode.model().item(4).setEnabled(raster)
-        if direct and reference:
+        if not hasattr(self, 'output_edits'):
+            return  # ainda montando a janela
+        vector = self._kind() == 'vector'
+        friction = self.mode.currentIndex() in (2,3)
+        reference = self.extent_mode.currentData() == 'reference'
+        self.grid_layer.setVisible(not vector and reference and not friction)
+        self.grid_label.setVisible(not vector and reference and not friction)
+        self.resolution.setVisible(not vector and not reference and not friction)
+        self.resolution_label.setVisible(not vector and not reference and not friction)
+        self.resolution.setEnabled(not vector and not reference and not friction)
+        self.extent_mode.model().item(4).setEnabled(not vector)
+        if vector and reference:
             self.extent_mode.setCurrentIndex(0)
-        if self.path_output.text() and not self.path_output.text().lower().endswith(suffix):
-            self.path_output.clear()
-        self.grid_note.setText(tr('Com Atrito: extensão, resolução e SRC herdados do raster de resistência; '
-                               'a grade não será reprojetada.' if friction else
-                               (('Vetor direto com massa: fronteiras exatas (círculos de Apolônio), arcos com '
-                                 'desvio máximo de 1 cm, recortadas à extensão e à área poligonal.'
-                                 if self.mode.currentIndex()==1 else
-                                 'Vetor direto: polígonos exatos recortados à extensão e à área poligonal.')
-                                if direct else
-                                'Poligonização: o cálculo é feito na grade raster e convertido em polígonos; '
-                                'as bordas seguem os pixels, e a resolução define o detalhe.'
-                                if self.output_type.currentData()=='vector' else
-                                'Raster: resolução necessária. A extensão poligonal define o retângulo envolvente.')))
+        if friction:
+            note = ('Vetorial com atrito: o atrito é uma superfície raster; as áreas são calculadas na '
+                    'grade dessa superfície e convertidas em polígonos (bordas nos pixels).' if vector else
+                    'Com Atrito: extensão, resolução e SRC herdados do raster de resistência; '
+                    'a grade não será reprojetada.')
+        elif vector and self.mode.currentIndex() == 1:
+            note = ('Vetor direto com massa: fronteiras exatas (círculos de Apolônio), arcos com '
+                    'desvio máximo de 1 cm, recortadas à extensão e à área poligonal.')
+        elif vector:
+            note = 'Vetor direto: polígonos exatos recortados à extensão e à área poligonal.'
+        else:
+            note = 'Raster: resolução necessária. A extensão poligonal define o retângulo envolvente.'
+        self.grid_note.setText(tr(note))
 
-    def _choose_output(self):
-        suffix=self._output_suffix()
-        path,_=QFileDialog.getSaveFileName(self,tr('Salvar Voronoi'),
-                   self.path_output.text().strip() or 'Analises_Voronoi'+suffix,
-                   'GeoTIFF (*.tif)' if suffix=='.tif' else self.vector_format.currentText())
-        if path:
-            if not path.lower().endswith(suffix): path+=suffix
-            self.path_output.setText(path)
+    def _choose_output(self, index):
+        """"Salvar como…": formato pelo filtro do diálogo, como no QGIS."""
+        edit = self.output_edits[index]
+        if index == 0:
+            filters = ['GeoTIFF (*.tif *.tiff)']
+            default = '.tif'
+        else:
+            filters = [f'{label} (*{extension})' for extension, (_, label) in VECTOR_FORMATS.items()]
+            default = self._output_suffix() if edit.text().strip() else '.gpkg'
+        current = edit.text().strip() or 'Analises_Voronoi' + default
+        selected = next((item for item in filters if default in item), filters[0])
+        path, chosen_filter = QFileDialog.getSaveFileName(
+            self, tr('Salvar Voronoi'), current, ';;'.join(filters), selected)
+        if not path:
+            return
+        extension = os.path.splitext(path)[1].lower()
+        allowed = ('.tif', '.tiff') if index == 0 else tuple(VECTOR_FORMATS)
+        if extension not in allowed:
+            match = next((ext for ext in allowed if f'*{ext}' in (chosen_filter or '')), allowed[0])
+            path += match
+        edit.setText(path)
 
     def _get_generators(self, target_crs):
         layer = self.point_layer.currentLayer()
@@ -687,6 +735,19 @@ class VoronoiDialog(QDialog):
         if layer is None:
             QMessageBox.warning(self,tr('Análises Voronoi'),tr('Selecione uma camada de pontos.'))
             return
+        kind=self._kind()
+        chosen=self.output_edits[self.tabs.currentIndex()].text().strip()
+        if chosen:
+            stem=os.path.splitext(chosen)[0]
+            existing=[path for path in output_family(chosen)+[stem+'_centros.csv',stem+'_resumo.txt']
+                      if os.path.exists(path)]
+            if existing and QMessageBox.question(
+                    self,tr('Substituir arquivos?'),
+                    tr('Há resultados existentes. Substituir mapa e relatórios associados?'),
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+                return
+        self._temporary=not chosen
         self._busy=True
         self.run_button.setEnabled(False)
         self.close_button.setEnabled(False)
@@ -697,7 +758,8 @@ class VoronoiDialog(QDialog):
         dialog.setValue(0)
         asynchronous = False
         try:
-            direct=self.output_type.currentData()=='direct'
+            # Vetorial: exato (sem grade) no Simples e Com Massa; com atrito, na grade do atrito.
+            direct=kind=='vector' and self.mode.currentIndex() in (0,1)
             if direct:
                 crs=layer.crs()
                 if not crs.isValid() or crs.isGeographic():
@@ -744,19 +806,18 @@ class VoronoiDialog(QDialog):
                         raise ValueError('A análise exige SRC projetado. Reprojete os dados.')
                     points=self._get_generators(crs)
                     transform,width,height,crs,wkt=self._get_grid(layer,points)
-            suffix=self._output_suffix()
-            destination=(temporary_destination('voronoi_espacial',suffix) if self.temp_output.isChecked()
-                         else self.path_output.text().strip())
-            if not destination or not destination.lower().endswith(suffix):
-                raise ValueError(f'Escolha um arquivo de saída {suffix}.')
-            kind=self.output_type.currentData()
+            if kind=='raster':
+                suffix='.tif'
+                if chosen and not chosen.lower().endswith(('.tif','.tiff')):
+                    raise ValueError('Escolha um arquivo de saída {0}.'.format('.tif'))
+            else:
+                suffix=vector_extension(chosen) if chosen else '.gpkg'
+            destination=chosen or temporary_destination('voronoi_espacial',suffix)
             prefix=os.path.splitext(destination)[0]
-            # Saída só vetorial: o GeoTIFF de cálculo usa o mesmo nome-base e é descartado.
+            # Vetorial com atrito: o GeoTIFF de cálculo usa o mesmo nome-base e é descartado.
             raster_destination=None if direct else (prefix+'.tif' if kind=='vector' else destination)
-            vector_destination=(destination if kind in ('direct','vector') else
-                                prefix+self.vector_format.currentData() if kind=='both' else None)
-            outputs=[path for path in (vector_destination,
-                                       raster_destination if kind in ('raster','both') else None) if path]
+            vector_destination=destination if kind=='vector' else None
+            outputs=[vector_destination or raster_destination]
             def same_file(first, second):
                 return os.path.normcase(os.path.realpath(first))==os.path.normcase(os.path.realpath(second))
             forbidden=[layer.source().split('|')[0]]
@@ -787,11 +848,11 @@ class VoronoiDialog(QDialog):
                     mode=('mass_friction' if self.mode.currentIndex()==3 else
                           'friction' if self.mode.currentIndex()==2 else
                           'mass' if self.mode.currentIndex()==1 else 'simple'),
-                    vectorize=self.output_type.currentData() in ('both','vector'),
+                    vectorize=kind=='vector',
                     friction_path=friction_path if friction_mode else None,
                     friction_components=friction_components if friction_mode else None,
-                    vector_format=self.vector_format.currentData(),
-                    keep_raster=self.output_type.currentData()!='vector')
+                    vector_format=suffix if kind=='vector' else '.gpkg',
+                    keep_raster=kind=='raster')
                 # Recebe o resultado na thread principal; NUNCA processEvents()
                 # nem acesso ao QGIS/Qt no worker raster.
                 task.ui_callback = self._on_raster_task_finished
@@ -808,8 +869,7 @@ class VoronoiDialog(QDialog):
                     raise
                 asynchronous = True
                 return
-            if self.load_project.isChecked() or self.temp_output.isChecked():
-                self._load_output(result)
+            self._load_output(result)
             if direct:
                 self.status.setText(tr('Voronoi vetorial concluído: {count} regiões.').format(count=len(result["rows"])))
             else:
@@ -839,7 +899,7 @@ class VoronoiDialog(QDialog):
             text=tr('Camada vetorial ({0}), CSV e TXT produzidos.').format(label)
         else:
             text=tr('GeoTIFF, CSV e TXT produzidos.')
-        if self.temp_output.isChecked():
+        if self._temporary:
             return text+'\n'+tr('Saída temporária: salve antes de fechar o QGIS.')
         return text+'\n'+tr('Resultado: {0}').format(result.get('output') or vector)
 
@@ -858,8 +918,7 @@ class VoronoiDialog(QDialog):
         self.close_button.setEnabled(True)
         if success and task.result:
             try:
-                if self.load_project.isChecked() or self.temp_output.isChecked():
-                    self._load_output(task.result)
+                self._load_output(task.result)
                 self.status.setText(
                     tr(f'Voronoi concluído: {len(task.points)} centros; '
                     f'{task.result["pixels_valid"]:,} pixels classificados.'))
@@ -905,8 +964,12 @@ class VoronoiDialog(QDialog):
             QgsProject.instance().addMapLayer(raster)
         vector_path = result.get('vector') or result.get('gpkg')
         if vector_path:
-            vector = QgsVectorLayer(layer_uri(vector_path),
-                                    'Análises Voronoi - polígonos','ogr')
+            # Padrão do plugin: sem arquivo indicado, camada temporária em memória.
+            vector = (materialize_in_memory(layer_uri(vector_path), 'Análises Voronoi')
+                      if self._temporary else
+                      QgsVectorLayer(layer_uri(vector_path), 'Análises Voronoi', 'ogr'))
+            if vector is None:
+                raise RuntimeError('Não foi possível carregar o resultado no QGIS.')
             if vector.isValid():
                 if len(result['rows']) <= 75:
                     cats = []

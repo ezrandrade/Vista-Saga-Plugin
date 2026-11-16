@@ -30,11 +30,17 @@ class VectorOutputHelpersTests(unittest.TestCase):
 
     def test_dialog_offers_vector_output_for_every_mode(self):
         content = (Path(__file__).resolve().parents[1] / 'voronoi_dialog.py').read_text(encoding='utf-8')
-        # Só o vetor direto é desabilitado com atrito; a poligonização segue disponível.
-        self.assertIn("self.output_type.addItem(tr('Vetor (poligonização)'), 'vector')", content)
-        self.assertIn('for extension, (_, label) in VECTOR_FORMATS.items():', content)
-        self.assertIn("keep_raster=self.output_type.currentData()!='vector'", content)
-        self.assertIn("self.output_type.setCurrentIndex(self.output_type.findData('vector'))", content)
+        # Guia Vetorial para todas as modalidades; formatos pelo filtro do "Salvar como…".
+        self.assertIn("for title in ('Raster', 'Vetorial'):", content)
+        self.assertIn("filters = [f'{label} (*{extension})' for extension, (_, label) in VECTOR_FORMATS.items()]", content)
+        self.assertIn("keep_raster=kind=='raster'", content)
+        self.assertIn("vectorize=kind=='vector',", content)
+        # Padrão do plugin: sem caixas de temporário/carregar; vetor temporário em memória.
+        self.assertNotIn('temp_output', content)
+        self.assertNotIn('load_project', content)
+        self.assertNotIn('poligonização)', content)
+        self.assertIn("materialize_in_memory(layer_uri(vector_path), 'Análises Voronoi')", content)
+        self.assertIn("'[Camada temporária em memória]'", content)
 
 
 @unittest.skipUnless(HAS_GDAL, 'GDAL/OGR indisponível')
@@ -131,6 +137,30 @@ class VoronoiVectorFormatsGdalTests(unittest.TestCase):
         self.assertEqual(Path(result['gpkg']).name, 'padrao.gpkg')
         self.assertEqual(result['vector'], result['gpkg'])
         self.assertTrue(Path(result['output']).is_file())
+
+    def test_friction_vector_only_uses_friction_grid(self):
+        """Guia Vetorial com atrito: cálculo na grade do atrito, só a camada vetorial fica."""
+        import numpy as np
+        friction = self.dir / 'atrito.tif'
+        ds = gdal.GetDriverByName('GTiff').Create(str(friction), 30, 25, 1, gdal.GDT_Float32)
+        ds.SetGeoTransform(self.transform)
+        ds.SetProjection(self.wkt)
+        surface = np.zeros((25, 30), dtype=np.float32)
+        surface[:, 14:16] = 50.  # faixa de alto atrito entre os centros
+        ds.GetRasterBand(1).WriteArray(surface)
+        ds = None
+        for mode in ('friction', 'mass_friction'):
+            with self.subTest(modalidade=mode):
+                result = self._run(f'{mode}.tif', mode=mode, friction_path=str(friction),
+                                   vector_format='.shp', keep_raster=False)
+                vector = Path(result['vector'])
+                self.assertTrue(vector.is_file())
+                self.assertIsNone(result['output'])
+                self.assertFalse(vector.with_suffix('.tif').exists())
+                _, features, _ = self._read(vector)
+                total = sum(area for _, _, _, area in features)
+                self.assertAlmostEqual(total, sum(row['AREA_HA'] for row in result['rows']), places=6)
+                self.assertIn('célula de 10 × 10', Path(result['txt']).read_text(encoding='utf-8'))
 
     def test_vector_only_requires_vectorize(self):
         from geosaga.voronoi_engine import run_voronoi

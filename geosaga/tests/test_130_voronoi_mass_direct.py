@@ -25,9 +25,8 @@ def _polygon_area(ring):
 class MassDirectWiringTests(unittest.TestCase):
     def test_dialog_enables_direct_vector_for_mass(self):
         content = (Path(__file__).resolve().parents[1] / 'voronoi_dialog.py').read_text(encoding='utf-8')
-        self.assertIn('self.output_type.model().item(1).setEnabled(not friction)', content)
+        self.assertIn("direct=kind=='vector' and self.mode.currentIndex() in (0,1)", content)
         self.assertIn("mode='mass' if self.mode.currentIndex()==1 else 'simple'", content)
-        self.assertIn('if self.mode.currentIndex() not in (0,1):', content)
 
 
 @unittest.skipUnless(HAS_GDAL, 'GDAL/OGR indisponível')

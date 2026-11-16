@@ -82,13 +82,15 @@ essas bibliotecas faltam.
 - **Combinação vetorial (1.2.0, decisões de método):** sobreposições internas com largura média
   < 1 cm são toleradas (registradas no resumo); resíduos de cruzamento < 1 cm são incorporados ao
   vizinho de maior fronteira comum. Campos do mapa: `COD_nn`/`LEG_nn`.
-- **Voronoi (1.3.0):** saídas “GeoTIFF”, “Vetor direto (Simples e Com Massa)”, “Vetor
-  (poligonização)” (todas as modalidades, GeoTIFF descartado) e “GeoTIFF + vetor”; formatos
-  vetoriais de `rs2_vector.VECTOR_FORMATS` via `voronoi_output.py` (GeoPackage de trabalho →
-  `VectorTranslate`; publicação da família de arquivos com reversão). Padrão: GeoPackage.
-  Vetor direto Com Massa (`mass_voronoi_polygons`, decisão de método do autor na 1.3.0): discos
-  de Apolônio e bissetrizes em OGR/GEOS, arcos com tolerância de 1 cm (desvio máximo 2/3 cm, sem
-  viés), polígono do disco gerado sobre a extensão inteira para os vizinhos coincidirem.
+- **Voronoi (1.3.0):** guias “Raster” e “Vetorial” (grupos de modelo e dados compartilhados,
+  movidos em `_tab_changed`); “Salvar em” no padrão do plugin (vetor temporário em memória via
+  `materialize_in_memory`); formatos de `rs2_vector.VECTOR_FORMATS` pelo filtro do “Salvar
+  como…”, gravados via `voronoi_output.py`. Vetorial: Simples e Com Massa exatos
+  (`save_vector_voronoi`; Com Massa = `mass_voronoi_polygons`, decisão de método do autor na
+  1.3.0: discos de Apolônio e bissetrizes em OGR/GEOS, tolerância de 1 cm, desvio máximo 2/3 cm,
+  sem viés, disco gerado sobre a extensão inteira para os vizinhos coincidirem); com atrito,
+  poligonização na grade do atrito (`run_voronoi(vectorize=True, keep_raster=False)`). O autor
+  retirou “Vetor (poligonização)” e “GeoTIFF + vetor”: não reintroduzir sem pedido.
 - **Mann–Kendall** saiu da Monitoria na 1.2.0 e volta como módulo próprio na 2.0;
   `monitoring_trends.py` e as funções de relatório ficam reservadas.
 - **Avaliação:** as três guias têm o mesmo leiaute (projeto, escala, critérios e pesos, classes,

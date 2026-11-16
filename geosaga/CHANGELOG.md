@@ -1,31 +1,31 @@
-## 1.3.0 — Voronoi: saída vetorial em todas as modalidades (em desenvolvimento)
+## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (em desenvolvimento)
 
-- **Análises Voronoi, vetor direto Com Massa (novo cálculo vetorial):** a opção “Vetor direto”
-  passa a valer também para a modalidade Com Massa. As fronteiras são calculadas exatamente,
-  sem grade: entre centros de massas diferentes, arcos de círculos de Apolônio (o mais leve
-  vence dentro do disco em que d_leve/d_pesado < M_leve/M_pesado); entre massas iguais,
-  bissetrizes. Os arcos são aproximados por segmentos com desvio máximo de 2/3 de 1 cm, sem
-  viés de área; vizinhos usam o mesmo arco, sem sobreposições nem lacunas. Uma região pode ter
-  mais de uma parte (multipolígono). O cálculo raster Com Massa não mudou; suas áreas convergem
-  para as do vetor direto quando a resolução diminui (25 centros: diferença média de 2,0% a
-  100 m, 0,5% a 30 m e 0,04% a 10 m).
-- **Análises Voronoi, nova saída “Vetor (poligonização)”:** disponível nas quatro modalidades
-  (Simples, Com Massa, Com Atrito e Com Massa e Atrito). O cálculo é o mesmo da saída raster, feito
-  na grade; o GeoTIFF intermediário é descartado e só a camada vetorial, o CSV e o TXT ficam.
-  Antes, nas modalidades com massa ou atrito, a única forma de obter polígonos era gravar também
-  o GeoTIFF (“GeoTIFF + GeoPackage”).
-- **Formato vetorial à escolha:** GeoPackage, Shapefile, GeoJSON ou FlatGeobuf, os mesmos do
-  Conversor de Formatos, nas três saídas vetoriais (“Vetor direto (somente Simples)”, “Vetor
-  (poligonização)” e “GeoTIFF + vetor (poligonização)”). O padrão continua GeoPackage. O vetor
-  direto (Simples e Com Massa) fica indisponível só nas modalidades com atrito.
-- Ao trocar do vetor direto para uma modalidade com massa ou atrito, a saída passa para “Vetor
-  (poligonização)”, em vez de voltar ao GeoTIFF.
-- O `_resumo.txt` registra que os polígonos vêm da poligonização da grade (bordas nos pixels, com o
-  tamanho da célula) e o formato gravado.
-- Mensagens de conclusão do Voronoi traduzidas para inglês e espanhol (antes ficavam em português).
-- **Nenhum algoritmo de cálculo foi alterado:** com a saída padrão, o GeoTIFF, os polígonos
-  GeoPackage e o CSV são idênticos byte a byte aos da 1.2.1 (conferido nas modalidades Simples e
-  Com Massa).
+- **Análises Voronoi no padrão dos demais módulos:** guias “Raster” e “Vetorial”, como na
+  Combinação de Mapas e na Monitoria; grupos “Modelo de influência”, “Dados de entrada” e
+  “Resultado”, compartilhados pelas duas guias (o preenchimento acompanha a troca de guia).
+- **Saída no padrão do plugin:** campo “Salvar em” com “Salvar como…”. Em branco: raster em
+  arquivo temporário; vetor em camada temporária em memória. Preenchido: salvo nesse arquivo.
+  Sempre carregado no QGIS. Saem as caixas “Resultado temporário” e “Adicionar ao projeto”, o
+  menu “Formato de saída” e o seletor de formato vetorial.
+- **Formatos vetoriais pelo filtro do “Salvar como…”**, como no QGIS: GeoPackage, Shapefile,
+  GeoJSON ou FlatGeobuf (os do Conversor de Formatos). Sem arquivo indicado, GeoPackage
+  temporário copiado para a memória.
+- **Guia Vetorial nas quatro modalidades:**
+  - Simples: polígonos exatos (bissetrizes), como antes;
+  - **Com Massa (cálculo novo):** fronteiras exatas, sem grade: arcos de círculos de Apolônio
+    entre massas diferentes (o mais leve vence no disco em que d_leve/d_pesado < M_leve/M_pesado),
+    bissetrizes entre massas iguais. Arcos com desvio máximo de 2/3 de 1 cm, sem viés de área;
+    vizinhos usam o mesmo arco (sem sobreposições nem lacunas); regiões podem ser
+    multipolígonos. As áreas do raster Com Massa convergem para as do vetor (25 centros:
+    diferença média de 2,0% a 100 m, 0,5% a 30 m e 0,04% a 10 m);
+  - **Com Atrito e Com Massa e Atrito:** o atrito é uma superfície raster, sem fronteira
+    geométrica exata; o cálculo é feito na grade da superfície de atrito e convertido em
+    polígonos (bordas nos pixels), sem guardar o GeoTIFF. O `_resumo.txt` registra isso.
+- Saem as opções “Vetor (poligonização)” e “GeoTIFF + vetor (poligonização)”.
+- Aviso antes de substituir resultados existentes, como na Combinação de Mapas.
+- Mensagens de conclusão do Voronoi traduzidas para inglês e espanhol.
+- **Cálculos existentes inalterados:** o GeoTIFF e o CSV da guia Raster são idênticos byte a
+  byte aos da 1.2.1 (modalidades Simples e Com Massa conferidas).
 
 ## 1.2.1 — Correções de interface (2026-11-16)
 
