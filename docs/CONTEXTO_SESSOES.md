@@ -40,7 +40,9 @@ Implementado na branch `feat/voronoi-atrito-fiel` (versão 1.4.0 no `metadata.tx
 Pendências:
 - [ ] Autor testa a dev1 no QGIS 4 com `caso_atrito_vetorial.gpkg` (esperado: 99,69% com massa e
       classes; 99,67% com atrito e coluna; Simples e Com Massa 100%, exceto empates).
-- [ ] Autor responde: algum mapa da tese usa o Com Massa/atrito da 1.3? (decide reprocessamento)
+- [x] Esclarecido pelo autor (17/11): o desenvolvimento do plugin é separado da tese, que fica fora
+      destas sessões. Não perguntar sobre mapas da tese nas sessões do plugin; o autor chama quando
+      voltar à tese. O rigor de método do `CLAUDE.md` continua valendo para o plugin.
 - [ ] Autor confirma: sem opção "legado 1.3" na interface.
 - [ ] Nota 0: permitida (custo zero), comportamento do Vista SAGA com nota 0 não testado.
 - [ ] Leitura/gravação do arquivo de pontos do Vista SAGA (contagem a partir de 1): não feito.
@@ -49,8 +51,8 @@ Pendências:
 
 - **Massa: M/d²** (como o Vista SAGA), no raster e no vetor exato (discos de Apolônio com razão √M).
 - **Atrito com superfície vetorial** nas modalidades Com Atrito e Com Massa e Atrito (pedido do autor).
-- Ainda sem resposta: se algum resultado da tese usa o Com Massa da 1.3 (orientador insistiu: decide
-  se há mapas a refazer); o que a massa representa no estudo.
+- Perguntas sobre a tese (mapas da 1.3, significado da massa): fora do escopo destas sessões, por
+  decisão do autor (ver entrada da dev1).
 
 ## 17/11/2026 (noite) — reteste no QGIS com os pontos corrigidos: Simples homologado
 
