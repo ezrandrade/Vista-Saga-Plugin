@@ -19,8 +19,7 @@ o contexto. O resumo abaixo foi reconstruído a partir do histórico dela.
 - **Build de teste:** `Vista_Saga_Plugin_QGIS4_v1.3.0-dev3.zip` = commit `9476819`.
   O autor testou no QGIS e aprovou ("Deu certo").
 - Conteúdo: ver `geosaga/NOTAS_DA_VERSAO_130.md` e `geosaga/CHANGELOG.md`.
-- **Decisão pendente do autor:** fechar a 1.3.0 como está (mesclar o PR 12) e tratar o atrito
-  numa versão própria (1.4.0).
+- **Decisão do autor (17/11):** fechar a 1.3.0 como está e tratar o atrito na 1.4.0.
 
 ### Achado de método: o modelo de atrito do Voronoi
 
@@ -102,7 +101,8 @@ Norte = origem − 700 × Y. Datum e fuso não podem ser deduzidos das coordenad
 
 ### Pendências abertas
 
-- [ ] Autor decide: fechar a 1.3.0 e mesclar o PR 12.
+- [x] 1.3.0 fechada em 17/11/2026 e PR 12 mesclado a pedido do autor. Tag `v1.3.0` pendente:
+      usar o commit de merge do PR 12 na `main` (o autor cria pelo Codespaces).
 - [ ] Autor gera o caso de teste com atrito no Vista SAGA (necessário para a 1.4.0).
 - [ ] Autor responde: o Vista SAGA que usa tem a escolha entre M/(d + a) e M/(d × a)?
 - [ ] Autor responde: faixa de valores de atrito usada (há notas 0?).

@@ -1,4 +1,4 @@
-## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (em desenvolvimento)
+## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (2026-11-17)
 
 - **Análises Voronoi no padrão dos demais módulos:** guias “Raster” e “Vetorial”, como na
   Combinação de Mapas e na Monitoria; grupos “Modelo de influência”, “Dados de entrada” e

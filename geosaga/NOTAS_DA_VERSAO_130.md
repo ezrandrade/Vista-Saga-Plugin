@@ -1,6 +1,6 @@
 # Vista Saga Plugin 1.3.0 — notas da versão
 
-> Versão em desenvolvimento. Inclui tudo da 1.2.1. Os cálculos existentes não mudaram; a 1.3.0
+> Versão de 17/11/2026. Inclui tudo da 1.2.1. Os cálculos existentes não mudaram; a 1.3.0
 > acrescenta um cálculo novo, o vetor exato Com Massa.
 
 ## O que muda para quem usa
@@ -54,6 +54,15 @@ intermediário não é guardado. O `_resumo.txt` registra o tamanho da célula.
 
 **GeoJSON:** a especificação atual prevê coordenadas em WGS 84; o GDAL grava o SRC projetado como
 extensão antiga do formato. Para a tese, prefira GeoPackage.
+
+## Limitação conhecida: modelo de atrito
+
+O modelo de atrito não mudou nesta versão e continua experimental. Testes feitos durante a 1.3.0
+mostraram que ele depende da direção e da resolução da superfície de atrito e que, no modo Com
+Massa e Atrito, as massas atuam como raiz quadrada. Uma análise do Vista SAGA original indica o
+mesmo efeito da massa, mas também diferenças de cálculo em relação ao plugin, ainda não validadas.
+A revisão do modelo fica para a 1.4.0, com validação no Vista SAGA original (detalhes em
+`docs/CONTEXTO_SESSOES.md`, no repositório).
 
 ## Homologação pedida ao autor (QGIS para Windows)
 
