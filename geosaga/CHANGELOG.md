@@ -1,3 +1,27 @@
+## 1.4.0 — Voronoi fiel ao Vista SAGA e atrito vetorial (em teste)
+
+- **Mudança de método, validada contra o Vista SAGA original** (caso sintético de 80 × 60
+  células, comparação célula a célula; ver `NOTAS_DA_VERSAO_140.md`):
+  - **Com Massa: maior M/d²** (antes, M/d). Raster: menor d²/M. Vetor exato: discos de Apolônio
+    com razão √(M_leve/M_pesado). Reproduz 100% das células do Vista SAGA (exceto empates); o
+    modelo antigo divergia em 15,6% das células.
+  - **Atrito no modelo do Vista SAGA:** custo acumulado = soma de distância ao polo × nota ×
+    passo (√2 na diagonal) nas células da reta de Bresenham polo-célula; com massa, dividido
+    pela massa (equivale a M/d²). A **nota entra direto como custo** (nota 1 = custo basal; sai o
+    1 + C). Reproduz 99,7% das células; as diferenças ficam na fronteira entre regiões. A célula
+    do polo é sempre dele. Poda exata reformulada.
+  - Com Atrito e Com Massa e Atrito deixam de ser "experimentais".
+- **Superfície de atrito vetorial** (Com Atrito e Com Massa e Atrito), além da raster:
+  polígonos com nota por **classe** (tabela classe → nota, como na Avaliação: “—” bloqueia a
+  execução; uma classe pode ser barreira) ou por **coluna** numérica. A **área sem polígono**
+  recebe uma nota informada ou é barreira; sem escolha, só roda se os polígonos cobrirem a grade.
+  Os polígonos viram notas na grade da análise (extensão e resolução escolhidas), pelo centro da
+  célula, sem reprojeção (a camada precisa estar no SRC da análise). O `_resumo.txt` registra
+  camada, campo, notas, área sem polígono e contagens.
+- Rasters de atrito antigos com valor 0 passam a ter custo zero: revise essas superfícies.
+- Scripts de validação: `scripts/gerar_caso_atrito.py`, `scripts/comparar_caso_atrito.py`,
+  `scripts/comparar_vetor_plugin.py`.
+
 ## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (2026-11-17)
 
 - **Análises Voronoi no padrão dos demais módulos:** guias “Raster” e “Vetorial”, como na

@@ -6,6 +6,45 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (noite) — 1.4.0-dev1 implementada
+
+Decisões do autor (17/11): massa **M/d²**; **atrito vetorial** nas modalidades com atrito, com notas
+por **classe** (tabela, como na Avaliação) **ou por coluna**; a **área sem polígono** recebe nota
+informada (ou barreira); custo = **nota direta** (sem 1 + C). Sem modelo "legado 1.3" na interface:
+quem precisar reproduzir resultados antigos usa o ZIP da versão antiga (decisão do orientador, a
+confirmar com o autor).
+
+Implementado na branch `feat/voronoi-atrito-fiel` (versão 1.4.0 no `metadata.txt`):
+
+- `voronoi_core.assign_window('mass')`: d²/M. `voronoi_vector._apollonius_disk`: k = √(M_l/M_p).
+- `voronoi_friction.py` reescrito: `_vista_saga_cost_batch` (Bresenham vetorizado, Σ d × nota ×
+  passo), poda exata com limite nota_mín × lado² × n(n+1)/2, célula do polo sempre do polo, sem
+  `baseline`. Reproduz exatamente os números da validação (16 e 15 células).
+- `voronoi_friction_vector.py` (novo): notas por classe/coluna, área sem polígono (nota, barreira
+  ou exigência de cobertura total), rasterização pelo centro da célula (MEM/"Memory" do OGR).
+- Diálogo: "Tipo de superfície" (Raster/Vetorial), camada de polígonos, "Notas por", campo de
+  classe + "Notas das classes…", coluna de atrito, "Área sem polígono" (“—”/nota + Barreira);
+  grade da análise (extensão + resolução) também na guia Vetorial com atrito vetorial; o SRC da
+  análise é o da camada de polígonos (pontos convertidos, como no atrito raster).
+- Modalidades com atrito sem "(experimental)"; textos, metadados e `_resumo.txt` atualizados.
+- Testes: 074/081/086 reescritos contra `geosaga/tests/friction_reference.py` (Python puro);
+  `test_140_voronoi_vista_saga_case.py` (regressão do caso) e `test_140_friction_vector.py`.
+  Suítes: 440 (3 pulados) + 36, verdes.
+- Conferência de ponta a ponta em **QGIS 3.34 offscreen** (o do Ubuntu; não é o alvo): caso em
+  polígonos → 99,69% (classes, com massa), 99,67% (coluna), 99,69% (guia Vetorial); mensagens de
+  cobertura incompleta, polo sobre barreira e classe sem nota conferidas. `gui_monkey`: nenhuma
+  exceção no Voronoi (só as do Processing, API exclusiva do QGIS 4).
+- ZIP de teste: `Vista_Saga_Plugin_QGIS4_v1.4.0-dev1.zip` + `caso_atrito_vetorial.gpkg`
+  (camadas `uso_atrito`, com CLASSE e ATRITO, e `pontos`, nos centros usados pelo Vista SAGA).
+
+Pendências:
+- [ ] Autor testa a dev1 no QGIS 4 com `caso_atrito_vetorial.gpkg` (esperado: 99,69% com massa e
+      classes; 99,67% com atrito e coluna; Simples e Com Massa 100%, exceto empates).
+- [ ] Autor responde: algum mapa da tese usa o Com Massa/atrito da 1.3? (decide reprocessamento)
+- [ ] Autor confirma: sem opção "legado 1.3" na interface.
+- [ ] Nota 0: permitida (custo zero), comportamento do Vista SAGA com nota 0 não testado.
+- [ ] Leitura/gravação do arquivo de pontos do Vista SAGA (contagem a partir de 1): não feito.
+
 ## 17/11/2026 (noite) — decisões do autor para a 1.4.0
 
 - **Massa: M/d²** (como o Vista SAGA), no raster e no vetor exato (discos de Apolônio com razão √M).
