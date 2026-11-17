@@ -3,8 +3,7 @@ import unittest
 
 import numpy as np
 
-from geosaga.voronoi_friction_vector import (BARRIER, check_rating, describe, ratings_from_classes,
-                                             ratings_from_column)
+from geosaga.voronoi_friction_vector import BARRIER, check_rating, describe, ratings_from_column
 
 try:
     from osgeo import ogr, osr
@@ -14,15 +13,6 @@ except ImportError:  # pragma: no cover - depende do ambiente
 
 
 class RatingTests(unittest.TestCase):
-    def test_classes_map_to_ratings_and_barriers(self):
-        got = ratings_from_classes(['Mata', 'Pasto', None, 'Rio', 3], {'Mata': 5, 'Pasto': '1,5'.replace(',', '.'), '3': 2},
-                                   barriers=['Rio'])
-        self.assertEqual(got, [5.0, 1.5, None, BARRIER, 2.0])
-
-    def test_missing_class_blocks_with_list(self):
-        with self.assertRaisesRegex(ValueError, 'Classes sem nota de atrito: Urbano, Solo'):
-            ratings_from_classes(['Mata', 'Urbano', 'Solo', 'Urbano'], {'Mata': 1})
-
     def test_column_values(self):
         self.assertEqual(ratings_from_column([1, 0, None, '2.5']), [1.0, 0.0, None, 2.5])
         for bad in (-1, float('nan'), 'abc'):
@@ -36,11 +26,10 @@ class RatingTests(unittest.TestCase):
             check_rating(-0.1, 'x')
 
     def test_describe_lists_choices(self):
-        spec = {'layer_name': 'uso', 'class_field': 'CLASSE', 'notes': {'Mata': 5.0}, 'barriers': ['Rio'],
-                'outside': 1.0, 'skipped': 2}
+        spec = {'layer_name': 'uso', 'rating_field': 'ATRITO', 'skipped': 2}
         text = describe(spec, {'features': 4, 'uncovered_cells': 10, 'barrier_cells': 3}, 10)
-        for piece in ('Superfície de atrito vetorial', 'campo CLASSE', 'Mata: 5', 'Rio: barreira',
-                      'Área sem polígono: nota 1', 'centro da célula', 'campo vazio'):
+        for piece in ('Superfície de atrito vetorial', 'coluna ATRITO', 'barreira', 'centro da célula',
+                      'coluna vazia: 2'):
             self.assertIn(piece, text)
 
 

@@ -25,8 +25,8 @@ def _polygon_area(ring):
 class MassDirectWiringTests(unittest.TestCase):
     def test_dialog_enables_direct_vector_for_mass(self):
         content = (Path(__file__).resolve().parents[1] / 'voronoi_dialog.py').read_text(encoding='utf-8')
-        self.assertIn("direct=kind=='vector' and self.mode.currentIndex() in (0,1)", content)
-        self.assertIn("mode='mass' if self.mode.currentIndex()==1 else 'simple'", content)
+        self.assertIn("direct=kind=='vector'\n", content)
+        self.assertIn("'mass' if self.mode.currentIndex()==1 else 'simple'", content)
 
 
 @unittest.skipUnless(HAS_GDAL, 'GDAL/OGR indisponível')
@@ -145,7 +145,8 @@ class SaveMassVectorTests(unittest.TestCase):
 
     def test_friction_mode_rejected(self):
         from geosaga.voronoi_vector import save_vector_voronoi
-        with self.assertRaisesRegex(ValueError, 'Simples e Com Massa'):
+        # 1.4.0: o vetor direto com atrito existe, mas exige os polígonos de atrito.
+        with self.assertRaisesRegex(ValueError, 'polígonos de atrito'):
             save_vector_voronoi(self.points, self.bounds, str(Path(self.folder.name) / 'x.gpkg'),
                                 self.wkt, mode='friction')
 

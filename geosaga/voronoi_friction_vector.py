@@ -5,10 +5,9 @@ da análise (extensão e resolução escolhidas pelo usuário), pela regra do ce
 célula recebe a nota do polígono que contém o seu centro). Onde polígonos se sobrepõem, vale o
 último na ordem das feições.
 
-A nota de cada polígono vem de uma tabela classe → nota (como na Avaliação) ou de uma coluna
-numérica da camada. A área sem polígono recebe uma nota informada pelo usuário ou é barreira; o
-plugin nunca supõe uma nota. Barreira = NoData: a célula não recebe resultado e nenhuma reta
-passa por ela.
+A nota de cada polígono vem de uma coluna numérica da camada (decisão do autor: sem atribuição
+manual). A área sem polígono e as feições com a coluna vazia são barreira = NoData: a célula não
+recebe resultado e nenhuma reta passa por ela; o plugin nunca supõe uma nota.
 
 Os dados chegam já extraídos do QGIS na thread principal (WKB + nota); aqui só há GDAL/OGR, na
 thread da tarefa. Sem reprojeção: as geometrias precisam estar no SRC da grade.
@@ -33,33 +32,6 @@ def check_rating(value, label):
     if not math.isfinite(rating) or rating < 0:
         raise ValueError(f'Nota de atrito inválida (use valor >= 0): {label}.')
     return rating
-
-
-def ratings_from_classes(values, notes, barriers=()):
-    """Traduz o valor de classe de cada feição em nota; None (campo vazio) fica fora da grade.
-
-    values: valor do campo de classe por feição (None = vazio). notes: {classe (texto): nota}.
-    barriers: classes marcadas como barreira. Classes sem nota bloqueiam (lista na mensagem).
-    """
-    barriers = {str(code) for code in barriers}
-    out, missing = [], []
-    for value in values:
-        if value is None:
-            out.append(None)
-            continue
-        key = str(value)
-        if key in barriers:
-            out.append(BARRIER)
-        elif key in notes:
-            out.append(check_rating(notes[key], key))
-        else:
-            out.append(None)
-            if key not in missing:
-                missing.append(key)
-    if missing:
-        shown = ', '.join(missing[:20]) + (', …' if len(missing) > 20 else '')
-        raise ValueError(f'Classes sem nota de atrito: {shown}. Atribua uma nota ou marque "Barreira".')
-    return out
 
 
 def ratings_from_column(values):
@@ -133,22 +105,12 @@ def rasterize_friction(features, outside, geotransform, width, height, projectio
 def describe(spec, stats, resolution):
     """Linhas do relatório _resumo.txt sobre a superfície vetorial."""
     lines = ['', 'Superfície de atrito vetorial',
-             f"Camada: {spec.get('layer_name', '')}"]
-    if spec.get('class_field'):
-        lines.append(f"Notas por classe do campo {spec['class_field']} (tabela classe → nota):")
-        for code, rating in sorted(spec.get('notes', {}).items(), key=lambda item: str(item[0])):
-            lines.append(f'  {code}: {rating:g}')
-        for code in spec.get('barriers', []):
-            lines.append(f'  {code}: barreira')
-    else:
-        lines.append(f"Notas da coluna {spec.get('rating_field', '')}.")
-    outside = spec.get('outside')
-    lines.append('Área sem polígono: ' + ('barreira' if outside == BARRIER else
-                 'não informada (exige cobertura total)' if outside is None else f'nota {outside:g}'))
-    lines.append(f'Rasterização pelo centro da célula, resolução {resolution:g} unidades do SRC; '
-                 'em sobreposições vale a última feição.')
-    lines.append(f"Feições usadas: {stats['features']}; células sem polígono: {stats['uncovered_cells']}; "
-                 f"células de barreira: {stats['barrier_cells']}.")
+             f"Camada: {spec.get('layer_name', '')}; notas da coluna {spec.get('rating_field', '')}.",
+             'Área sem polígono e feições com a coluna vazia: barreira (sem resultado e sem passagem).',
+             f'Rasterização pelo centro da célula, resolução {resolution:g} unidades do SRC; '
+             'em sobreposições vale a última feição.',
+             f"Feições usadas: {stats['features']}; células sem polígono: {stats['uncovered_cells']}; "
+             f"células de barreira: {stats['barrier_cells']}."]
     if spec.get('skipped'):
-        lines.append(f"Feições com o campo vazio (tratadas como área sem polígono): {spec['skipped']}.")
+        lines.append(f"Feições com a coluna vazia: {spec['skipped']}.")
     return '\n'.join(lines) + '\n'

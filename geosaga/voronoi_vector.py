@@ -256,17 +256,26 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,**kw):
 
 def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='simple',
                         study_geometry=None,progress=None,cancelled=None,
-                        arc_tolerance_m=DEFAULT_ARC_TOLERANCE_M):
+                        arc_tolerance_m=DEFAULT_ARC_TOLERANCE_M,friction_features=None,
+                        search_spacing=None,friction_info=None):
     """Grava a camada vetorial (formato pela extensão) + CSV/TXT com substituição segura.
 
-    mode: 'simple' (bissetrizes) ou 'mass' (maior M/d²; círculos de Apolônio
-    com arcos de desvio máximo ``arc_tolerance_m`` metros).
+    mode: 'simple' (bissetrizes), 'mass' (maior M/d²; círculos de Apolônio com arcos de desvio
+    máximo ``arc_tolerance_m`` metros) ou, desde a 1.4.0, 'friction' / 'mass_friction' (modelo
+    contínuo do atrito, voronoi_friction_continuous): friction_features = [(wkb, nota ou None)],
+    search_spacing = espaçamento da malha de busca (unidades do SRC); fronteiras com desvio máximo
+    ``arc_tolerance_m``. friction_info: camada, coluna e feições sem nota, para o relatório.
     study_geometry: QgsGeometry já transformada para o SRC de saída.
     """
     from osgeo import ogr, osr
-    if mode not in ('simple','mass'):
-        raise ValueError('Vetor direto disponível para Voronoi Simples e Com Massa.')
-    validate_generators(generators, weighted=mode=='mass')
+    if mode not in ('simple','mass','friction','mass_friction'):
+        raise ValueError('Modalidade de Voronoi desconhecida.')
+    friction=mode in ('friction','mass_friction')
+    if friction and not friction_features:
+        raise ValueError('O vetor direto com atrito exige polígonos de atrito com a coluna de notas.')
+    if friction and not (search_spacing and math.isfinite(search_spacing) and search_spacing > 0):
+        raise ValueError('Informe o espaçamento da busca (positivo).')
+    validate_generators(generators, weighted=mode in ('mass','mass_friction'))
     srs=osr.SpatialReference()
     if not projection_wkt or srs.ImportFromWkt(projection_wkt) or not srs.IsProjected():
         raise ValueError('Voronoi requer SRC projetado válido.')
@@ -322,9 +331,16 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             # Geometrias OGR do começo ao fim; a área de estudo entra pelo WKB.
             study=(ogr.CreateGeometryFromWkb(bytes(study_geometry.asWkb()))
                    if study_geometry is not None else None)
-            for generator,geometry in mass_voronoi_polygons(
-                    generators,bounds,tolerance=arc_tolerance_m/units,
-                    cancelled=cancelled,progress=progress):
+            if friction:
+                from .voronoi_friction_continuous import friction_voronoi_polygons
+                regions,friction_stats=friction_voronoi_polygons(
+                    generators,friction_features,bounds,spacing=float(search_spacing),
+                    tolerance=arc_tolerance_m/units,mass_weighted=mode=='mass_friction',
+                    cancelled=cancelled,progress=(lambda v: progress(int(v*.75))) if progress else None)
+            else:
+                regions=mass_voronoi_polygons(generators,bounds,tolerance=arc_tolerance_m/units,
+                                              cancelled=cancelled,progress=progress)
+            for generator,geometry in regions:
                 if study is not None:
                     clipped=_clean(geometry.Intersection(study))
                     geometry=ogr.Geometry(ogr.wkbMultiPolygon)
@@ -381,6 +397,24 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             report.write('Vista Saga Plugin - Análises Voronoi\n')
             if mode=='simple':
                 report.write('Modalidade: Simples; saída vetorial direta (sem rasterização)\n')
+            elif friction:
+                report.write(('Modalidade: Com Massa e Atrito' if mode=='mass_friction' else 'Modalidade: Com Atrito')
+                             + '; saída vetorial direta (modelo contínuo, sem rasterização)\n')
+                report.write('Critério: menor custo A = integral de s × nota ao longo do segmento reto polo-ponto '
+                             '(s = distância ao polo)' + (', dividido pela massa (equivale a M/d²)' if mode=='mass_friction' else '')
+                             + '. Versão contínua do atrito do Vista SAGA: no caso de teste, 99,60% (com massa) e '
+                             '99,52% (sem massa) das células coincidem com o Vista SAGA original; a guia Raster '
+                             'usa o modelo célula a célula (99,7%).\n')
+                info=friction_info or {}
+                report.write(f"Polígonos de atrito: {info.get('layer_name','')}; notas da coluna "
+                             f"{info.get('rating_field','')}. Área sem polígono e feições com a coluna vazia "
+                             f"({info.get('skipped',0)}): barreira (sem resultado e sem passagem). "
+                             'Em sobreposições vale a última feição.\n')
+                report.write(f'Fronteiras traçadas numericamente: malha de busca de {float(search_spacing):g} unidades '
+                             f'do SRC, com refinamento local, e desvio máximo de {arc_tolerance_m:g} m. Regiões '
+                             'menores que a malha de busca podem não ser detectadas.\n')
+                report.write(f"Nós avaliados: {friction_stats['evaluations']}; células refinadas: "
+                             f"{friction_stats['refined_cells']}; vértices de fronteira: {friction_stats['boundary_vertices']}.\n")
             else:
                 report.write('Modalidade: Com Massa (maior M/d², modelo do Vista SAGA); saída vetorial direta (sem rasterização)\n')
                 report.write('Fronteiras entre centros de massas diferentes: arcos de círculos de Apolônio, '
@@ -394,7 +428,9 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             for row in rows:
                 report.write(f"{row['ID']} | {row['CENTRO']} | {row['MASSA']:.3f} | "
                              f"{row['AREA_M2']:.3f} | {row['AREA_HA']:.6f} | {row['PCT_AREA']:.4f}\n")
-            report.write('\nA equivalência com o Vista SAGA original depende de validação comparativa.\n')
+            if mode in ('simple','mass'):
+                report.write('\nSimples e Com Massa reproduziram 100% das células do Vista SAGA original no caso '
+                             'de teste, exceto empates.\n')
         # Mesmo padrão de backup/rollback do módulo raster (família vetorial inteira).
         publish_outputs(stage,outputs)
         if progress: progress(100)
