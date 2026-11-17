@@ -6,6 +6,21 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (noite) — reteste no QGIS com os pontos corrigidos: Simples homologado
+
+O autor refez o vetorial com `docs/caso_atrito/pontos_qgis.csv` (`Voronoi_Plugin_{Simples,Massa}_2.gpkg`).
+`python3.12 scripts/comparar_vetor_plugin.py VS PLUGIN _2 qgis`:
+
+- **Simples: 99,96% (2 células), e as 2 são empates exatos** entre B e C (células 45:23 e 55:26,
+  equidistantes). Excluídos os empates, 100%. **Homologado pelo autor no QGIS 4.2.2.**
+- **Desempate do Vista SAGA:** nas 4 células empatadas da grade (45:23, 55:26, 65:29, 75:32), vence o
+  polo que vem **primeiro no arquivo** (B antes de C). É a mesma regra do raster do plugin (`<` estável
+  em `assign_window`). No vetor, o empate é a própria fronteira; a rasterização pelo centro escolhe
+  qualquer lado, o que não é erro do plugin.
+- **Com Massa: 84,39% (749 células), exatamente o previsto** a partir do código; 100% contra o modelo do
+  próprio plugin. Polo C: 512 células no Vista SAGA, 143 no plugin. Diagnóstico confirmado: a
+  divergência é só o modelo (M/d × M/d²).
+
 ## 17/11/2026 (noite) — vetor do plugin (QGIS 4.2.2) × Vista SAGA
 
 O autor rodou no QGIS o Voronoi **vetorial** Simples e Com Massa (`Voronoi_Plugin_{Simples,Massa}.gpkg`,
