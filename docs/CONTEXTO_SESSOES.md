@@ -6,6 +6,11 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 18/11/2026 — resultados do teste da 1.4.0-dev2 recebidos
+
+- O autor enviou `Voronoi_Vetorial.zip` com os resultados do teste da dev2 no QGIS 4 (análise em
+  andamento nesta sessão; ver a entrada seguinte quando houver).
+
 ## 17/11/2026 (noite) — 1.4.0-dev2 implementada: vetor direto com atrito
 
 - `geosaga/voronoi_friction_continuous.py` (novo): `FrictionSurface` (polígonos com nota, sobreposição
