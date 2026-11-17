@@ -15,8 +15,11 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
   no fim); validação **caixa-preta** (entrada → saída do Vista SAGA), sem nova análise do executável;
   os RS2 de saída não vão para o repositório (regra do `CLAUDE.md`); só o script de comparação e os
   números resumidos.
-- Pendente: o autor reenviar R1–R4 e `pontos_salvo.txt`, com as respostas do roteiro (qual arquivo de
-  pontos funcionou, deslocamentos, notas).
+- **Reenviado** (`teste_voronoi_atrito_2.zip`). Respostas do autor:
+  - funcionou o `pontos_pixel.txt`: coordenadas do arquivo de pontos em **coluna:linha**;
+  - notas de atrito exibidas como 1, 1, 3, 5 (lidas corretamente);
+  - a versão do Vista SAGA usada **não oferece** a escolha entre M/(d + a) e M/(d × a);
+  - não testou atrito igual a 0.
 
 ## 17/11/2026 (tarde) — 1.3.0 fechada; caso de teste do atrito
 
