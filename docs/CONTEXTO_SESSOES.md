@@ -6,6 +6,28 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (tarde) — 1.3.0 fechada; caso de teste do atrito
+
+- **1.3.0 fechada e mesclada** (merge `87406de` na `main`). Tag `v1.3.0` pendente (autor).
+- **Branch da 1.4.0:** `feat/voronoi-atrito-fiel` ("atrito fiel ao Vista SAGA"). Versão do
+  `metadata.txt` ainda 1.3.0: muda junto com a primeira alteração de código.
+- **Caso de teste enviado ao autor** (`teste_voronoi_atrito.zip`), reproduzível com
+  `python scripts/gerar_caso_atrito.py PASTA` (gera arquivos idênticos byte a byte):
+  - `teste_atrito.rs2`: 80 × 60 células de 10 m; bordas X 500000–500800, Y 8900000–8900600;
+    classes 0 FUNDO (ausente do mapa), 1 Atrito baixo, 2 Atrito médio, 3 Atrito alto;
+    faixa vertical de atrito alto (colunas 30–39) com corredor de atrito baixo (linhas 25–34) e
+    bloco alto (linhas 5–19, colunas 55–69);
+  - pontos (coluna, linha, a partir de 0): Polo A M=9 (12, 15); Polo B M=4 (60, 50);
+    Polo C M=1 (72, 10); notas `[ATRITOS]` 1, 1, 3, 5;
+  - `pontos_pixel.txt` (X:Y = coluna:linha) e `pontos_utm.txt` (X:Y = centro da célula), porque
+    a unidade das coordenadas não foi confirmada.
+- **Roteiro pedido ao autor:** abrir o RS2 e conferir com `mapa_previa.png`; carregar
+  `pontos_pixel.txt` (se falhar, `pontos_utm.txt`; anotar qual funcionou e qualquer deslocamento);
+  conferir as notas; rodar e salvar R1 atrito sem massa, R2 atrito com massa, R3 sem atrito com
+  massa, R4 simples; salvar o arquivo de pontos pelo Vista SAGA (`pontos_salvo.txt`).
+- **Próximo passo:** com os quatro RS2 e o `pontos_salvo.txt`, comparar pixel a pixel com a
+  simulação da leitura do executável e fixar o modelo da 1.4.0.
+
 ## 17/11/2026 — recuperação do contexto da sessão de 16/11 (noite)
 
 A sessão de 16/11 que produziu a 1.3.0 foi interrompida por bloqueio automático antes de registrar
@@ -103,7 +125,8 @@ Norte = origem − 700 × Y. Datum e fuso não podem ser deduzidos das coordenad
 
 - [x] 1.3.0 fechada em 17/11/2026 e PR 12 mesclado a pedido do autor. Tag `v1.3.0` pendente:
       usar o commit de merge do PR 12 na `main` (o autor cria pelo Codespaces).
-- [ ] Autor gera o caso de teste com atrito no Vista SAGA (necessário para a 1.4.0).
+- [x] Caso de teste gerado e enviado (17/11).
+- [ ] Autor roda o caso de teste no Vista SAGA e envia R1–R4 e `pontos_salvo.txt`.
 - [ ] Autor responde: o Vista SAGA que usa tem a escolha entre M/(d + a) e M/(d × a)?
 - [ ] Autor responde: faixa de valores de atrito usada (há notas 0?).
 - [ ] Conversão do arquivo de pontos do autor para o formato do Vista SAGA integrado: interrompida
