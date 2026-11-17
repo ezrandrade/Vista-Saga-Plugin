@@ -14,6 +14,8 @@ from collections import Counter
 import numpy as np
 from .voronoi_friction import (validate_friction, assign_friction_window,
                                MAX_FRICTION_CELLS)
+from .voronoi_output import (DEFAULT_EXTENSION, LAYER_NAME, VECTOR_FORMATS, export_vector,
+                             publish_outputs, vector_extension)
 from .voronoi_core import (assign_window, assign_window_nearest,
                            build_nearest_index, validate_generators,
                            counts_as_rows, pixel_area_m2)
@@ -75,8 +77,16 @@ def _write_reports(csv_path, txt_path, mode, rows, excluded, pixel_area):
                 'a equivalência com o Vista SAGA original ainda depende de validação comparativa.\n')
 
 
-def _polygonize(raster_path, gpkg_path, generator_rows, units_to_meters, cancelled=None):
+def _polygonize(raster_path, vector_path, generator_rows, units_to_meters, cancelled=None):
+    """Poligoniza o GeoTIFF de centros no formato vetorial indicado pela extensão.
+
+    A camada é montada num GeoPackage de trabalho (aceita SetFeature) e, se
+    outro formato foi pedido, exportada dele, como no Conversor de Formatos.
+    """
     from osgeo import gdal, ogr, osr
+    extension = vector_extension(vector_path)
+    gpkg_path = (vector_path if extension == '.gpkg'
+                 else os.path.splitext(vector_path)[0] + '_trabalho.gpkg')
     ds = gdal.Open(raster_path, gdal.GA_ReadOnly)
     if ds is None:
         raise RuntimeError('Não foi possível abrir o GeoTIFF intermediário para vetorização.')
@@ -86,7 +96,7 @@ def _polygonize(raster_path, gpkg_path, generator_rows, units_to_meters, cancell
         raise RuntimeError('Não foi possível criar o GeoPackage.')
     srs = osr.SpatialReference()
     srs.ImportFromWkt(ds.GetProjectionRef())
-    layer = vector.CreateLayer('voronoi_espacial', srs, ogr.wkbPolygon)
+    layer = vector.CreateLayer(LAYER_NAME, srs, ogr.wkbPolygon)
     if layer is None:
         raise RuntimeError('Não foi possível criar a camada de polígonos.')
     for name, datatype in [('CENTRO_ID',ogr.OFTInteger),('CENTRO',ogr.OFTString),
@@ -114,12 +124,21 @@ def _polygonize(raster_path, gpkg_path, generator_rows, units_to_meters, cancell
     layer = None
     vector = None
     ds = None
+    if extension != '.gpkg':
+        export_vector(gpkg_path, vector_path)
+        os.remove(gpkg_path)
 
 
 def run_voronoi(points, destination, projection_wkt, geotransform, width, height, *,
                 mode='simple', units_to_meters=1., mask=None, vectorize=False,
-                progress=None, cancelled=None, friction_path=None, friction_components=None):
+                progress=None, cancelled=None, friction_path=None, friction_components=None,
+                vector_format=DEFAULT_EXTENSION, keep_raster=True):
     """Executa Voronoi em janelas e retorna caminhos/estatísticas.
+
+    vectorize: poligoniza o resultado no formato ``vector_format`` (.gpkg,
+    .shp, .geojson ou .fgb), com o mesmo nome-base de ``destination``.
+    keep_raster: False descarta o GeoTIFF depois da poligonização (saída só
+    vetorial); o cálculo continua o mesmo, feito na grade raster.
 
     points: lista de Generator com coordenadas no SRC da grade.
     mask: máscara numpy opcional (TRUE para células válidas); não usada no GUI 0.7.0.
@@ -157,10 +176,12 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
     parent = os.path.dirname(destination)
     if not os.path.isdir(parent):
         raise ValueError('Pasta de destino inexistente.')
+    if not keep_raster and not vectorize:
+        raise ValueError('Sem GeoTIFF, a saída precisa ser vetorial.')
     prefix = os.path.splitext(destination)[0]
     files = [destination, prefix+'_centros.csv', prefix+'_resumo.txt']
     if vectorize:
-        files.append(prefix+'.gpkg')
+        files.append(prefix+vector_extension(vector_format))
     if any(os.path.isdir(f) for f in files):
         raise ValueError('Uma saída coincide com um diretório.')
     # A superfície de atrito é aberta e descarregada na thread da tarefa,
@@ -309,34 +330,27 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
                                  f"notas={spec.get('notes','') or 'valores originais'}\n")
                 report.write('NoData em qualquer superfície: barreira; custo por célula = 1 + atrito integrado.\n')
         if vectorize:
+            with open(local_txt,'a',encoding='utf-8') as report:
+                report.write('\nSaída vetorial\n')
+                report.write('Polígonos obtidos por poligonização da grade raster: as bordas seguem os pixels '
+                             f'(célula de {abs(geotransform[1]):g} × {abs(geotransform[5]):g} unidades do SRC).\n')
+                report.write(f'Formato: {VECTOR_FORMATS[vector_extension(vector_format)][1]}.\n')
+                if not keep_raster:
+                    report.write('O GeoTIFF intermediário foi descartado; o cálculo é o mesmo da saída raster.\n')
             if progress: progress(83)
             local_vec = os.path.join(stage,os.path.basename(files[3]))
             _polygonize(local_tif,local_vec,rows,units_to_meters,cancelled)
             if progress: progress(96)
         if cancelled and cancelled(): raise InterruptedError('Voronoi cancelado pelo usuário.')
-        # Backup com rollback dos arquivos já existentes.
-        backup = os.path.join(stage, '_anteriores')
-        os.makedirs(backup)
-        originals = []
-        try:
-            for p in files:
-                if os.path.isfile(p):
-                    saved = os.path.join(backup,str(len(originals)))
-                    os.replace(p,saved)
-                    originals.append((saved,p))
-            for p in files:
-                local = os.path.join(stage,os.path.basename(p))
-                os.replace(local,p)
-                created.append(p)
-        except Exception:
-            for p in created:
-                if os.path.exists(p): os.remove(p)
-            for saved,p in originals:
-                if os.path.exists(saved): os.replace(saved,p)
-            raise
+        # Backup com rollback dos arquivos já existentes (família vetorial inteira).
+        published = files if keep_raster else files[1:]
+        created.extend(publish_outputs(stage, published))
         if progress: progress(100)
-        return {'output':files[0], 'csv':files[1], 'txt':files[2],
-                'gpkg':files[3] if vectorize else None,'rows':rows,
+        vector_path = files[3] if vectorize else None
+        return {'output':files[0] if keep_raster else None, 'csv':files[1], 'txt':files[2],
+                'vector':vector_path,
+                'gpkg':vector_path if vector_path and vector_path.lower().endswith('.gpkg') else None,
+                'rows':rows,
                 'pixels_valid':sum(count.values()),'pixels_excluded':excluded,
                 'raster_calc_seconds':analysis_seconds,
                 'friction_diagnostics':dict(friction_stats) if mode in ('friction','mass_friction') else None}

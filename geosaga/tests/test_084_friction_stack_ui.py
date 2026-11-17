@@ -14,9 +14,10 @@ class MultiFrictionUI084(unittest.TestCase):
         cls.source = (ROOT/'voronoi_dialog.py').read_text(encoding='utf-8')
 
     def test_scrollable_main_form(self):
-        self.assertIn('scroll = QScrollArea(self)', self.source)
+        # 1.3.0: cada guia (Raster e Vetorial) é uma área rolável.
+        self.assertIn('scroll = QScrollArea()', self.source)
         self.assertIn('scroll.setWidgetResizable(True)', self.source)
-        self.assertIn('layout.addWidget(scroll, 1)', self.source)
+        self.assertIn('self.tabs.addTab(scroll, tr(title))', self.source)
 
     def test_dedicated_chooser_and_summary(self):
         for snippet in ('self.friction_stack_dialog = QDialog(self)',

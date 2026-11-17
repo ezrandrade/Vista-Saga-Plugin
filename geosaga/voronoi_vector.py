@@ -9,6 +9,7 @@ import os
 import shutil
 import tempfile
 from .voronoi_core import validate_generators
+from .voronoi_output import LAYER_NAME, VECTOR_FORMATS, export_vector, publish_outputs
 
 
 def _clip_halfplane(polygon, sx, sy, tx, ty, eps=1e-10):
@@ -67,15 +68,202 @@ def simple_voronoi_polygons(generators, bounds, *, cancelled=None, progress=None
             yield centre,polygon+[polygon[0]]
 
 
-def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
-                        study_geometry=None,progress=None,cancelled=None):
-    """Grava GeoPackage + CSV/TXT com substituição segura.
+DEFAULT_ARC_TOLERANCE_M = 0.01
 
+
+def _ogr_polygon(points):
+    from osgeo import ogr
+    ring = ogr.Geometry(ogr.wkbLinearRing)
+    for x, y in points:
+        ring.AddPoint_2D(float(x), float(y))
+    ring.CloseRings()
+    polygon = ogr.Geometry(ogr.wkbPolygon)
+    polygon.AddGeometry(ring)
+    return polygon
+
+
+def _apollonius_disk(light, heavy):
+    """Disco em que o centro mais leve vence: d_leve / d_pesado < k, k = M_leve / M_pesado < 1."""
+    k = float(light.mass) / float(heavy.mass)
+    factor = 1. - k*k
+    cx = (light.x - k*k*heavy.x) / factor
+    cy = (light.y - k*k*heavy.y) / factor
+    radius = k * math.hypot(light.x-heavy.x, light.y-heavy.y) / factor
+    return cx, cy, radius
+
+
+def _disk_relation(cx, cy, radius, envelope):
+    """'contains' (disco cobre o envelope), 'disjoint' ou 'partial'."""
+    xmin, xmax, ymin, ymax = envelope
+    if all(math.hypot(x-cx, y-cy) <= radius
+           for x, y in ((xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax))):
+        return 'contains'
+    nx, ny = min(max(cx, xmin), xmax), min(max(cy, ymin), ymax)
+    return 'disjoint' if math.hypot(nx-cx, ny-cy) >= radius else 'partial'
+
+
+def _disk_polygon(cx, cy, radius, box, tolerance):
+    """Disco restrito à caixa ``box``, com arco de desvio máximo ``tolerance``.
+
+    A caixa é sempre a extensão inteira (com margem), para que os dois centros
+    de um par usem exatamente o mesmo polígono e a fronteira comum coincida.
+    Com o centro fora da caixa, gera só o setor que a enxerga (setor = disco
+    nesses ângulos), o que mantém poucos vértices mesmo em círculos muito
+    grandes (massas quase iguais).
+    """
+    xmin, ymin, xmax, ymax = box
+    corners = ((xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax))
+    step = 2.*math.acos(max(-1., 1.-tolerance/radius)) if radius > tolerance else math.pi/2.
+    step = max(step, 1.e-7)
+    inside = xmin <= cx <= xmax and ymin <= cy <= ymax
+    if inside:
+        start, end = 0., 2.*math.pi
+    else:
+        angles = [math.atan2(y-cy, x-cx) for x, y in corners]
+        base = angles[0]
+        unwrapped = [base + math.remainder(a-base, 2.*math.pi) for a in angles]
+        start, end = min(unwrapped), max(unwrapped)
+    count = max(8 if inside else 2, int(math.ceil((end-start)/step)))
+    if count > 200000:
+        raise ValueError('Arco de influência com vértices demais; aumente a tolerância ou reduza a extensão.')
+    arc = [(cx + radius*math.cos(start + (end-start)*i/count),
+            cy + radius*math.sin(start + (end-start)*i/count)) for i in range(count + (0 if inside else 1))]
+    # O polígono inscrito fica dentro do círculo. Deslocar os vértices para fora
+    # em 2/3 da flecha zera o viés médio de área (o arco desvia da corda, em
+    # média, 2/3 da flecha); o desvio máximo fica em 2/3 da tolerância.
+    sagitta = radius*(1.-math.cos((end-start)/count/2.))
+    scale = (radius + 2.*sagitta/3.)/radius
+    arc = [(cx + (x-cx)*scale, cy + (y-cy)*scale) for x, y in arc]
+    return _ogr_polygon(arc if inside else [(cx, cy)] + arc)
+
+
+def _halfplane_polygon(centre, other, box):
+    """Semiplano mais próximo de ``centre`` (massas iguais), restrito à caixa."""
+    xmin, ymin, xmax, ymax = box
+    rectangle = [(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
+    clipped = _clip_halfplane(rectangle, centre.x, centre.y, other.x, other.y)
+    if len(clipped) < 3:
+        from osgeo import ogr
+        return ogr.Geometry(ogr.wkbPolygon)
+    return _ogr_polygon(clipped)
+
+
+def _clean(geometry):
+    if geometry is None or geometry.IsEmpty() or geometry.IsValid():
+        return geometry
+    fixed = geometry.MakeValid()
+    if fixed is None:
+        raise ValueError('Geometria inválida durante o Voronoi com Massa.')
+    return fixed
+
+
+def _collect_polygons(geometry, target):
+    """Copia só as partes poligonais (descarta linhas e pontos de contato)."""
+    from osgeo import ogr
+    kind = ogr.GT_Flatten(geometry.GetGeometryType())
+    if kind == ogr.wkbPolygon:
+        if geometry.GetArea() > 0:
+            target.AddGeometry(geometry)
+    elif kind in (ogr.wkbMultiPolygon, ogr.wkbGeometryCollection):
+        for i in range(geometry.GetGeometryCount()):
+            _collect_polygons(geometry.GetGeometryRef(i), target)
+
+
+def mass_voronoi_polygons(generators, bounds, *, tolerance, cancelled=None, progress=None):
+    """Voronoi multiplicativamente ponderado exato (maior M/d vence), em vetor.
+
+    Para cada centro i, a região é a caixa intersectada com os discos de
+    Apolônio em que i vence os centros mais pesados, menos os discos em que
+    os mais leves vencem i, e cortada pelas bissetrizes dos centros de massa
+    igual. Os arcos são aproximados por segmentos com desvio máximo
+    ``tolerance`` (unidades do SRC). Regiões podem ser desconexas.
+    Retorna pares (centro, geometria OGR).
+    """
+    from osgeo import ogr
+    validate_generators(generators, weighted=True)
+    xmin, ymin, xmax, ymax = map(float, bounds)
+    if not all(math.isfinite(v) for v in (xmin, ymin, xmax, ymax)) or xmin >= xmax or ymin >= ymax:
+        raise ValueError('A extensão do Voronoi precisa ter área positiva.')
+    if len(generators) > 1000:
+        raise ValueError('Esta versão aceita até 1.000 centros; divida a análise.')
+    if not math.isfinite(tolerance) or tolerance <= 0:
+        raise ValueError('Tolerância dos arcos inválida.')
+    margin = max(tolerance, 1.e-6*max(xmax-xmin, ymax-ymin))
+    box = (xmin-margin, ymin-margin, xmax+margin, ymax+margin)
+    rectangle = _ogr_polygon([(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)])
+    results = []
+    for idx, centre in enumerate(generators):
+        if cancelled and cancelled():
+            raise InterruptedError('Voronoi cancelado.')
+        heavier, equal, lighter = [], [], []
+        for other in generators:
+            if other.identifier == centre.identifier:
+                continue
+            ratio = float(centre.mass)/float(other.mass)
+            if abs(1.-ratio*ratio) < 1.e-12:
+                equal.append(other)
+            elif ratio < 1.:
+                heavier.append((_apollonius_disk(centre, other), other))
+            else:
+                lighter.append((_apollonius_disk(other, centre), other))
+        region = rectangle.Clone()
+        # Discos que contêm o centro primeiro, do menor para o maior: encolhem a região cedo.
+        for (cx, cy, radius), _ in sorted(heavier, key=lambda item: item[0][2]):
+            relation = _disk_relation(cx, cy, radius, region.GetEnvelope())
+            if relation == 'contains':
+                continue
+            if relation == 'disjoint':
+                region = None
+                break
+            region = _clean(region.Intersection(_disk_polygon(cx, cy, radius, box, tolerance)))
+            if region is None or region.IsEmpty():
+                break
+        if region is not None and not region.IsEmpty():
+            for other in equal:
+                region = _clean(region.Intersection(_halfplane_polygon(centre, other, box)))
+                if region is None or region.IsEmpty():
+                    break
+        if region is not None and not region.IsEmpty():
+            for (cx, cy, radius), _ in lighter:
+                relation = _disk_relation(cx, cy, radius, region.GetEnvelope())
+                if relation == 'disjoint':
+                    continue
+                disk = _disk_polygon(cx, cy, radius, box, tolerance)
+                if relation == 'contains' and disk.Contains(region):
+                    region = None
+                    break
+                region = _clean(region.Difference(disk))
+                if region is None or region.IsEmpty():
+                    break
+        if progress:
+            progress(int((idx+1)*75/len(generators)))
+        if region is None or region.IsEmpty():
+            continue
+        polygons = ogr.Geometry(ogr.wkbMultiPolygon)
+        _collect_polygons(region, polygons)
+        if polygons.GetGeometryCount():
+            results.append((centre, polygons))
+    return results
+
+
+def save_simple_voronoi(generators,bounds,destination,projection_wkt,**kw):
+    """Compatibilidade: Voronoi Simples vetorial direto."""
+    return save_vector_voronoi(generators,bounds,destination,projection_wkt,mode='simple',**kw)
+
+
+def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='simple',
+                        study_geometry=None,progress=None,cancelled=None,
+                        arc_tolerance_m=DEFAULT_ARC_TOLERANCE_M):
+    """Grava a camada vetorial (formato pela extensão) + CSV/TXT com substituição segura.
+
+    mode: 'simple' (bissetrizes) ou 'mass' (maior M/d; círculos de Apolônio
+    com arcos de desvio máximo ``arc_tolerance_m`` metros).
     study_geometry: QgsGeometry já transformada para o SRC de saída.
     """
     from osgeo import ogr, osr
-    from qgis.core import QgsGeometry, QgsPointXY
-    validate_generators(generators)
+    if mode not in ('simple','mass'):
+        raise ValueError('Vetor direto disponível para Voronoi Simples e Com Massa.')
+    validate_generators(generators, weighted=mode=='mass')
     srs=osr.SpatialReference()
     if not projection_wkt or srs.ImportFromWkt(projection_wkt) or not srs.IsProjected():
         raise ValueError('Voronoi requer SRC projetado válido.')
@@ -85,8 +273,9 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
     if study_geometry is not None and (study_geometry.isNull() or study_geometry.isEmpty() or not study_geometry.isGeosValid()):
         raise ValueError('Polígonos da área de estudo inválidos. Corrija a geometria.')
     destination=os.path.abspath(str(destination))
-    if not destination.lower().endswith('.gpkg'):
-        raise ValueError('Escolha um arquivo GeoPackage (.gpkg).')
+    if os.path.splitext(destination)[1].lower() not in VECTOR_FORMATS:
+        raise ValueError('Escolha um arquivo vetorial: GeoPackage (.gpkg), Shapefile (.shp), '
+                         'GeoJSON (.geojson) ou FlatGeobuf (.fgb).')
     folder=os.path.dirname(destination)
     if not os.path.isdir(folder):
         raise ValueError('Diretório de saída inexistente.')
@@ -98,10 +287,12 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
     datasource=None
     try:
         local=os.path.join(stage,os.path.basename(destination))
-        datasource=ogr.GetDriverByName('GPKG').CreateDataSource(local)
+        # GeoPackage de trabalho; outros formatos são exportados dele no fim.
+        work=local if local.lower().endswith('.gpkg') else os.path.splitext(local)[0]+'_trabalho.gpkg'
+        datasource=ogr.GetDriverByName('GPKG').CreateDataSource(work)
         if datasource is None:
             raise OSError('Falha ao criar o GeoPackage.')
-        layer=datasource.CreateLayer('voronoi_espacial',srs=srs,geom_type=ogr.wkbMultiPolygon)
+        layer=datasource.CreateLayer(LAYER_NAME,srs=srs,geom_type=ogr.wkbMultiPolygon)
         if layer is None:
             raise OSError('Falha ao criar camada GeoPackage.')
         for name,kind in [('CENTRO_ID',ogr.OFTInteger),('CENTRO',ogr.OFTString),
@@ -110,18 +301,40 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
             if layer.CreateField(ogr.FieldDefn(name,kind)) != ogr.OGRERR_NONE:
                 raise OSError(f'Falha ao criar campo {name}')
         records=[]
-        for generator,ring in simple_voronoi_polygons(generators,bounds,cancelled=cancelled,progress=progress):
-            geometry=QgsGeometry.fromPolygonXY([[QgsPointXY(*xy) for xy in ring]])
-            if study_geometry is not None:
-                geometry=geometry.intersection(study_geometry)
-            if geometry.isNull() or geometry.isEmpty():
-                continue
-            if not geometry.isGeosValid():
-                raise ValueError(f'Polígono resultante inválido para o centro {generator.identifier}.')
-            area=geometry.area()*(units**2)
-            if area<=1.e-10:
-                continue
-            records.append((generator,geometry,area))
+        if mode=='simple':
+            from qgis.core import QgsGeometry, QgsPointXY
+            for generator,ring in simple_voronoi_polygons(generators,bounds,cancelled=cancelled,progress=progress):
+                geometry=QgsGeometry.fromPolygonXY([[QgsPointXY(*xy) for xy in ring]])
+                if study_geometry is not None:
+                    geometry=geometry.intersection(study_geometry)
+                if geometry.isNull() or geometry.isEmpty():
+                    continue
+                if not geometry.isGeosValid():
+                    raise ValueError(f'Polígono resultante inválido para o centro {generator.identifier}.')
+                area=geometry.area()*(units**2)
+                if area<=1.e-10:
+                    continue
+                records.append((generator,geometry,area))
+        else:
+            # Geometrias OGR do começo ao fim; a área de estudo entra pelo WKB.
+            study=(ogr.CreateGeometryFromWkb(bytes(study_geometry.asWkb()))
+                   if study_geometry is not None else None)
+            for generator,geometry in mass_voronoi_polygons(
+                    generators,bounds,tolerance=arc_tolerance_m/units,
+                    cancelled=cancelled,progress=progress):
+                if study is not None:
+                    clipped=_clean(geometry.Intersection(study))
+                    geometry=ogr.Geometry(ogr.wkbMultiPolygon)
+                    if clipped is not None and not clipped.IsEmpty():
+                        _collect_polygons(clipped,geometry)
+                if geometry.IsEmpty() or not geometry.GetGeometryCount():
+                    continue
+                if not geometry.IsValid():
+                    raise ValueError(f'Polígono resultante inválido para o centro {generator.identifier}.')
+                area=geometry.GetArea()*(units**2)
+                if area<=1.e-10:
+                    continue
+                records.append((generator,geometry,area))
         total=sum(entry[2] for entry in records)
         if not total:
             raise ValueError('A área de análise não contém regiões de influência válidas.')
@@ -129,7 +342,8 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
         for idx,(point,geometry,area) in enumerate(records):
             if cancelled and cancelled():
                 raise InterruptedError('Voronoi cancelado.')
-            geom_ogr=ogr.CreateGeometryFromWkb(bytes(geometry.asWkb()))
+            geom_ogr=(geometry.Clone() if isinstance(geometry,ogr.Geometry)
+                      else ogr.CreateGeometryFromWkb(bytes(geometry.asWkb())))
             if geom_ogr is None:
                 raise OSError('Não foi possível converter a geometria para OGR.')
             if geom_ogr.GetGeometryType() not in (ogr.wkbMultiPolygon,ogr.wkbMultiPolygon25D):
@@ -151,6 +365,9 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
                 progress(75+int((idx+1)*20/len(records)))
         layer=None
         datasource=None
+        if work!=local:
+            export_vector(work,local)
+            os.remove(work)
         csv_path=os.path.join(stage,os.path.basename(outputs[1]))
         txt_path=os.path.join(stage,os.path.basename(outputs[2]))
         with open(csv_path,'w',encoding='utf-8-sig',newline='') as report:
@@ -159,7 +376,15 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
             writer.writerows(rows)
         with open(txt_path,'w',encoding='utf-8') as report:
             report.write('Vista Saga Plugin - Análises Voronoi\n')
-            report.write('Modalidade: Simples; saída vetorial direta (sem rasterização)\n')
+            if mode=='simple':
+                report.write('Modalidade: Simples; saída vetorial direta (sem rasterização)\n')
+            else:
+                report.write('Modalidade: Com Massa (maior M/d); saída vetorial direta (sem rasterização)\n')
+                report.write('Fronteiras entre centros de massas diferentes: arcos de círculos de Apolônio, '
+                             f'aproximados por segmentos com desvio máximo de {2*arc_tolerance_m/3:.4g} m '
+                             f'(tolerância {arc_tolerance_m:g} m); massas iguais: bissetrizes. '
+                             'Regiões podem ter mais de uma parte (multipolígono).\n')
+            report.write(f'Formato: {VECTOR_FORMATS[os.path.splitext(destination)[1].lower()][1]}\n')
             report.write('Extensão finita definida pelo usuário; distâncias euclidianas no SRC projetado.\n')
             report.write('Áreas métricas planares calculadas nas unidades lineares do SRC.\n\n')
             report.write('ID | Centro | Massa | Área (m²) | Área (ha) | % da área avaliada\n')
@@ -167,28 +392,11 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,*,
                 report.write(f"{row['ID']} | {row['CENTRO']} | {row['MASSA']:.3f} | "
                              f"{row['AREA_M2']:.3f} | {row['AREA_HA']:.6f} | {row['PCT_AREA']:.4f}\n")
             report.write('\nA equivalência com o Vista SAGA original depende de validação comparativa.\n')
-        # Usa o mesmo padrão de backup/rollback do módulo raster.
-        backup=os.path.join(stage,'_backup')
-        os.makedirs(backup)
-        originals=[]
-        created=[]
-        try:
-            for destination_path in outputs:
-                if os.path.isfile(destination_path):
-                    saved=os.path.join(backup,str(len(originals)))
-                    os.replace(destination_path,saved)
-                    originals.append((saved,destination_path))
-            for destination_path in outputs:
-                os.replace(os.path.join(stage,os.path.basename(destination_path)),destination_path)
-                created.append(destination_path)
-        except Exception:
-            for path in created:
-                if os.path.exists(path): os.remove(path)
-            for saved,original in originals:
-                if os.path.exists(saved): os.replace(saved,original)
-            raise
+        # Mesmo padrão de backup/rollback do módulo raster (família vetorial inteira).
+        publish_outputs(stage,outputs)
         if progress: progress(100)
-        return {'output':None,'gpkg':destination,'csv':outputs[1],
+        return {'output':None,'vector':destination,
+                'gpkg':destination if destination.lower().endswith('.gpkg') else None,'csv':outputs[1],
                 'txt':outputs[2],'rows':rows,'pixels_valid':None,
                 'pixels_excluded':None,'vector_direct':True}
     finally:

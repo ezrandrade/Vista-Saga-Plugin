@@ -86,3 +86,12 @@ e espanhol.
 Correções de interface (traduções do Sequenciador e texto do botão de opções avançadas do
 Conversor). Fechada e incorporada a pedido do autor, com o build `1.2.1-dev1`. Suítes locais:
 `geosaga/tests` OK (16 pulados); `tests/unit` 36/36; `test_121_i18n_fixes.py` novo.
+
+## Versão 1.3.0 fechada (17/11/2026)
+
+Análises Voronoi com guias Raster e Vetorial e vetor exato Com Massa (círculos de Apolônio).
+Homologada pelo autor no QGIS para Windows com o build `1.3.0-dev3` (commit `9476819`): roteiro
+de seis itens das notas da versão conferido. Suítes locais: `geosaga/tests` OK (423 testes, 38
+pulados neste contêiner, sem GDAL); testes novos `test_130_voronoi_mass_direct.py` e
+`test_130_voronoi_vector_output.py`. Guia Raster idêntica byte a byte à 1.2.1 (Simples e Com
+Massa). Modelo de atrito inalterado; revisão prevista para a 1.4.0.

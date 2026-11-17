@@ -1,3 +1,32 @@
+## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (2026-11-17)
+
+- **Análises Voronoi no padrão dos demais módulos:** guias “Raster” e “Vetorial”, como na
+  Combinação de Mapas e na Monitoria; grupos “Modelo de influência”, “Dados de entrada” e
+  “Resultado”, compartilhados pelas duas guias (o preenchimento acompanha a troca de guia).
+- **Saída no padrão do plugin:** campo “Salvar em” com “Salvar como…”. Em branco: raster em
+  arquivo temporário; vetor em camada temporária em memória. Preenchido: salvo nesse arquivo.
+  Sempre carregado no QGIS. Saem as caixas “Resultado temporário” e “Adicionar ao projeto”, o
+  menu “Formato de saída” e o seletor de formato vetorial.
+- **Formatos vetoriais pelo filtro do “Salvar como…”**, como no QGIS: GeoPackage, Shapefile,
+  GeoJSON ou FlatGeobuf (os do Conversor de Formatos). Sem arquivo indicado, GeoPackage
+  temporário copiado para a memória.
+- **Guia Vetorial nas quatro modalidades:**
+  - Simples: polígonos exatos (bissetrizes), como antes;
+  - **Com Massa (cálculo novo):** fronteiras exatas, sem grade: arcos de círculos de Apolônio
+    entre massas diferentes (o mais leve vence no disco em que d_leve/d_pesado < M_leve/M_pesado),
+    bissetrizes entre massas iguais. Arcos com desvio máximo de 2/3 de 1 cm, sem viés de área;
+    vizinhos usam o mesmo arco (sem sobreposições nem lacunas); regiões podem ser
+    multipolígonos. As áreas do raster Com Massa convergem para as do vetor (25 centros:
+    diferença média de 2,0% a 100 m, 0,5% a 30 m e 0,04% a 10 m);
+  - **Com Atrito e Com Massa e Atrito:** o atrito é uma superfície raster, sem fronteira
+    geométrica exata; o cálculo é feito na grade da superfície de atrito e convertido em
+    polígonos (bordas nos pixels), sem guardar o GeoTIFF. O `_resumo.txt` registra isso.
+- Saem as opções “Vetor (poligonização)” e “GeoTIFF + vetor (poligonização)”.
+- Aviso antes de substituir resultados existentes, como na Combinação de Mapas.
+- Mensagens de conclusão do Voronoi traduzidas para inglês e espanhol.
+- **Cálculos existentes inalterados:** o GeoTIFF e o CSV da guia Raster são idênticos byte a
+  byte aos da 1.2.1 (modalidades Simples e Com Massa conferidas).
+
 ## 1.2.1 — Correções de interface (2026-11-16)
 
 Correções encontradas ao escrever o manual de uso da 1.2.0. Nenhum algoritmo foi alterado.
