@@ -48,8 +48,10 @@ grade. O plugin usa a **versão contínua** do modelo do Vista SAGA:
 
 calculado exatamente pelos cruzamentos do segmento com as bordas dos polígonos (com massa,
 dividido por M). As fronteiras entre as regiões não têm fórmula fechada: são traçadas
-numericamente, com desvio máximo de 1 cm, a partir de uma malha de busca ("Espaçamento da busca")
-com refinamento local nas junções. Regiões menores que o espaçamento da busca podem não ser
+numericamente, com tolerância de 1 cm, a partir de uma malha de busca ("Espaçamento da busca")
+com refinamento local. No caso de teste, mais de 99,9% dos pontos de fronteira ficam a menos de 2 cm
+da fronteira do modelo, com qualquer espaçamento de 5 a 40 m; pontas de cunhas muito finas e
+encontros de três regiões podem ficar encurtados em alguns decímetros (área desprezível). Regiões menores que o espaçamento da busca podem não ser
 detectadas; use um espaçamento menor que os menores detalhes que importam. A partição não tem
 sobreposições nem lacunas, e a fronteira com a área sem polígono é a borda exata dos polígonos.
 

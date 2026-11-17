@@ -674,8 +674,8 @@ class VoronoiDialog(QDialog):
         self.resolution_label.setText(tr('Espaçamento da busca:') if vector and vector_friction
                                       else tr('Resolução raster:'))
         if vector and vector_friction:
-            note = ('Vetor direto com atrito (modelo contínuo): fronteiras traçadas sem grade, com desvio '
-                    'máximo de 1 cm. O espaçamento da busca controla os detalhes detectados: regiões menores '
+            note = ('Vetor direto com atrito (modelo contínuo): fronteiras traçadas sem grade, com tolerância '
+                    'de 1 cm. O espaçamento da busca controla os detalhes detectados: regiões menores '
                     'que ele podem não aparecer. Área sem polígono e coluna vazia: barreira.')
         elif vector_friction:
             note = ('Atrito vetorial: os polígonos são convertidos em notas na grade da análise (extensão e '

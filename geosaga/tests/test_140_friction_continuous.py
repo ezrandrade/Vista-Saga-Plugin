@@ -141,6 +141,34 @@ class ContinuousPolygonsTests(unittest.TestCase):
         for ident, cells in ((1, 2844), (2, 1506), (3, 450)):
             self.assertLess(abs(areas[ident] / 100. - cells) / cells, 0.02)
 
+    def test_single_part_regions_for_any_spacing(self):
+        # Teste do autor (dev2, espaçamento 20 m): a região A saía em duas partes, separadas por um fio de
+        # C de 0,14 mm (lado de célula com duas trocas de região perto da borda da cobertura).
+        from geosaga.tests.test_140_voronoi_vista_saga_case import caso
+        from geosaga.voronoi_friction_continuous import friction_voronoi_polygons
+        _, pontos = caso()
+        for spacing in (5, 20, 40):
+            for weighted in (True, False):
+                results, _ = friction_voronoi_polygons(pontos, _case_features(), (X0, Y1 - 600, X0 + 800, Y1),
+                                                       spacing=spacing, tolerance=0.01, mass_weighted=weighted)
+                self.assertEqual([geom.GetGeometryCount() for _, geom in results], [1, 1, 1], (spacing, weighted))
+                self._check_partition(results, 480000.)
+
+    def test_thin_wedge_at_polygon_corner_is_traced(self):
+        # Cunha fina de B (5 m × 2 m) que nasce no canto do corredor de atrito baixo (500400; 8900350):
+        # conferir a corda só no meio a cortava (desvio de até 2 m).
+        from geosaga.tests.test_140_voronoi_vista_saga_case import caso
+        from geosaga.voronoi_friction_continuous import friction_voronoi_polygons
+        _, pontos = caso()
+        for spacing in (10, 20):
+            results, _ = friction_voronoi_polygons(pontos, _case_features(), (X0, Y1 - 600, X0 + 800, Y1),
+                                                   spacing=spacing, tolerance=0.01, mass_weighted=False)
+            region_b = {g.identifier: geom for g, geom in results}[2]
+            for x, y in ((500397.6, 8900350.1), (500398.5, 8900349.4), (500398.5, 8900350.9)):
+                point = ogr.Geometry(ogr.wkbPoint)
+                point.AddPoint_2D(x, y)
+                self.assertTrue(region_b.Contains(point), (spacing, x, y))
+
     def test_uniform_friction_reproduces_apollonius_mass_voronoi(self):
         # Nota uniforme: A = f d²/2, logo A/M dá a lei M/d² do Com Massa (vetor exato da 1.3).
         from geosaga.voronoi_friction_continuous import friction_voronoi_polygons

@@ -8,8 +8,27 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ## 18/11/2026 — resultados do teste da 1.4.0-dev2 recebidos
 
-- O autor enviou `Voronoi_Vetorial.zip` com os resultados do teste da dev2 no QGIS 4 (análise em
-  andamento nesta sessão; ver a entrada seguinte quando houver).
+- O autor enviou `Voronoi_Vetorial.zip` (QGIS 4, guia Vetorial, 4 modalidades). Partição exata nas 4;
+  coincidência com o Vista SAGA: Simples 99,96% (2 empates), Com Massa 100%, Atrito 99,50% (espaçamento
+  5), Massa e Atrito 99,60% (espaçamento 20). Áreas estáveis entre espaçamentos (0,1-0,4 cm médios).
+- **Defeito achado no teste do autor:** Massa e Atrito com espaçamento 20 m: região A em 2 partes (um
+  triângulo de 3 m² separado por um fio de C de 0,14 mm). Causa: lado de célula com duas trocas de
+  região (C→A→fora) perto da borda; a junção caiu na célula errada. O autor notou que mudar o
+  espaçamento faz o defeito sumir (coerente: depende de onde caem as células).
+- Correções (não commitadas como versão; WIP na branch): (1) lado com duas trocas se denuncia pelo
+  rótulo ao lado da troca achada ≠ rótulo da ponta → as duas células se dividem em 4, recursivamente;
+  (2) faces-fio (largura média < 2 × tolerância) vão ao vizinho de maior fronteira comum; (3) corda
+  conferida em 1/4, 1/2 e 3/4 (uma cunha fina de B de 5 m × 2 m no canto do corredor era cortada, com
+  desvio de até 2 m), dividida no ponto do meio; busca da fronteira com alcance crescente.
+  Resultado no caso: 1 parte por região em qualquer espaçamento (5-40 m); >99,9% dos pontos de
+  fronteira a < 2 cm da verdadeira; pontas de cunhas encurtadas em até ~0,5 m (área desprezível).
+  A afirmação "desvio máximo de 1 cm" foi corrigida para "tolerância de 1 cm" + ressalva (relatório,
+  interface, notas).
+- **Em aberto:** `test_random_polygons_partition_and_labels` falha: faixa estreita (~7 m) da região 2
+  entre duas partes da região 4 atravessa o lado de uma célula de 15 m com as duas pontas iguais
+  (4→2→4): troca dupla invisível, ~100 m² com rótulo errado. É a limitação declarada ("detalhes menores
+  que o espaçamento"), mas silenciosa. Proposta: verificação automática das faces (amostras internas)
+  com refinamento local, ou aviso ao usuário.
 
 ## 17/11/2026 (noite) — 1.4.0-dev2 implementada: vetor direto com atrito
 

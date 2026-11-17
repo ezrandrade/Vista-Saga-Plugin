@@ -16,7 +16,8 @@
   - **Guia Vetorial: vetor direto, sem rasterização (modelo contínuo).** Custo = integral de
     distância ao polo × nota ao longo do segmento polo-ponto, calculada exatamente pelos
     cruzamentos com as bordas dos polígonos; com massa, dividido por M. Fronteiras traçadas
-    numericamente (malha de busca deslocada, refinamento local, desvio máximo de 1 cm); partição
+    numericamente (malha de busca deslocada, refinamento local, tolerância de 1 cm; pontas de
+    cunhas finas e junções podem ficar encurtadas em alguns decímetros); partição
     sem sobreposições nem lacunas; recorte exato pela cobertura dos polígonos. Coincide com o
     Vista SAGA em 99,60% (com massa) e 99,52% (sem massa) das células; com nota uniforme,
     reproduz os discos de Apolônio do Com Massa a menos de 1 cm. "Espaçamento da busca": regiões

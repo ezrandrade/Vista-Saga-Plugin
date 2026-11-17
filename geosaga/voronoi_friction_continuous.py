@@ -314,65 +314,86 @@ def _junction(lattice, i0, j0, size):
     return float(x), float(y)
 
 
-def _refine(model, segments, tolerance, cancelled, max_depth=14):
+def _refine(model, segments, tolerance, cancelled, max_depth=16):
     """Insere vértices até a corda ficar a menos de ``tolerance`` da fronteira verdadeira.
 
-    segments: [(P, Q, a, b)], fronteira entre os rótulos a e b. Para cada corda, procura a fronteira
-    na mediatriz (bisseção entre um ponto de rótulo a e um de rótulo b); se ela fica a mais de
-    ``tolerance`` do meio da corda, divide a corda nesse ponto.
+    segments: [(P, Q, a, b)], fronteira entre os rótulos a e b. A corda é conferida em 1/4, 1/2 e
+    3/4 do comprimento (só o meio deixaria passar cunhas finas, como as que nascem nos cantos dos
+    polígonos de atrito): em cada ponto, procura a fronteira na perpendicular (bisseção entre um
+    ponto de rótulo a e um de rótulo b, a partir da corda e com alcance crescente); se o maior desvio
+    passa de ``tolerance``, a corda é dividida no ponto de fronteira do meio, e as metades são
+    conferidas de novo.
     """
+    fractions = np.array([0.25, 0.5, 0.75])
+    nf = fractions.size
     done = []
     work = [(np.array(p, float), np.array(q, float), a, b, 0) for p, q, a, b in segments]
     while work:
         if cancelled and cancelled():
             raise InterruptedError('Voronoi cancelado.')
-        active = [w for w in work if w[4] < max_depth and np.hypot(*(w[1] - w[0])) > 2 * tolerance]
+        keep = [w for w in work if w[4] < max_depth and np.hypot(*(w[1] - w[0])) > 2 * tolerance]
         done.extend(w for w in work if not (w[4] < max_depth and np.hypot(*(w[1] - w[0])) > 2 * tolerance))
-        if not active:
+        if not keep:
             break
-        P = np.array([w[0] for w in active]); Q = np.array([w[1] for w in active])
-        A = np.array([w[2] for w in active]); B = np.array([w[3] for w in active])
-        M = (P + Q) / 2
+        P = np.array([w[0] for w in keep]); Q = np.array([w[1] for w in keep])
+        A = np.repeat([w[2] for w in keep], nf); B = np.repeat([w[3] for w in keep], nf)
         d = Q - P
         length = np.hypot(d[:, 0], d[:, 1])
-        n = np.column_stack((-d[:, 1], d[:, 0])) / length[:, None]
-        found = np.zeros(len(active), dtype=bool)
+        normal = np.column_stack((-d[:, 1], d[:, 0])) / length[:, None]
+        # Pontos de conferência (segmento k, fração f) achatados em k * nf + f.
+        M = (P[:, None, :] + fractions[None, :, None] * d[:, None, :]).reshape(-1, 2)
+        n = np.repeat(normal, nf, axis=0)
+        L = np.repeat(length, nf)
+        found = np.zeros(M.shape[0], dtype=bool)
         lo_pt = np.zeros_like(M); hi_pt = np.zeros_like(M)
-        for reach in (0.5, 0.25):
-            todo = ~found
-            if not todo.any():
+        # Busca da fronteira MAIS PRÓXIMA na perpendicular: a partir do ponto da corda, com alcance
+        # crescente, para na primeira troca para o outro rótulo (um alcance grande logo de saída
+        # pularia para a fronteira do outro lado de uma língua estreita).
+        here = model.labels(M[:, 0], M[:, 1])
+        on_a, on_b = here == A, here == B
+        other = np.where(on_a, B, A)
+        searchable = on_a | on_b
+        for reach in (1 / 64, 1 / 32, 1 / 16, 1 / 8, 1 / 4, 1 / 2):
+            todo = np.flatnonzero(~found & searchable)
+            if not todo.size:
                 break
-            r = (reach * length)[:, None]
-            plus, minus = M + r * n, M - r * n
-            lp = model.labels(plus[todo, 0], plus[todo, 1])
-            lm = model.labels(minus[todo, 0], minus[todo, 1])
-            idx = np.flatnonzero(todo)
-            for k, a_, b_, vp, vm in zip(idx, A[todo], B[todo], lp, lm):
-                if vm == a_ and vp == b_:
-                    found[k] = True; lo_pt[k] = minus[k]; hi_pt[k] = plus[k]
-                elif vm == b_ and vp == a_:
-                    found[k] = True; lo_pt[k] = plus[k]; hi_pt[k] = minus[k]
-        # lo_pt tem o rótulo a; hi_pt, o rótulo b. Bisseção contínua até tolerance / 4.
+            r = np.maximum(reach * L[todo], tolerance)[:, None]
+            plus, minus = M[todo] + r * n[todo], M[todo] - r * n[todo]
+            lp = model.labels(plus[:, 0], plus[:, 1])
+            lm = model.labels(minus[:, 0], minus[:, 1])
+            use_plus = lp == other[todo]
+            use_minus = ~use_plus & (lm == other[todo])
+            hit = use_plus | use_minus
+            idx = todo[hit]
+            far = np.where(use_plus[hit][:, None], plus[hit], minus[hit])
+            found[idx] = True
+            # lo_pt fica com o rótulo a; hi_pt, com o rótulo b.
+            near_is_a = on_a[idx][:, None]
+            lo_pt[idx] = np.where(near_is_a, M[idx], far)
+            hi_pt[idx] = np.where(near_is_a, far, M[idx])
         sel = np.flatnonzero(found)
         if sel.size:
             span = np.hypot(*(hi_pt[sel] - lo_pt[sel]).T).max()
             for _ in range(max(1, int(math.ceil(math.log2(max(span, tolerance) / (tolerance / 4)))))):
                 mid = (lo_pt[sel] + hi_pt[sel]) / 2
-                lab = model.labels(mid[:, 0], mid[:, 1])
-                is_a = lab == A[sel]
+                is_a = model.labels(mid[:, 0], mid[:, 1]) == A[sel]
                 lo_pt[sel[is_a]] = mid[is_a]
                 hi_pt[sel[~is_a]] = mid[~is_a]
+        boundary = (lo_pt + hi_pt) / 2
+        deviation = np.where(found, np.hypot(*(boundary - M).T), -1.0).reshape(-1, nf)
         work = []
-        for k, w in enumerate(active):
-            if not found[k]:
+        middle = int(np.flatnonzero(fractions == 0.5)[0])
+        for k, w in enumerate(keep):
+            worst = int(np.argmax(deviation[k]))
+            if deviation[k, worst] <= tolerance:
                 done.append(w)
                 continue
-            boundary = (lo_pt[k] + hi_pt[k]) / 2
-            if np.hypot(*(boundary - M[k])) <= tolerance:
-                done.append(w)
-            else:
-                work.append((w[0], boundary, w[2], w[3], w[4] + 1))
-                work.append((boundary, w[1], w[2], w[3], w[4] + 1))
+            # Divide no ponto de fronteira do MEIO da corda (mantém a ordem ao longo da curva quando
+            # ela se dobra, como numa língua); só sem fronteira no meio usa o ponto de maior desvio.
+            pick = middle if deviation[k, middle] >= 0 else worst
+            point = boundary[k * nf + pick]
+            work.append((w[0], point, w[2], w[3], w[4] + 1))
+            work.append((point, w[1], w[2], w[3], w[4] + 1))
     return [((float(p[0]), float(p[1])), (float(q[0]), float(q[1]))) for p, q, *_ in done]
 
 
@@ -454,21 +475,49 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
     if progress:
         progress(35)
     # 3. Pontos de fronteira nos lados das células (bisseção diádica na malha fina; lados iguais
-    # dão pontos iguais).
+    # dão pontos iguais). Um lado com duas ou mais trocas de região se denuncia: o rótulo logo
+    # antes/depois da troca encontrada não é o da ponta. As duas células desse lado são então
+    # divididas em quatro, recursivamente, até não restar lado assim (ou chegar à malha fina).
     def side_keys(i0, j0, size):
         return [(i0, j0, 1, 0, size), (i0 + size, j0, 0, 1, size), (i0, j0 + size, 1, 0, size), (i0, j0, 0, 1, size)]
 
-    edge_specs, edge_index = [], {}
+    found = {}
+    for _ in range(lattice.level + 1):
+        pending = []
+        for i0, j0, size in cells:
+            for key in side_keys(i0, j0, size):
+                if key in found:
+                    continue
+                a = lattice.labels([(key[0], key[1])])[0]
+                b = lattice.labels([(key[0] + key[2] * size, key[1] + key[3] * size)])[0]
+                if a == b:
+                    found[key] = None
+                else:
+                    pending.append((key, a, b))
+        if pending:
+            for (key, a, b), point in zip(pending, _bisect_edges(lattice, [k for k, _, _ in pending], cancelled)):
+                found[key] = (point, point[1] != a or point[2] != b)
+        doubled = {key for key, value in found.items() if value is not None and value[1] and key[4] > 1}
+        if not doubled:
+            break
+        split = set()
+        for i0, j0, size in cells:
+            if size > 1 and any(key in doubled for key in side_keys(i0, j0, size)):
+                split.add((i0, j0, size))
+        if not split:
+            break
+        cells = [c for c in cells if c not in split] + [
+            (i0 + a * (size // 2), j0 + b * (size // 2), size // 2)
+            for i0, j0, size in split for a in (0, 1) for b in (0, 1)]
+        if cancelled and cancelled():
+            raise InterruptedError('Voronoi cancelado.')
+    edge_index, points = {}, []
     for i0, j0, size in cells:
         for key in side_keys(i0, j0, size):
-            if key in edge_index:
-                continue
-            a = lattice.labels([(key[0], key[1])])[0]
-            b = lattice.labels([(key[0] + key[2] * size, key[1] + key[3] * size)])[0]
-            if a != b:
-                edge_index[key] = len(edge_specs)
-                edge_specs.append(key)
-    points = _bisect_edges(lattice, edge_specs, cancelled) if edge_specs else []
+            value = found.get(key)
+            if value is not None and key not in edge_index:
+                edge_index[key] = len(points)
+                points.append(value[0])
     if progress:
         progress(50)
     # Segmentos em cada célula (2 pontos: corda; sela de 2 rótulos: pelo centro; 3+ rótulos: junção).
@@ -534,6 +583,7 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
         parts = [pieces.GetGeometryRef(k).Clone() for k in range(pieces.GetGeometryCount())]
         inner = [part.PointOnSurface() for part in parts]
         face_labels = model.labels(np.array([p.GetX() for p in inner]), np.array([p.GetY() for p in inner]))
+        face_labels = _absorb_slivers(parts, face_labels, tolerance)
         regions = {}
         for g in generators:
             group = ogr.Geometry(ogr.wkbMultiPolygon)
@@ -579,11 +629,44 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
     if progress:
         progress(90)
     stats = {'spacing': spacing, 'tolerance': tolerance, 'base_nodes': int(base_nodes),
-             'refined_cells': len(refined),
+             'refined_cells': len(refined), 'cells': len(cells),
              'evaluations': model.evaluations, 'boundary_vertices': len(lines),
              'polygons': len(surface.ratings), 'min_rating': surface.min_rating,
              'absorbed_residues': absorbed}
     return results, stats
+
+
+def _absorb_slivers(parts, labels, tolerance):
+    """Faces-fio (largura média < 2 × tolerância) ficam com o vizinho de maior fronteira comum.
+
+    Perto de junções, duas linhas do traçado podem correr quase juntas e deixar entre elas uma face
+    de largura milimétrica; o rótulo do ponto interior dela não é confiável (o ponto fica praticamente
+    sobre a fronteira) e a região vizinha sairia partida. A regra é a dos resíduos da Combinação
+    vetorial (1.2.0).
+    """
+    labels = np.array(labels, dtype=np.int64)
+    widths = []
+    for part in parts:
+        perimeter = part.Boundary().Length()
+        widths.append(2 * part.GetArea() / perimeter if perimeter > 0 else 0.0)
+    thin = [k for k, w in enumerate(widths) if w < 2 * tolerance]
+    if not thin:
+        return labels
+    thin_set = set(thin)
+    envelopes = [part.GetEnvelope() for part in parts]
+    for k in sorted(thin, key=lambda k: parts[k].GetArea()):
+        x0, x1, y0, y1 = envelopes[k]
+        edge = parts[k].Boundary()
+        shared = {}
+        for n, (a0, a1, b0, b1) in enumerate(envelopes):
+            if n == k or n in thin_set or a1 < x0 or a0 > x1 or b1 < y0 or b0 > y1:
+                continue
+            length = edge.Intersection(parts[n].Boundary()).Length()
+            if length > 0:
+                shared[labels[n]] = shared.get(labels[n], 0.0) + length
+        if shared:
+            labels[k] = max(shared, key=shared.get)
+    return labels
 
 
 def _collect(geometry, target):

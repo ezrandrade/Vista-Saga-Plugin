@@ -411,8 +411,11 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                              f"({info.get('skipped',0)}): barreira (sem resultado e sem passagem). "
                              'Em sobreposições vale a última feição.\n')
                 report.write(f'Fronteiras traçadas numericamente: malha de busca de {float(search_spacing):g} unidades '
-                             f'do SRC, com refinamento local, e desvio máximo de {arc_tolerance_m:g} m. Regiões '
-                             'menores que a malha de busca podem não ser detectadas.\n')
+                             f'do SRC, com refinamento local, e tolerância de {arc_tolerance_m:g} m (no caso de teste, '
+                             'mais de 99,9% dos pontos de fronteira a menos de 2 cm da fronteira do modelo). Pontas de '
+                             'cunhas muito finas e encontros de três regiões podem ficar encurtados em alguns '
+                             'decímetros (área desprezível). Regiões menores que a malha de busca podem não ser '
+                             'detectadas.\n')
                 report.write(f"Nós avaliados: {friction_stats['evaluations']}; células refinadas: "
                              f"{friction_stats['refined_cells']}; vértices de fronteira: {friction_stats['boundary_vertices']}.\n")
             else:
