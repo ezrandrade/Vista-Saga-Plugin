@@ -33,21 +33,31 @@ célula do polo e a célula de destino, de
 
 ### Superfície de atrito vetorial (nova)
 
-Em Com Atrito e Com Massa e Atrito, "Tipo de superfície" oferece **Raster** ou **Vetorial
-(polígonos)**:
+Em Com Atrito e Com Massa e Atrito, a superfície de atrito pode ser uma **camada de polígonos**
+com a nota numa **coluna de atrito** (escolhida em "Coluna de atrito"; sem atribuição manual).
 
-- **Notas por classes:** escolha o campo de classe e, em "Notas das classes…", dê a nota de cada
-  classe, como na Avaliação. Classe com “—” bloqueia a execução; uma classe pode ser marcada
-  como **barreira**.
-- **Notas por coluna:** escolha uma coluna numérica que já traga a nota de cada polígono.
-- **Área sem polígono:** informe uma nota ou marque "Barreira". Deixada em “—”, a execução só
-  ocorre se os polígonos cobrirem toda a grade (o plugin nunca supõe uma nota).
-- Os polígonos viram notas na **grade da análise** (extensão e resolução escolhidas), pela regra do
-  centro da célula; em sobreposições vale a última feição. Feições com o campo vazio contam como
-  área sem polígono.
+- Área sem polígono e feições com a coluna vazia são **barreira** (sem resultado e sem passagem).
+- Em sobreposições vale a última feição.
 - **Sem reprojeção:** a camada de polígonos define o SRC da análise (os pontos são convertidos para
-  ele, como no atrito raster); um raster de referência precisa estar nesse SRC.
-- O `_resumo.txt` registra camada, campo, notas, área sem polígono, resolução e contagens.
+  ele, como no atrito raster).
+
+**Guia Vetorial: vetor direto, sem rasterização.** O resultado não é mais a poligonização de uma
+grade. O plugin usa a **versão contínua** do modelo do Vista SAGA:
+
+> custo = ∫ (distância ao polo) × (nota) ao longo do segmento reto polo → ponto
+
+calculado exatamente pelos cruzamentos do segmento com as bordas dos polígonos (com massa,
+dividido por M). As fronteiras entre as regiões não têm fórmula fechada: são traçadas
+numericamente, com desvio máximo de 1 cm, a partir de uma malha de busca ("Espaçamento da busca")
+com refinamento local nas junções. Regiões menores que o espaçamento da busca podem não ser
+detectadas; use um espaçamento menor que os menores detalhes que importam. A partição não tem
+sobreposições nem lacunas, e a fronteira com a área sem polígono é a borda exata dos polígonos.
+
+**Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução escolhidas),
+pela regra do centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA.
+
+As duas guias dão resultados ligeiramente diferentes para a mesma entrada (veja a tabela abaixo):
+o modelo contínuo é o limite do modelo célula a célula quando a célula tende a zero.
 
 ## Justificativa da mudança de método
 
@@ -64,6 +74,11 @@ preta, sem uso de código do programa original):
 | Com Atrito | 96,7% | **99,67%** |
 | Com Massa e Atrito | 98,4% | **99,69%** |
 
+Guia Vetorial com atrito (modelo contínuo, vetor direto): **99,60%** com massa e **99,52%** sem
+massa (avaliado no centro das células; os polígonos traçados dão 99,60% e 99,48%, por duas células
+a milímetros da fronteira). Com nota uniforme, o modelo contínuo reproduz os discos de Apolônio do
+Com Massa a menos de 1 cm, o que confirma a coerência entre as modalidades.
+
 As diferenças restantes no atrito (15 a 16 células) ficam todas na fronteira entre regiões, com
 margem de custo pequena: detalhe do traçado das retas. Escolher entre variantes de traçado exigiria
 um segundo caso independente, para não ajustar o modelo ao mesmo caso que o valida.
@@ -79,6 +94,9 @@ linha **contadas a partir de 1**.
 
 - Suíte histórica e `tests/unit` verdes; testes do atrito reescritos contra uma referência escalar
   em Python puro; regressão com o caso validado (`test_140_voronoi_vista_saga_case.py`).
-- Fluxo do diálogo conferido em QGIS 3.34 sem interface gráfica: o caso validado desenhado em
-  polígonos reproduz os mesmos 99,69% e 99,67%, nas guias Raster e Vetorial.
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev`).
+- Vetor direto com atrito: testes do custo exato (contra integral numérica), da passagem exata por
+  vértices, da partição (sem sobreposições nem lacunas) com polígonos e polos aleatórios, e da
+  coincidência com os discos de Apolônio (`test_140_friction_continuous.py`).
+- Fluxo do diálogo conferido em QGIS 3.34 sem interface gráfica: guia Vetorial 99,60% (com massa,
+  0,6 s) e 99,48% (sem massa); guia Raster com polígonos 99,69%.
+- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev2`).

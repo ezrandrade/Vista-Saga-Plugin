@@ -6,6 +6,36 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (noite) — 1.4.0-dev2 implementada: vetor direto com atrito
+
+- `geosaga/voronoi_friction_continuous.py` (novo): `FrictionSurface` (polígonos com nota, sobreposição
+  = última feição, arestas com interior à esquerda, união = cobertura), custo exato
+  A = D²·[Σ ±f·τ²/2 + f(x)/2] por cruzamentos (vetorizado, sem ordenar), barreira = sair da
+  cobertura; polo deslocado 1 µm nos testes de cruzamento (o caso de teste tinha segmentos passando
+  exatamente por cantos e dava paridade errada). `ContinuousModel.labels` com poda A >= f_mín·D²/2.
+  `friction_voronoi_polygons`: malha deslocada (1/π, 1/e do espaçamento), bisseção diádica nos lados
+  (pontos idênticos nas arestas comuns), refinamento local 8 × 8 das células com junção/sela,
+  propagado quando um lado troca de rótulo mais de uma vez; junção por subdivisão; refinamento de
+  corda até a tolerância; poligonização GEOS (noding por união com uma linha, GDAL < 3.7);
+  recorte de cada face pelo domínio antes do rótulo, rótulo por pedaço; resíduos finos ao vizinho
+  de maior fronteira comum.
+- `save_vector_voronoi` aceita 'friction'/'mass_friction' (friction_features, search_spacing).
+- Diálogo: guia Vetorial = vetor direto nas 4 modalidades; com atrito, só polígonos + "Coluna de
+  atrito" + "Espaçamento da busca" (o campo de resolução, rotulado de novo). Saíram a tabela
+  classe → nota e o controle de área sem polígono (barreira fixa). Corrigido: colunas vazias quando a
+  camada já vinha selecionada.
+- Resultados: caso validado 99,60% (com massa) / 99,52% (sem massa) no centro das células; partição
+  exata; nota uniforme = Apolônio a < 1 cm (espaçamento 10-20 m; com 40 m, 6 cm: detalhe perdido).
+  QGIS 3.34 offscreen: Vetorial 99,60% em 0,6 s; Raster com polígonos 99,69%. Suítes: 448 (3
+  pulados) + 36.
+- ZIP `Vista_Saga_Plugin_QGIS4_v1.4.0-dev2.zip`; teste com `caso_atrito_vetorial.gpkg` (coluna ATRITO).
+
+Pendências:
+- [ ] Autor testa a dev2 no QGIS 4: guia Vetorial (esperado 99,60% com massa; 99,48% sem) e Raster.
+- [ ] Autor confirma: área sem polígono/coluna vazia = barreira; sem "legado 1.3"; nota 0 permitida.
+- [ ] Desempenho com dados reais (muitos polos/polígonos) não medido; o custo cresce com
+      polos × arestas × nós avaliados.
+
 ## 17/11/2026 (noite) — decisões para a 1.4.0-dev2: vetor direto com atrito
 
 - O autor não quer o resultado com atrito obtido por poligonização de raster: **a guia Vetorial passa a

@@ -11,16 +11,23 @@
     1 + C). Reproduz 99,7% das células; as diferenças ficam na fronteira entre regiões. A célula
     do polo é sempre dele. Poda exata reformulada.
   - Com Atrito e Com Massa e Atrito deixam de ser "experimentais".
-- **Superfície de atrito vetorial** (Com Atrito e Com Massa e Atrito), além da raster:
-  polígonos com nota por **classe** (tabela classe → nota, como na Avaliação: “—” bloqueia a
-  execução; uma classe pode ser barreira) ou por **coluna** numérica. A **área sem polígono**
-  recebe uma nota informada ou é barreira; sem escolha, só roda se os polígonos cobrirem a grade.
-  Os polígonos viram notas na grade da análise (extensão e resolução escolhidas), pelo centro da
-  célula, sem reprojeção (a camada precisa estar no SRC da análise). O `_resumo.txt` registra
-  camada, campo, notas, área sem polígono e contagens.
+- **Superfície de atrito vetorial** (Com Atrito e Com Massa e Atrito): polígonos com a nota na
+  **coluna de atrito** (sem atribuição manual). Área sem polígono e coluna vazia: barreira.
+  - **Guia Vetorial: vetor direto, sem rasterização (modelo contínuo).** Custo = integral de
+    distância ao polo × nota ao longo do segmento polo-ponto, calculada exatamente pelos
+    cruzamentos com as bordas dos polígonos; com massa, dividido por M. Fronteiras traçadas
+    numericamente (malha de busca deslocada, refinamento local, desvio máximo de 1 cm); partição
+    sem sobreposições nem lacunas; recorte exato pela cobertura dos polígonos. Coincide com o
+    Vista SAGA em 99,60% (com massa) e 99,52% (sem massa) das células; com nota uniforme,
+    reproduz os discos de Apolônio do Com Massa a menos de 1 cm. "Espaçamento da busca": regiões
+    menores que ele podem não ser detectadas.
+  - **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução), pelo
+    centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA (99,7%).
+  - Sem reprojeção: a camada de polígonos define o SRC da análise.
 - Rasters de atrito antigos com valor 0 passam a ter custo zero: revise essas superfícies.
 - Scripts de validação: `scripts/gerar_caso_atrito.py`, `scripts/comparar_caso_atrito.py`,
   `scripts/comparar_vetor_plugin.py`.
+- Guia Vetorial: vetor direto nas quatro modalidades (antes, com atrito, poligonização da grade).
 
 ## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (2026-11-17)
 
