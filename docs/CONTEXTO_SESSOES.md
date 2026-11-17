@@ -6,6 +6,30 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (noite) — vetor do plugin (QGIS 4.2.2) × Vista SAGA
+
+O autor rodou no QGIS o Voronoi **vetorial** Simples e Com Massa (`Voronoi_Plugin_{Simples,Massa}.gpkg`,
+SIRGAS 2000 / UTM 25S, extensão igual à do mapa) com os pontos do `pontos_utm.txt`, que estão
+**deslocados 1 célula** (+10 m em X, −10 m em Y) em relação ao Vista SAGA, por causa da contagem a
+partir de 1. Comparação pelo centro das células: `python3.12 scripts/comparar_vetor_plugin.py VS PLUGIN`.
+
+| | Simples | Com Massa |
+|---|---|---|
+| plugin × Vista SAGA, bruto | 97,67% (112) | 82,82% (824) |
+| plugin × modelo do próprio plugin nos pontos usados | 99,98% (1, empate exato) | **100%** |
+| modelo do plugin × Vista SAGA, nos pontos do Vista SAGA | **100%** | **84,39% (749)** |
+
+- **A cadeia do plugin está correta**: camada → SRC → vetor exato reproduz o modelo do plugin. No
+  Simples, a única diferença é a célula 46:24, equidistante de B e C (empate na bissetriz).
+- **Simples:** a diferença bruta (112 células) vem **só** do deslocamento dos pontos; com os pontos no
+  lugar, 100%.
+- **Com Massa:** a diferença vem do **modelo** (M/d no plugin × M/d² no Vista SAGA). Polo C (M = 1):
+  512 células no Vista SAGA, 143 no plugin; Polo A (M = 9): 2.693 × 3.518.
+- Observações menores: no Simples o campo `MASSA` sai 1 para todos (massa ignorada, mas pode confundir);
+  o metadado QGIS embutido no GPKG de saída tem SRC vazio (o SRC da camada está certo).
+- Para refazer o teste da 1.4.0: usar `pontos_qgis.csv` (centros 500115/8900455, 500595/8900105,
+  500715/8900505), gerado nesta sessão.
+
 ## 17/11/2026 (noite) — validação caixa-preta do Voronoi contra o Vista SAGA
 
 Comparação célula a célula (`python scripts/comparar_caso_atrito.py PASTA`) das quatro saídas do
