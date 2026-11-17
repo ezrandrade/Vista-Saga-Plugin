@@ -29,6 +29,8 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
   (4→2→4): troca dupla invisível, ~100 m² com rótulo errado. É a limitação declarada ("detalhes menores
   que o espaçamento"), mas silenciosa. Proposta: verificação automática das faces (amostras internas)
   com refinamento local, ou aviso ao usuário.
+- **Decisão do autor (18/11): opção 1, verificação automática com correção** (conferir pontos dentro de
+  cada célula/face; onde houver rótulo inesperado, subdividir e traçar de novo; relatar a conferência).
 
 ## 17/11/2026 (noite) — 1.4.0-dev2 implementada: vetor direto com atrito
 
