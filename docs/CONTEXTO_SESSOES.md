@@ -6,6 +6,13 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (noite) — decisões do autor para a 1.4.0
+
+- **Massa: M/d²** (como o Vista SAGA), no raster e no vetor exato (discos de Apolônio com razão √M).
+- **Atrito com superfície vetorial** nas modalidades Com Atrito e Com Massa e Atrito (pedido do autor).
+- Ainda sem resposta: se algum resultado da tese usa o Com Massa da 1.3 (orientador insistiu: decide
+  se há mapas a refazer); o que a massa representa no estudo.
+
 ## 17/11/2026 (noite) — reteste no QGIS com os pontos corrigidos: Simples homologado
 
 O autor refez o vetorial com `docs/caso_atrito/pontos_qgis.csv` (`Voronoi_Plugin_{Simples,Massa}_2.gpkg`).
