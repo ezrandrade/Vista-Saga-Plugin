@@ -6,6 +6,21 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (noite) — decisões para a 1.4.0-dev2: vetor direto com atrito
+
+- O autor não quer o resultado com atrito obtido por poligonização de raster: **a guia Vetorial passa a
+  usar o modelo contínuo** do atrito (A = ∫₀^D s·f(s) ds ao longo do segmento polo → ponto, f = nota
+  do polígono atravessado; com massa, A/M), com fronteiras traçadas numericamente até uma tolerância
+  declarada. Mostrado ao autor antes da decisão (figuras): no caso validado, o modelo contínuo
+  coincide 99,50% (sem massa) e 99,60% (com massa) com o Vista SAGA, contra 99,67%/99,69% do modelo
+  discreto da guia Raster; diferenças a menos de uma célula da fronteira. Guia Raster continua no
+  modelo discreto do Vista SAGA.
+- **Atribuição do atrito simplificada:** só pela **coluna de atrito** da camada de polígonos; sai a
+  tabela classe → nota.
+- Decisões do orientador, a confirmar com o autor: área sem polígono e feições com a coluna vazia =
+  barreira (sem resultado e sem passagem), sem controle manual; na guia Vetorial, superfície de atrito
+  só vetorial (polígonos).
+
 ## 17/11/2026 (noite) — 1.4.0-dev1 implementada
 
 Decisões do autor (17/11): massa **M/d²**; **atrito vetorial** nas modalidades com atrito, com notas
