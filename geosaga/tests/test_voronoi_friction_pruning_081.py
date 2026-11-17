@@ -1,35 +1,16 @@
-"""Prova por comparação: poda por limite inferior mantém os resultados do traçado integral."""
+"""Prova por comparação: a poda por limite inferior mantém o resultado do cálculo integral.
+
+Desde a 1.4.0 a referência é o modelo do Vista SAGA (friction_reference.py), em Python puro.
+"""
 import unittest
 import numpy as np
 from geosaga.voronoi_core import Generator
-from geosaga.voronoi_friction import assign_friction_window, _straight_cost_batch
-
-
-def reference(generators, raster, t, *, weighted=False, baseline=1.):
-    """Algoritmo integral pré-0.8.1, compara todos os pontos para cada célula."""
-    height, width = raster.shape
-    out = np.zeros((height,width), dtype=np.int32)
-    for row in range(height):
-        cols=np.flatnonzero(np.isfinite(raster[row]))
-        xs = cols.astype(float)+.5
-        ys=np.full(xs.shape,row+.5)
-        wx=t[0]+t[1]*xs
-        wy=t[3]+t[5]*ys
-        best=np.full(xs.shape,np.inf)
-        choice=np.zeros(xs.shape,dtype=np.int32)
-        for p in generators:
-            sx=(p.x-t[0])/t[1]; sy=(p.y-t[3])/t[5]
-            costs=_straight_cost_batch(raster,sx,sy,xs,ys,baseline=baseline)
-            scores=np.hypot(wx-p.x,wy-p.y)*costs/(p.mass if weighted else 1.)
-            better=scores<best
-            best[better]=scores[better]
-            choice[better]=p.identifier
-        out[row,cols]=choice
-    return out
+from geosaga.voronoi_friction import assign_friction_window
+from geosaga.tests.friction_reference import reference
 
 
 class FrictionPruning081Tests(unittest.TestCase):
-    def test_random_rectangular_grids_match_original(self):
+    def test_random_rectangular_grids_match_reference(self):
         for seed in range(8):
             rng=np.random.default_rng(seed)
             ny,nx=12,14
@@ -49,6 +30,15 @@ class FrictionPruning081Tests(unittest.TestCase):
                                               mass_weighted=weighted)
                 np.testing.assert_array_equal(pruned,full,err_msg=f'seed={seed}, mass={weighted}')
 
+    def test_non_square_cells(self):
+        rng=np.random.default_rng(7)
+        a=rng.uniform(.5,6.,(10,13))
+        t=(0.,30.,0.,100.,0.,-10.)
+        p=[Generator(1,45.,95.,2.),Generator(2,375.,15.,5.),Generator(3,200.,55.,1.)]
+        for mass in (False,True):
+            np.testing.assert_array_equal(assign_friction_window(p,a,t,0,10,mass_weighted=mass),
+                                          reference(p,a,t,weighted=mass))
+
     def test_shuffled_generator_order_and_ties(self):
         a=np.ones((9,9),dtype=float)
         t=(0.,1.,0.,9.,0.,-1.)
@@ -64,6 +54,14 @@ class FrictionPruning081Tests(unittest.TestCase):
         t=(0.,1.,0.,8.,0.,-1.)
         for mass in (False,True):
             np.testing.assert_array_equal(assign_friction_window(p,a,t,0,8,mass_weighted=mass),reference(p,a,t,weighted=mass))
+
+    def test_zero_ratings_keep_pruning_exact(self):
+        rng=np.random.default_rng(3)
+        a=rng.choice([0.,0.,1.,3.],size=(9,11))
+        t=(0.,1.,0.,9.,0.,-1.)
+        p=[Generator(1,1.5,7.5,4,'A'),Generator(2,9.5,1.5,1,'B'),Generator(3,5.5,4.5,2,'C')]
+        for mass in (False,True):
+            np.testing.assert_array_equal(assign_friction_window(p,a,t,0,9,mass_weighted=mass),reference(p,a,t,weighted=mass))
 
     def test_legacy_fixed_workload_guard_removed(self):
         from pathlib import Path

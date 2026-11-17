@@ -1,9 +1,9 @@
-"""Testes da modalidade atrito, independentes do QGIS/GDAL."""
+"""Testes da modalidade atrito (modelo do Vista SAGA desde a 1.4.0), sem QGIS/GDAL."""
 import unittest
 import numpy as np
 from geosaga.voronoi_core import Generator, assign_window
 from geosaga.voronoi_friction import (
-    assign_friction_window, validate_friction, _straight_cost_batch,
+    assign_friction_window, validate_friction, _vista_saga_cost_batch,
     estimated_visits,
 )
 
@@ -29,13 +29,23 @@ class FrictionVoronoiTests(unittest.TestCase):
         self.assertEqual(ordinary[0, 2], 1)
         self.assertEqual(friction[0, 2], 2)
 
-    def test_zero_allowed_with_baseline(self):
+    def test_rating_is_the_cost_without_baseline(self):
+        # Nota direta (Vista SAGA): sem custo basal somado; nota 0 = custo zero.
+        raster = np.ones((1, 5), dtype=float)
+        costs = _vista_saga_cost_batch(raster, 0, 0, np.array([2]), np.array([0]))
+        self.assertEqual(costs.tolist(), [3.0])  # 1×1 + 2×1
         raster = np.zeros((1, 5), dtype=float)
         validate_friction(raster, self.t, self.points)
+        self.assertEqual(_vista_saga_cost_batch(raster, 0, 0, np.array([2]), np.array([0])).tolist(), [0.0])
+        # Tudo empata em zero: vence o primeiro polo, mas a célula de cada polo é dele.
         self.assertEqual(assign_friction_window(self.points,raster,self.t,0,1).tolist(),
-                         [[1, 1, 1, 2, 2]])
-        costs = _straight_cost_batch(raster, .5,.5,np.array([2.5]), np.array([.5]))
-        self.assertEqual(costs.tolist(), [3.0])
+                         [[1, 1, 1, 1, 2]])
+
+    def test_cost_grows_with_squared_distance(self):
+        # Nota uniforme: A cresce como d²/2 e a massa passa a valer como M/d².
+        raster = np.ones((1, 9), dtype=float)
+        costs = _vista_saga_cost_batch(raster, 0, 0, np.arange(9), np.zeros(9, dtype=int))
+        self.assertEqual(costs.tolist(), [n*(n+1)/2 for n in range(9)])
 
     def test_nodata_in_path_blocks_a_center(self):
         raster = np.ones((1,5))
@@ -52,8 +62,9 @@ class FrictionVoronoiTests(unittest.TestCase):
         t = (0,1,0,3,0,-1)
         raster=np.ones((3,3))
         # from top-left to lower-right through pixel corners, diagonal cells only
-        cost=_straight_cost_batch(raster,.5,.5,np.array([2.5]),np.array([2.5]))
-        self.assertEqual(float(cost[0]),6.)
+        # Passos diagonais: d = √2 e 2√2, passo √2 → 2 + 4 = 6.
+        cost=_vista_saga_cost_batch(raster,0,0,np.array([2]),np.array([2]))
+        self.assertAlmostEqual(float(cost[0]),6.)
 
     def test_middle_window_matches_full(self):
         raster=np.ones((9,8))
@@ -85,9 +96,9 @@ class FrictionVoronoiTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'sem rotação'):
             validate_friction(np.ones((1,5)),(0,1,.01,1,0,-1),self.points)
 
-    def test_invalid_baseline(self):
-        with self.assertRaisesRegex(ValueError,'basal'):
-            assign_friction_window(self.points,np.ones((1,5)),self.t,0,1,baseline=0)
+    def test_baseline_parameter_removed(self):
+        with self.assertRaises(TypeError):
+            assign_friction_window(self.points,np.ones((1,5)),self.t,0,1,baseline=1)
 
     def test_complexity_estimate_is_finite(self):
         self.assertEqual(estimated_visits(10,10,2),1000)

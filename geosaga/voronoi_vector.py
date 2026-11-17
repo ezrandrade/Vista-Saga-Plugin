@@ -83,8 +83,11 @@ def _ogr_polygon(points):
 
 
 def _apollonius_disk(light, heavy):
-    """Disco em que o centro mais leve vence: d_leve / d_pesado < k, k = M_leve / M_pesado < 1."""
-    k = float(light.mass) / float(heavy.mass)
+    """Disco em que o centro mais leve vence: d_leve / d_pesado < k, k = √(M_leve / M_pesado) < 1.
+
+    Lei M/d² do Vista SAGA (1.4.0): M_leve/d_leve² > M_pesado/d_pesado² ⇔ d_leve/d_pesado < k.
+    """
+    k = math.sqrt(float(light.mass) / float(heavy.mass))
     factor = 1. - k*k
     cx = (light.x - k*k*heavy.x) / factor
     cy = (light.y - k*k*heavy.y) / factor
@@ -170,7 +173,7 @@ def _collect_polygons(geometry, target):
 
 
 def mass_voronoi_polygons(generators, bounds, *, tolerance, cancelled=None, progress=None):
-    """Voronoi multiplicativamente ponderado exato (maior M/d vence), em vetor.
+    """Voronoi Com Massa exato (maior M/d² vence, lei do Vista SAGA), em vetor.
 
     Para cada centro i, a região é a caixa intersectada com os discos de
     Apolônio em que i vence os centros mais pesados, menos os discos em que
@@ -256,7 +259,7 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                         arc_tolerance_m=DEFAULT_ARC_TOLERANCE_M):
     """Grava a camada vetorial (formato pela extensão) + CSV/TXT com substituição segura.
 
-    mode: 'simple' (bissetrizes) ou 'mass' (maior M/d; círculos de Apolônio
+    mode: 'simple' (bissetrizes) ou 'mass' (maior M/d²; círculos de Apolônio
     com arcos de desvio máximo ``arc_tolerance_m`` metros).
     study_geometry: QgsGeometry já transformada para o SRC de saída.
     """
@@ -379,7 +382,7 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             if mode=='simple':
                 report.write('Modalidade: Simples; saída vetorial direta (sem rasterização)\n')
             else:
-                report.write('Modalidade: Com Massa (maior M/d); saída vetorial direta (sem rasterização)\n')
+                report.write('Modalidade: Com Massa (maior M/d², modelo do Vista SAGA); saída vetorial direta (sem rasterização)\n')
                 report.write('Fronteiras entre centros de massas diferentes: arcos de círculos de Apolônio, '
                              f'aproximados por segmentos com desvio máximo de {2*arc_tolerance_m/3:.4g} m '
                              f'(tolerância {arc_tolerance_m:g} m); massas iguais: bissetrizes. '
