@@ -6,6 +6,36 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (noite) — validação caixa-preta do Voronoi contra o Vista SAGA
+
+Comparação célula a célula (`python scripts/comparar_caso_atrito.py PASTA`) das quatro saídas do
+Vista SAGA com o caso de teste. Arquivos recebidos: `voronoi_saga_{simples,massa,atrito,massa_atrito}.rs2`
+(R4, R3, R1, R2) e `pontos_saga.txt`, este **idêntico byte a byte** ao `pontos_pixel.txt`.
+
+**Confirmado:**
+
+1. **Arquivo de pontos:** `Nome;Massa;X:Y`, sem cabeçalho, CRLF, `[ATRITOS]` com uma nota por classe a
+   partir da classe 0; X:Y = **coluna:linha contadas a partir de 1** (12:15 caiu na célula 11:14
+   contada a partir de 0, nos quatro resultados).
+2. **Saída:** classe 0 "Ponto" marca as células dos polos; classes 1..n = polos, na ordem do arquivo.
+3. **Simples:** distância euclidiana entre centros, 100% (0 divergências).
+4. **Com Massa (sem atrito): max M/d², não M/d.** min d/√M acerta 100%; o expoente é nítido (k = 0,48
+   ou 0,52 já dá 26 e 35 divergências). Coincide com a fórmula do manual, FZ = M/(D × A), em que
+   A cresce com D. **O plugin 1.3 usa M/d e diverge em 749 células (84,4%)**, inclusive no vetor
+   exato (discos de Apolônio com razão M; a correção é usar √M).
+5. **Atrito:** Σ (distância do polo à célula × nota × √2 nos passos diagonais) / M, na reta polo →
+   célula: 99,67% (sem massa) e 99,69% (com massa). Era a leitura do executável; agora validada pela
+   saída. O "efeito √M" é a mesma propriedade do item 4, presente também sem atrito.
+6. Plugin 1.3 (código real, notas 1, 1, 3, 5 como C, basal 1): Atrito 96,73% (157), Massa + Atrito
+   98,37% (78).
+
+**Resíduo:** 10 a 16 células, **todas na fronteira entre regiões**, com margem de custo ≤ 10%: detalhe
+do traçado (raios até a borda, regra de sobreposição, variante da reta). Raios até a borda com "último
+raio vence" dão 10 divergências no Massa + Atrito, mas foram escolhidos entre 32 variantes **no mesmo
+caso**: é ajuste, não validação. Decidir entre variantes exige um segundo caso, independente.
+
+**Não testado:** notas 0, classes excluídas, mapas com FUNDO dentro da área, polos na borda.
+
 ## 17/11/2026 (noite) — resultados do teste perdidos em sessão bloqueada
 
 - O autor **já rodou o caso de teste no Vista SAGA** e enviou os RS2 de saída numa sessão que foi
