@@ -110,7 +110,7 @@ class FrictionVoronoiTests(unittest.TestCase):
         dialog=(folder/'voronoi_dialog.py').read_text(encoding='utf-8')
         engine=(folder/'voronoi_engine.py').read_text(encoding='utf-8')
         self.assertIn('friction_path=self.friction_path',dialog)
-        self.assertIn('friction_path=friction_path if friction_mode else None',dialog)
+        self.assertIn('friction_path=friction_path if friction_mode and not friction_vector else None',dialog)
         self.assertIn("mode in ('friction','mass_friction')",engine)
         self.assertIn('assign_friction_window(',engine)
         self.assertNotIn('QApplication.processEvents()',engine)

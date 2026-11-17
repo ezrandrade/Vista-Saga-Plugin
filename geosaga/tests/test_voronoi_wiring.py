@@ -21,8 +21,10 @@ class VoronoiWiring(unittest.TestCase):
         dialog=(ROOT/'voronoi_dialog.py').read_text(encoding='utf-8')
         for name in ('Simples','Com Massa','Com Atrito','Com Massa e Atrito'):
             self.assertIn(name,dialog)
-        self.assertIn("'Com Massa e Atrito (experimental)'", dialog)
-        self.assertIn('Com Atrito (experimental)',dialog)
+        # 1.4.0: modelos validados contra o Vista SAGA; sem o rótulo "experimental".
+        self.assertNotIn('(experimental)', dialog)
+        self.assertIn("tr('Vetorial (polígonos)'), 'vector'", dialog)
+        self.assertIn('friction_vector=friction_vector if friction_mode else None', dialog)
         self.assertIn('QgsMapLayerComboBox',dialog)
         self.assertIn('temporary_destination',dialog)
 

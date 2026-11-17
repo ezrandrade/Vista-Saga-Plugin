@@ -135,7 +135,7 @@ def _polygonize(raster_path, vector_path, generator_rows, units_to_meters, cance
 def run_voronoi(points, destination, projection_wkt, geotransform, width, height, *,
                 mode='simple', units_to_meters=1., mask=None, vectorize=False,
                 progress=None, cancelled=None, friction_path=None, friction_components=None,
-                vector_format=DEFAULT_EXTENSION, keep_raster=True):
+                vector_format=DEFAULT_EXTENSION, keep_raster=True, friction_vector=None):
     """Executa Voronoi em janelas e retorna caminhos/estatísticas.
 
     vectorize: poligoniza o resultado no formato ``vector_format`` (.gpkg,
@@ -145,13 +145,16 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
 
     points: lista de Generator com coordenadas no SRC da grade.
     mask: máscara numpy opcional (TRUE para células válidas); não usada no GUI 0.7.0.
+    friction_vector: superfície de atrito vetorial (1.4.0), dicionário com 'features'
+    [(wkb, nota | 'barreira')], 'outside' e os campos descritivos de voronoi_friction_vector.describe;
+    os polígonos são rasterizados nesta grade.
     """
     from osgeo import gdal, osr
     weighted = mode in ('mass','mass_friction')
     if mode not in ('simple','mass','friction','mass_friction'):
         raise ValueError('Modalidade de Voronoi desconhecida.')
-    if mode in ('friction','mass_friction') and not (friction_path or friction_components):
-        raise ValueError('A modalidade com Atrito exige selecionar um GeoTIFF de resistência territorial.')
+    if mode in ('friction','mass_friction') and not (friction_path or friction_components or friction_vector):
+        raise ValueError('A modalidade com Atrito exige uma superfície de atrito (raster ou vetorial).')
     validate_generators(points, weighted=weighted)
     if len(points) > MAX_GENERATORS:
         raise ValueError('Limite de 1.000 pontos na versão 0.7.0; divida a análise em áreas.')
@@ -190,7 +193,15 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
     # A superfície de atrito é aberta e descarregada na thread da tarefa,
     # sem compartilhar objetos GDAL ou objetos Qt entre threads.
     friction = None
-    if mode in ('friction','mass_friction') and friction_components:
+    vector_stats = None
+    if mode in ('friction','mass_friction') and friction_vector:
+        from .voronoi_friction_vector import rasterize_friction
+        if width*height > MAX_FRICTION_CELLS:
+            raise ValueError('O atrito excede 8 milhões de células; recorte ou aumente a resolução.')
+        friction, vector_stats = rasterize_friction(friction_vector['features'], friction_vector.get('outside'),
+                                                    geotransform, width, height, projection_wkt)
+        validate_friction(friction, geotransform, points)
+    elif mode in ('friction','mass_friction') and friction_components:
         from .voronoi_friction_stack import read_friction_stack
         paths = [os.path.abspath(str(spec['path'])) for spec in friction_components]
         if destination in paths or any(os.path.normcase(os.path.realpath(path)) ==
@@ -294,6 +305,7 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
                                        ','.join(str(spec['weight']) for spec in friction_components))
                 raster.SetMetadataItem('VISTASAGA_FRICTION_STACK_LAYERS',
                                        str(len(friction_components)))
+            raster.SetMetadataItem('VISTASAGA_FRICTION_SOURCE','vector' if vector_stats is not None else 'raster')
             raster.SetMetadataItem('VISTASAGA_FRICTION_SEARCH','Exact lower-bound pruning; no approximation')
             if mode == 'mass_friction':
                 raster.SetMetadataItem('VISTASAGA_MASS_MODEL','A / M (equivale a M / d2)')
@@ -325,6 +337,10 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
                 report.write(f"Tempo do cálculo matricial (s): {analysis_seconds:.3f}\n")
                 if friction_stats['traced_paths']:
                     report.write(f"Média de células por trajetória: {friction_stats['visited_cells'] / friction_stats['traced_paths']:.2f}\n")
+        if vector_stats is not None:
+            from .voronoi_friction_vector import describe
+            with open(local_txt,'a',encoding='utf-8') as report:
+                report.write(describe(friction_vector, vector_stats, abs(geotransform[1])))
         if friction_components:
             with open(local_txt,'a',encoding='utf-8') as report:
                 report.write('\nSuperfícies de atrito integradas (média ponderada)\n')
