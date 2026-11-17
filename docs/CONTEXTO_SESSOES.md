@@ -31,6 +31,20 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
   com refinamento local, ou aviso ao usuário.
 - **Decisão do autor (18/11): opção 1, verificação automática com correção** (conferir pontos dentro de
   cada célula/face; onde houver rótulo inesperado, subdividir e traçar de novo; relatar a conferência).
+- **Implementado (dev3):** `trace()` em `friction_voronoi_polygons`: malha adaptativa (dict de células
+  (i0, j0, tamanho)), conferência por célula com avaliação em lote (lados: 1/4, 1/2, 3/4 e cantos das
+  vizinhas menores; interior: centro e quartos; lado duplo da bisseção), só das células novas e das
+  vizinhas das divididas. Conferência final: 1 ponto por célula base (posição fixa 0,618/0,414), contra
+  os polígonos; divergência a > 5 × tolerância da fronteira aprofunda a pré-divisão (8 × 8, 64 × 64)
+  da célula e vizinhas e refaz o traçado (até 3 passadas; orçamento de 400 mil células). Rotulagem com
+  uma passada por polo (poda exata conferida contra avaliação exaustiva). Relatório informa a
+  conferência e avisa se restar divergência.
+- Provas: caso aleatório 0 divergências e 0/6000 numa amostra independente (espaçamentos 15/30/60 m);
+  com as conferências internas novas desligadas, a final achou e corrigiu a faixa estreita (30 m).
+  Desligar a conferência dos lados quebra a coerência entre células grossas e refinadas (não é
+  opcional). Tempo: caso de teste 0,5-3 s; caso aleatório (9 polos, 13 polígonos) ~4-5 s.
+- Suítes: 450 (3 pulados) + 36. QGIS 3.34 offscreen: Vetorial 99,60% / 99,48%, Raster 99,69%.
+- ZIP `Vista_Saga_Plugin_QGIS4_v1.4.0-dev3.zip`.
 
 ## 17/11/2026 (noite) — 1.4.0-dev2 implementada: vetor direto com atrito
 

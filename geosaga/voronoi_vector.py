@@ -416,8 +416,18 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                              'cunhas muito finas e encontros de três regiões podem ficar encurtados em alguns '
                              'decímetros (área desprezível). Regiões menores que a malha de busca podem não ser '
                              'detectadas.\n')
-                report.write(f"Nós avaliados: {friction_stats['evaluations']}; células refinadas: "
-                             f"{friction_stats['refined_cells']}; vértices de fronteira: {friction_stats['boundary_vertices']}.\n")
+                report.write(f"Nós avaliados: {friction_stats['evaluations']}; células da malha adaptativa: "
+                             f"{friction_stats['cells']}; vértices de fronteira: {friction_stats['boundary_vertices']}.\n")
+                check=friction_stats.get('check') or {}
+                report.write(f"Conferência automática: {check.get('samples',0)} pontos (um por célula da malha de busca) "
+                             f"comparados com o modelo; {check.get('divergent',0)} divergência(s) longe da fronteira após "
+                             f"{check.get('passes',0)} passada(s) de traçado"
+                             + (f" (correção local em {check.get('forced_cells',0)} célula(s))" if check.get('forced_cells') else '')
+                             + '.\n')
+                if check.get('divergent'):
+                    report.write('ATENÇÃO: restaram divergências entre os polígonos e o modelo'
+                                 + (' (limite de memória da correção atingido)' if check.get('budget_hit') else '')
+                                 + '. Repita com um espaçamento da busca menor.\n')
             else:
                 report.write('Modalidade: Com Massa (maior M/d², modelo do Vista SAGA); saída vetorial direta (sem rasterização)\n')
                 report.write('Fronteiras entre centros de massas diferentes: arcos de círculos de Apolônio, '

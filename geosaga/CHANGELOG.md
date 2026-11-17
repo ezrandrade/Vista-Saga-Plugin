@@ -22,6 +22,11 @@
     Vista SAGA em 99,60% (com massa) e 99,52% (sem massa) das células; com nota uniforme,
     reproduz os discos de Apolônio do Com Massa a menos de 1 cm. "Espaçamento da busca": regiões
     menores que ele podem não ser detectadas.
+  - **Conferência automática do traçado:** cada célula é testada nos lados e no interior, com
+    subdivisão onde houver suspeita; depois, o modelo é comparado com os polígonos em um ponto por
+    célula, com novo traçado local onde divergir (até 3 passadas). O `_resumo.txt` informa o
+    resultado e avisa se restar divergência. Corrige a região partida em duas (espaçamento 20 m) do
+    teste do autor.
   - **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução), pelo
     centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA (99,7%).
   - Sem reprojeção: a camada de polígonos define o SRC da análise.

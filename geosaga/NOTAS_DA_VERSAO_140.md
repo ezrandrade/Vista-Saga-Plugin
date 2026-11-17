@@ -55,6 +55,18 @@ encontros de três regiões podem ficar encurtados em alguns decímetros (área 
 detectadas; use um espaçamento menor que os menores detalhes que importam. A partição não tem
 sobreposições nem lacunas, e a fronteira com a área sem polígono é a borda exata dos polígonos.
 
+**Conferência automática (dev3).** O traçado se confere sozinho, em duas camadas:
+- durante o traçado, cada célula da malha de busca é testada nos lados (pontos intermediários, para
+  achar trocas de região escondidas, mesmo com a mesma região nas duas pontas) e no interior (centro e
+  quartos); qualquer suspeita subdivide a célula e as vizinhas, até estabilizar;
+- depois do traçado, o modelo é comparado com os polígonos em um ponto de cada célula da malha de
+  busca; se houver divergência longe da fronteira, aquela área é refinada e o traçado é refeito
+  (até 3 passadas, com limite de memória).
+O `_resumo.txt` informa quantos pontos foram conferidos e quantas divergências restaram; se restar
+alguma, avisa para repetir com espaçamento menor. Isso torna visível o que antes era silencioso. A
+limitação de fundo continua: um detalhe mais estreito que o espaçamento que não toque nenhum ponto
+conferido ainda pode escapar, mas agora com chance muito menor.
+
 **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução escolhidas),
 pela regra do centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA.
 
@@ -101,4 +113,7 @@ linha **contadas a partir de 1**.
   coincidência com os discos de Apolônio (`test_140_friction_continuous.py`).
 - Fluxo do diálogo conferido em QGIS 3.34 sem interface gráfica: guia Vetorial 99,60% (com massa,
   0,6 s) e 99,48% (sem massa); guia Raster com polígonos 99,69%.
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev2`).
+- Teste do autor da dev2 (QGIS 4): partição exata nas quatro modalidades; achou a região A partida
+  em duas com espaçamento de 20 m (corrigido na dev3, junto com uma cunha cortada no canto do
+  corredor e uma faixa estreita perdida nos testes com dados aleatórios).
+- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev3`).

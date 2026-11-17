@@ -203,23 +203,21 @@ class ContinuousModel:
         count, npoles = x.size, len(self.generators)
         self.evaluations += count
         d2 = (x[None, :] - self.gx[:, None]) ** 2 + (y[None, :] - self.gy[:, None]) ** 2
-        # Limite inferior exato: A >= nota mínima × D² / 2.
+        # Limite inferior exato: A >= nota mínima × D² / 2. Uma passada por polo, na ordem do menor
+        # limite inferior médio; cada polo só calcula os pontos em que ainda pode vencer.
         lower = self.surface.min_rating * d2 / 2.0 / self.mass[:, None]
-        order = np.argsort(lower, axis=0, kind='stable')
         best = np.full(count, np.inf)
         best_j = np.full(count, npoles, dtype=np.int64)
-        index = np.arange(count)
-        for rank in range(npoles):
-            j_for = order[rank]
-            can = lower[j_for, index] <= best
-            if not can.any():
-                break
-            for j in np.unique(j_for[can]):
-                sub = np.flatnonzero(can & (j_for == j))
-                score = self.surface.costs(self.gx[j], self.gy[j], self.g_inside[j], x[sub], y[sub]) / self.mass[j]
-                take = np.isfinite(score) & ((score < best[sub]) | ((score == best[sub]) & (j < best_j[sub])))
-                best[sub[take]] = score[take]
-                best_j[sub[take]] = j
+        nearest = np.argmin(lower, axis=0)
+        order = sorted(range(npoles), key=lambda j: (-(nearest == j).sum(), float(lower[j].mean())))
+        for j in order:
+            sub = np.flatnonzero(lower[j] <= best)
+            if not sub.size:
+                continue
+            score = self.surface.costs(self.gx[j], self.gy[j], self.g_inside[j], x[sub], y[sub]) / self.mass[j]
+            take = np.isfinite(score) & ((score < best[sub]) | ((score == best[sub]) & (j < best_j[sub])))
+            best[sub[take]] = score[take]
+            best_j[sub[take]] = j
         out = np.zeros(count, dtype=np.int64)
         reached = best_j < npoles
         out[reached] = self.ids[best_j[reached]]
@@ -234,6 +232,8 @@ class ContinuousModel:
 _SHIFT_X, _SHIFT_Y = 0.3183098861837907, 0.36787944117144233
 # Refinamento local das células complexas: 2**_REFINE_LEVEL subdivisões por lado.
 _REFINE_LEVEL = 3
+# Máximo de células criadas pela correção da conferência final (protege a memória do QGIS).
+_CELL_BUDGET = 400_000
 
 
 class _Lattice:
@@ -426,135 +426,271 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
     base_nodes = nx * ny
     if progress:
         progress(20)
-    # 2. Refinamento local: células base com 3+ rótulos nos cantos (junções) ou em sela são
-    # divididas em R × R; se um lado de uma célula refinada troca de rótulo mais de uma vez, a
-    # vizinha daquele lado também é refinada, até estabilizar. Assim, um lado compartilhado entre
-    # célula grossa e célula refinada tem no máximo uma troca, e os pontos de fronteira coincidem.
     R = 2 ** _REFINE_LEVEL
     sub = step // R
 
     def corners(i0, j0, size):
         return lattice.labels([(i0, j0), (i0 + size, j0), (i0 + size, j0 + size), (i0, j0 + size)])
 
-    refined, queue = set(), []
+    def side_keys(i0, j0, size):
+        return [(i0, j0, 1, 0, size), (i0 + size, j0, 0, 1, size), (i0, j0 + size, 1, 0, size), (i0, j0, 0, 1, size)]
+
+    # Células iniciais: as células base com 3+ rótulos nos cantos (junções) ou em sela, e as forçadas
+    # pela conferência final, já entram divididas em R × R.
+    initial = set()
     for j in range(ny - 1):
         for i in range(nx - 1):
             c = corners(i * step, j * step, step)
             kinds = len(set(c))
             if kinds >= 3 or (kinds == 2 and c[0] == c[2] and c[1] == c[3] and c[0] != c[1]):
-                queue.append((i, j))
-    while queue:
-        if cancelled and cancelled():
-            raise InterruptedError('Voronoi cancelado.')
-        batch = [cell for cell in dict.fromkeys(queue) if cell not in refined]
-        queue = []
-        if not batch:
-            break
-        keys = [(i * step + a * sub, j * step + b * sub) for i, j in batch for a in range(R + 1) for b in range(R + 1)]
-        lattice.labels(keys)
-        for i, j in batch:
-            refined.add((i, j))
-            i0, j0 = i * step, j * step
-            sides = {(0, -1): [(i0 + a * sub, j0) for a in range(R + 1)],
-                     (1, 0): [(i0 + step, j0 + b * sub) for b in range(R + 1)],
-                     (0, 1): [(i0 + a * sub, j0 + step) for a in range(R + 1)],
-                     (-1, 0): [(i0, j0 + b * sub) for b in range(R + 1)]}
-            for (di, dj), nodes in sides.items():
-                values = lattice.labels(nodes)
-                changes = sum(1 for u, v in zip(values, values[1:]) if u != v)
-                ni, nj = i + di, j + dj
-                if changes > 1 and 0 <= ni < nx - 1 and 0 <= nj < ny - 1 and (ni, nj) not in refined:
-                    queue.append((ni, nj))
-    cells = []
-    for j in range(ny - 1):
-        for i in range(nx - 1):
-            if (i, j) in refined:
-                cells.extend((i * step + a * sub, j * step + b * sub, sub) for a in range(R) for b in range(R))
-            else:
-                cells.append((i * step, j * step, step))
+                initial.add((i, j))
     if progress:
-        progress(35)
-    # 3. Pontos de fronteira nos lados das células (bisseção diádica na malha fina; lados iguais
-    # dão pontos iguais). Um lado com duas ou mais trocas de região se denuncia: o rótulo logo
-    # antes/depois da troca encontrada não é o da ponta. As duas células desse lado são então
-    # divididas em quatro, recursivamente, até não restar lado assim (ou chegar à malha fina).
-    def side_keys(i0, j0, size):
-        return [(i0, j0, 1, 0, size), (i0 + size, j0, 0, 1, size), (i0, j0 + size, 1, 0, size), (i0, j0, 0, 1, size)]
+        progress(25)
 
-    found = {}
-    for _ in range(lattice.level + 1):
-        pending = []
-        for i0, j0, size in cells:
-            for key in side_keys(i0, j0, size):
-                if key in found:
-                    continue
-                a = lattice.labels([(key[0], key[1])])[0]
-                b = lattice.labels([(key[0] + key[2] * size, key[1] + key[3] * size)])[0]
+    def trace(forced):
+        """Malha adaptativa → pontos de fronteira → segmentos → linhas → regiões, com as células
+        base de ``forced`` ({(i, j): profundidade}) pré-divididas em (2**3)**profundidade partes por
+        lado. Devolve (regiões {id: geometria}, informações)."""
+        cells = set()
+        for j in range(ny - 1):
+            for i in range(nx - 1):
+                depth = max(forced.get((i, j), 0), 1 if (i, j) in initial else 0)
+                size = max(1, step >> (_REFINE_LEVEL * depth))
+                n = step // size
+                cells.update((i * step + a * size, j * step + b * size, size) for a in range(n) for b in range(n))
+        sizes = sorted({step >> k for k in range(lattice.level + 1)}, reverse=True)
+
+        def owner(i, j):
+            """Célula que contém o nó (i, j) da malha fina (convenção semiaberta)."""
+            for size in sizes:
+                key = (i - i % size, j - j % size, size)
+                if key in cells:
+                    return key
+            return None
+
+        def across(cell, side):
+            """Células do outro lado de um lado da célula (podem ser maiores, iguais ou menores)."""
+            i0, j0, size = cell
+            out, t = [], 0
+            while t < size:
+                if side == 0:
+                    probe = (i0 + t, j0 - 1)
+                elif side == 1:
+                    probe = (i0 + size, j0 + t)
+                elif side == 2:
+                    probe = (i0 + t, j0 + size)
+                else:
+                    probe = (i0 - 1, j0 + t)
+                other = owner(*probe)
+                if other is None:
+                    break
+                out.append(other)
+                o_i, o_j, o_size = other
+                t = (o_i + o_size - i0) if side in (0, 2) else (o_j + o_size - j0)
+            return out
+
+        found = {}
+        cache = lattice.cache
+
+        def plan(cell):
+            """Nós que a conferência da célula usa: [(lado, chave, posições ao longo do lado)], interior."""
+            i0, j0, size = cell
+            sides = []
+            for side, key in enumerate(side_keys(i0, j0, size)):
+                offsets = {size // 2} | ({size // 4, 3 * size // 4} if size >= 4 else set())
+                for other in across(cell, side):
+                    if other[2] < size:
+                        edge_pos = (other[0] - i0) if side in (0, 2) else (other[1] - j0)
+                        for t in (edge_pos, edge_pos + other[2]):
+                            if 0 < t < size:
+                                offsets.add(t)
+                sides.append((key, [0] + sorted(offsets) + [size]))
+            inner = [(i0 + size // 2, j0 + size // 2)]
+            if size >= 4:
+                q = size // 4
+                inner += [(i0 + q, j0 + q), (i0 + 3 * q, j0 + q), (i0 + 3 * q, j0 + 3 * q), (i0 + q, j0 + 3 * q)]
+            return sides, inner
+
+        dirty = set(cells)
+        for _ in range(lattice.level + 2):
+            if cancelled and cancelled():
+                raise InterruptedError('Voronoi cancelado.')
+            # Pontos de fronteira (bisseção diádica) nos lados novos com pontas diferentes.
+            new_sides = [key for i0, j0, size in cells for key in side_keys(i0, j0, size) if key not in found]
+            new_sides = list(dict.fromkeys(new_sides))
+            lattice.labels([(k[0], k[1]) for k in new_sides] +
+                           [(k[0] + k[2] * k[4], k[1] + k[3] * k[4]) for k in new_sides])
+            pending = []
+            for key in new_sides:
+                a = cache[(key[0], key[1])]
+                b = cache[(key[0] + key[2] * key[4], key[1] + key[3] * key[4])]
                 if a == b:
                     found[key] = None
                 else:
                     pending.append((key, a, b))
-        if pending:
-            for (key, a, b), point in zip(pending, _bisect_edges(lattice, [k for k, _, _ in pending], cancelled)):
-                found[key] = (point, point[1] != a or point[2] != b)
-        doubled = {key for key, value in found.items() if value is not None and value[1] and key[4] > 1}
-        if not doubled:
-            break
-        split = set()
+            if pending:
+                for (key, a, b), point in zip(pending, _bisect_edges(lattice, [k for k, _, _ in pending], cancelled)):
+                    found[key] = (point, point[1] != a or point[2] != b)
+            # Conferência das células novas e das vizinhas das divididas: (1) lado com duas trocas
+            # achado na bisseção; (2) nos lados, pontos intermediários (1/4, 1/2, 3/4 e os cantos das
+            # vizinhas menores) com mais trocas do que o lado representa; (3) no interior (centro e
+            # quartos), rótulo que não está nos cantos. Todos os nós são avaliados de uma vez.
+            plans = {cell: plan(cell) for cell in dirty if cell in cells and cell[2] >= 2}
+            need = []
+            for cell, (sides, inner) in plans.items():
+                for key, ts in sides:
+                    need.extend((key[0] + key[2] * t, key[1] + key[3] * t) for t in ts)
+                need.extend(inner)
+                i0, j0, size = cell
+                need.extend([(i0, j0), (i0 + size, j0), (i0 + size, j0 + size), (i0, j0 + size)])
+            lattice.labels(need)
+            split = set()
+            for cell, (sides, inner) in plans.items():
+                i0, j0, size = cell
+                c = {cache[(i0, j0)], cache[(i0 + size, j0)], cache[(i0 + size, j0 + size)], cache[(i0, j0 + size)]}
+                bad = False
+                for key, ts in sides:
+                    value = found.get(key)
+                    if value is not None and value[1]:
+                        bad = True
+                        break
+                    seq = [cache[(key[0] + key[2] * t, key[1] + key[3] * t)] for t in ts]
+                    changes = sum(1 for u, v in zip(seq, seq[1:]) if u != v)
+                    if changes > (0 if seq[0] == seq[-1] else 1):
+                        bad = True
+                        break
+                if not bad and any(cache[node] not in c for node in inner):
+                    bad = True
+                if bad:
+                    split.add(cell)
+            if not split:
+                break
+            dirty = set()
+            for cell in split:
+                for side in range(4):
+                    dirty.update(across(cell, side))
+            for i0, j0, size in split:
+                cells.discard((i0, j0, size))
+                half = size // 2
+                children = [(i0 + a * half, j0 + b * half, half) for a in (0, 1) for b in (0, 1)]
+                cells.update(children)
+                dirty.update(children)
+            dirty = {cell for cell in dirty if cell in cells}
+        edge_index, points = {}, []
         for i0, j0, size in cells:
-            if size > 1 and any(key in doubled for key in side_keys(i0, j0, size)):
-                split.add((i0, j0, size))
-        if not split:
-            break
-        cells = [c for c in cells if c not in split] + [
-            (i0 + a * (size // 2), j0 + b * (size // 2), size // 2)
-            for i0, j0, size in split for a in (0, 1) for b in (0, 1)]
-        if cancelled and cancelled():
-            raise InterruptedError('Voronoi cancelado.')
-    edge_index, points = {}, []
-    for i0, j0, size in cells:
-        for key in side_keys(i0, j0, size):
-            value = found.get(key)
-            if value is not None and key not in edge_index:
-                edge_index[key] = len(points)
-                points.append(value[0])
-    if progress:
-        progress(50)
-    # Segmentos em cada célula (2 pontos: corda; sela de 2 rótulos: pelo centro; 3+ rótulos: junção).
-    segments = []
-    for i0, j0, size in cells:
-        c = corners(i0, j0, size)
-        sides = [edge_index.get(key) for key in side_keys(i0, j0, size)]
-        present = [s_ for s_ in sides if s_ is not None]
-        if not present:
-            continue
-        if len(present) == 2:
-            (p, a, b), (q, _, _) = points[present[0]], points[present[1]]
-            segments.append((p, q, a, b))
-        elif len(present) == 4 and len(set(c)) == 2:
-            center = lattice.labels([(i0 + size // 2, j0 + size // 2)])[0] if size > 1 else c[0]
-            pairs = ((0, 1), (2, 3)) if center == c[0] else ((3, 0), (1, 2))
-            for s_, t_ in pairs:
-                (p, a, b), (q, _, _) = points[sides[s_]], points[sides[t_]]
+            for key in side_keys(i0, j0, size):
+                value = found.get(key)
+                if value is not None and key not in edge_index:
+                    edge_index[key] = len(points)
+                    points.append(value[0])
+        # Segmentos em cada célula (2 pontos: corda; sela de 2 rótulos: pelo centro; 3+: junção).
+        segments = []
+        for i0, j0, size in cells:
+            c = corners(i0, j0, size)
+            sides = [edge_index.get(key) for key in side_keys(i0, j0, size)]
+            present = [s_ for s_ in sides if s_ is not None]
+            if not present:
+                continue
+            if len(present) == 2:
+                (p, a, b), (q, _, _) = points[present[0]], points[present[1]]
                 segments.append((p, q, a, b))
-        else:
-            hub = _junction(lattice, i0, j0, size)
-            for s_ in present:
-                p, a, b = points[s_]
-                segments.append((p, hub, a, b))
+            elif len(present) == 4 and len(set(c)) == 2:
+                center = lattice.labels([(i0 + size // 2, j0 + size // 2)])[0] if size > 1 else c[0]
+                pairs = ((0, 1), (2, 3)) if center == c[0] else ((3, 0), (1, 2))
+                for s_, t_ in pairs:
+                    (p, a, b), (q, _, _) = points[sides[s_]], points[sides[t_]]
+                    segments.append((p, q, a, b))
+            else:
+                hub = _junction(lattice, i0, j0, size)
+                for s_ in present:
+                    p, a, b = points[s_]
+                    segments.append((p, hub, a, b))
+        lines = _refine(model, segments, tolerance, cancelled)
+        regions, absorbed = _assemble(model, surface, lines, lattice, (xmin, ymin, xmax, ymax), tolerance)
+        return regions, {'cells': len(cells), 'boundary_vertices': len(lines), 'absorbed_residues': absorbed}
+
+    # Conferência final, independente do traçado: o modelo em um ponto de cada célula base (posição
+    # fixa, fora dos nós) contra os polígonos traçados. Divergência longe da fronteira (> 5 ×
+    # tolerância) aprofunda a pré-divisão daquela célula base e das vizinhas, e o traçado é refeito
+    # (até 3 passadas). O que restar é informado no relatório.
+    forced = {}
+    sample_i, sample_j = np.meshgrid(np.arange(nx - 1), np.arange(ny - 1))
+    sample_x = lattice.x0 + (sample_i.ravel() + 0.6180339887) * spacing
+    sample_y = lattice.y0 + (sample_j.ravel() + 0.4142135624) * spacing
+    inside = (sample_x > xmin) & (sample_x < xmax) & (sample_y > ymin) & (sample_y < ymax)
+    sample_i, sample_j = sample_i.ravel()[inside], sample_j.ravel()[inside]
+    sample_x, sample_y = sample_x[inside], sample_y[inside]
+    expected = model.labels(sample_x, sample_y)
+    passes, divergent, budget_hit = 0, [], False
+    while True:
+        passes += 1
+        regions, info = trace(forced)
+        if progress:
+            progress(min(85, 40 + 15 * passes))
+        divergent = _divergent_samples(regions, sample_x, sample_y, expected, 5 * tolerance)
+        if not divergent or passes >= 3:
+            break
+        # A célula base da amostra divergente desce um nível; as vizinhas, pelo menos ao primeiro.
+        # Orçamento de células: acima dele a correção para (e o relatório informa o que restou).
+        proposal = dict(forced)
+        max_depth = max(1, lattice.level // _REFINE_LEVEL)
+        for k in divergent:
+            ci, cj = int(sample_i[k]), int(sample_j[k])
+            for di in (-1, 0, 1):
+                for dj in (-1, 0, 1):
+                    i, j = ci + di, cj + dj
+                    if not (0 <= i < nx - 1 and 0 <= j < ny - 1):
+                        continue
+                    current = proposal.get((i, j), 1 if (i, j) in initial else 0)
+                    target = min(current + 1, max_depth) if (di, dj) == (0, 0) else max(current, 1)
+                    if target > proposal.get((i, j), 0):
+                        proposal[(i, j)] = target
+        budget = sum(4 ** (_REFINE_LEVEL * d) for d in proposal.values())
+        if proposal == forced or budget > _CELL_BUDGET:
+            budget_hit = budget > _CELL_BUDGET
+            break
+        forced = proposal
+    results = []
+    from osgeo import ogr as _ogr
+    for g in generators:
+        region = regions.get(g.identifier)
+        if region is None:
+            continue
+        polygons = _ogr.Geometry(_ogr.wkbMultiPolygon)
+        _collect(region, polygons)
+        if polygons.GetGeometryCount():
+            results.append((g, polygons))
+    refined = initial
+    cells = range(info['cells'])
+    lines = range(info['boundary_vertices'])
+    absorbed = info['absorbed_residues']
+    check = {'samples': int(sample_x.size), 'divergent': len(divergent), 'passes': passes,
+             'forced_cells': len(forced), 'budget_hit': budget_hit}
     if progress:
-        progress(60)
-    # 4. Refinamento até a tolerância.
-    lines = _refine(model, segments, tolerance, cancelled)
-    if progress:
-        progress(80)
-    # 5. Polígonos: linhas + contorno da malha → poligonização → rótulo de cada face → união por polo.
+        progress(90)
+    stats = {'spacing': spacing, 'tolerance': tolerance, 'base_nodes': int(base_nodes),
+             'refined_cells': len(refined), 'cells': len(cells),
+             'evaluations': model.evaluations, 'boundary_vertices': len(lines),
+             'polygons': len(surface.ratings), 'min_rating': surface.min_rating,
+             'absorbed_residues': absorbed, 'check': check}
+    return results, stats
+
+
+def _assemble(model, surface, lines, lattice, bounds, tolerance):
+    """Linhas + contorno da malha → poligonização → rótulo de cada face → união por polo.
+
+    Devolve ({identificador: geometria}, resíduos absorvidos).
+    """
+    from osgeo import ogr
+    from .gdal_scope import gdal_exceptions
+    xmin, ymin, xmax, ymax = bounds
+    step = lattice.step
     with gdal_exceptions():
         x1, y1 = lattice.xy((lattice.nx - 1) * step, (lattice.ny - 1) * step)
         frame = [(lattice.x0, lattice.y0), (float(x1), lattice.y0), (float(x1), float(y1)),
                  (lattice.x0, float(y1)), (lattice.x0, lattice.y0)]
         net = ogr.Geometry(ogr.wkbMultiLineString)
-        for (p, q) in lines + list(zip(frame, frame[1:])):
+        for (p, q) in list(lines) + list(zip(frame, frame[1:])):
             line = ogr.Geometry(ogr.wkbLineString)
             line.AddPoint_2D(*p)
             line.AddPoint_2D(*q)
@@ -572,9 +708,8 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
         extent.AddGeometry(ring)
         # A fronteira com a área sem polígono (barreira) é conhecida exatamente: a borda da cobertura.
         domain = extent.Intersection(surface.union)
-        # Cada face é recortada pelo domínio ANTES de receber o rótulo: uma face que cruza a borda
-        # da cobertura (dentro da tolerância) seria rotulada por um ponto de fora e descartada.
-        # O recorte pode partir uma face em vários pedaços: cada pedaço recebe o próprio rótulo.
+        # Cada face é recortada pelo domínio ANTES de receber o rótulo; o recorte pode partir uma face
+        # em vários pedaços, e cada pedaço recebe o próprio rótulo.
         pieces = ogr.Geometry(ogr.wkbMultiPolygon)
         for k in range(faces.GetGeometryCount()):
             clipped = faces.GetGeometryRef(k).Intersection(domain)
@@ -585,15 +720,15 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
         face_labels = model.labels(np.array([p.GetX() for p in inner]), np.array([p.GetY() for p in inner]))
         face_labels = _absorb_slivers(parts, face_labels, tolerance)
         regions = {}
-        for g in generators:
+        for ident in sorted({int(v) for v in face_labels if v}):
             group = ogr.Geometry(ogr.wkbMultiPolygon)
             for part, label in zip(parts, face_labels):
-                if label == g.identifier:
+                if label == ident:
                     _collect(part, group)
             if group.GetGeometryCount():
                 region = group.UnionCascaded().Intersection(domain)
                 if region is not None and not region.IsEmpty():
-                    regions[g.identifier] = region
+                    regions[ident] = region
         # Resíduos finos (largura média < 2 × tolerância) entre o traçado e a borda exata ficam com o
         # vizinho de maior fronteira comum, como na Combinação vetorial (1.2.0).
         absorbed = 0
@@ -617,23 +752,40 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
                 if shared[ident] > 0:
                     regions[ident] = regions[ident].Union(piece)
                     absorbed += 1
-        results = []
-        for g in generators:
-            region = regions.get(g.identifier)
-            if region is None:
-                continue
-            polygons = ogr.Geometry(ogr.wkbMultiPolygon)
-            _collect(region, polygons)
-            if polygons.GetGeometryCount():
-                results.append((g, polygons))
-    if progress:
-        progress(90)
-    stats = {'spacing': spacing, 'tolerance': tolerance, 'base_nodes': int(base_nodes),
-             'refined_cells': len(refined), 'cells': len(cells),
-             'evaluations': model.evaluations, 'boundary_vertices': len(lines),
-             'polygons': len(surface.ratings), 'min_rating': surface.min_rating,
-             'absorbed_residues': absorbed}
-    return results, stats
+    return regions, absorbed
+
+
+def _divergent_samples(regions, xs, ys, expected, margin):
+    """Índices das amostras cujo rótulo do modelo não é o da região traçada que as contém, a mais de
+    ``margin`` da fronteira traçada (perto dela, a diferença está dentro da tolerância)."""
+    from osgeo import ogr
+    got = np.zeros(xs.size, dtype=np.int64)
+    for ident, region in regions.items():
+        prepared = region
+        env = region.GetEnvelope()
+        cand = np.flatnonzero((got == 0) & (xs >= env[0]) & (xs <= env[1]) & (ys >= env[2]) & (ys <= env[3]))
+        for k in cand:
+            point = ogr.Geometry(ogr.wkbPoint)
+            point.AddPoint_2D(float(xs[k]), float(ys[k]))
+            if prepared.Contains(point):
+                got[k] = ident
+    out = []
+    boundaries = None
+    for k in np.flatnonzero(got != expected):
+        if boundaries is None:
+            boundaries = ogr.Geometry(ogr.wkbMultiLineString)
+            for region in regions.values():
+                b = region.Boundary()
+                if ogr.GT_Flatten(b.GetGeometryType()) == ogr.wkbLineString:
+                    boundaries.AddGeometry(b)
+                else:
+                    for n in range(b.GetGeometryCount()):
+                        boundaries.AddGeometry(b.GetGeometryRef(n))
+        point = ogr.Geometry(ogr.wkbPoint)
+        point.AddPoint_2D(float(xs[k]), float(ys[k]))
+        if boundaries.Distance(point) > margin:
+            out.append(int(k))
+    return out
 
 
 def _absorb_slivers(parts, labels, tolerance):

@@ -201,6 +201,9 @@ class ContinuousPolygonsTests(unittest.TestCase):
             results, stats = friction_voronoi_polygons(points, features, bounds, spacing=15, tolerance=0.01,
                                                        mass_weighted=weighted)
             self._check_partition(results, 800000.)
+            # Conferência automática (decisão do autor, 18/11): nenhuma divergência restante.
+            self.assertEqual(stats['check']['divergent'], 0, stats['check'])
+            self.assertGreater(stats['check']['samples'], 3000)
             model = ContinuousModel(points, FrictionSurface(features), mass_weighted=weighted)
             by_id = {g.identifier: geom for g, geom in results}
             boundary = None
