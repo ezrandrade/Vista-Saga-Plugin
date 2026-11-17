@@ -6,6 +6,18 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 17/11/2026 (noite) — resultados do teste perdidos em sessão bloqueada
+
+- O autor **já rodou o caso de teste no Vista SAGA** e enviou os RS2 de saída numa sessão que foi
+  bloqueada antes de qualquer registro; nada chegou ao repositório. É o **segundo bloqueio** (o
+  primeiro foi o de 16/11). Causa desconhecida.
+- Medidas combinadas: registrar o contexto **no início** da sessão e logo após cada achado (não só
+  no fim); validação **caixa-preta** (entrada → saída do Vista SAGA), sem nova análise do executável;
+  os RS2 de saída não vão para o repositório (regra do `CLAUDE.md`); só o script de comparação e os
+  números resumidos.
+- Pendente: o autor reenviar R1–R4 e `pontos_salvo.txt`, com as respostas do roteiro (qual arquivo de
+  pontos funcionou, deslocamentos, notas).
+
 ## 17/11/2026 (tarde) — 1.3.0 fechada; caso de teste do atrito
 
 - **1.3.0 fechada e mesclada** (merge `87406de` na `main`). Tag `v1.3.0` pendente (autor).
