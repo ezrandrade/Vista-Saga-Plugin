@@ -122,6 +122,10 @@ essas bibliotecas faltam.
 
 ## Pendências registradas
 
+- **Contexto entre sessões:** leia `docs/CONTEXTO_SESSOES.md` no início de cada sessão e
+  atualize-o ao final (decisões, achados, pendências). Inclui a análise do modelo de atrito do
+  Voronoi e a proposta da 1.4.0.
+
 - **Tags (adiadas pelo autor em 16/11/2026):** commits já conferidos (último merge de cada versão
   na `main`): v1.0.5 `0063fe2`, v1.0.6 `27b06e5`, v1.0.8 `760620e`, v1.0.9 `1ee4d8c`, v1.1.0
   `bcb08fb` (PR #9: README do ZIP já na 1.1.0), v1.2.0 `92d35ea`, v1.2.1 `4b165de`. **O proxy das
