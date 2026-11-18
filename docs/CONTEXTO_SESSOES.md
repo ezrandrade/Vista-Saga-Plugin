@@ -9,7 +9,14 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 ## 18/11/2026 — resultados do teste da 1.4.0-dev4 recebidos
 
 - `voronoi_vetorial_dev4.zip`. O autor testou nota 0 na coluna ATRITO: o processo foi bloqueado (como
-  decidido) e ele rodou com 0,1. Análise em andamento nesta sessão.
+  decidido) e ele rodou com 0,1 (coluna ATRITO2; inferido pelas áreas: 0,1 no polígono "Atrito medio").
+- Coluna ATRITO (extensão de ~948 m): espaçamento automático 9,48 m, tolerância 0,474 m; regiões inteiras,
+  partição exata, conferência 0 divergências, 99,52% (sem massa) e 99,60% (com massa) do Vista SAGA;
+  diferença para a dev3 (1 cm): 2-5 cm médios.
+- Coluna ATRITO2 (0,1 no leste): conferência 0 divergências; Com Atrito com a região C em 2 partes — a
+  segunda (858 m²) é real: cunha de C no alto da faixa de atrito alto, separada do corpo de C pela
+  região B (conferido no modelo ponto a ponto).
+- **dev4 homologada pelo autor no QGIS 4.**
 
 ## 18/11/2026 — 1.4.0-dev4 implementada
 
