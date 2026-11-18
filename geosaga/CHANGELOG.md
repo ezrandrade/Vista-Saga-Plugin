@@ -41,6 +41,11 @@
   - **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução), pelo
     centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA (99,7%).
   - Sem reprojeção: a camada de polígonos define o SRC da análise.
+- **dev6 (teste da dev5 com dados reais):** guia Raster **recorta pela área de estudo** quando a extensão
+  vem de camada poligonal (antes, só o retângulo envolvente); **NoData do raster de atrito sem resultado,
+  atravessável com nota 1** (antes, barreira); lascas do recorte final (largura média < 2 × tolerância)
+  incorporadas ao vizinho; `_resumo.txt` do vetor direto com o tempo de cálculo e as partes com área
+  < 25 m² (só informadas); resumo do raster com atrito com a regra de passagem conforme a fonte.
 - **Nota de atrito 0 recusada** (raster, coluna vetorial e combinação de superfícies): custo zero cria
   empates resolvidos pela ordem dos pontos, e o comportamento do Vista SAGA com nota 0 não foi
   testado. Para "quase sem atrito", use um valor pequeno, como 0,1. Rasters de atrito antigos com

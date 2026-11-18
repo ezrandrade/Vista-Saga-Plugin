@@ -31,7 +31,9 @@ célula do polo e a célula de destino, de
   empates entre polos, resolvidos pela ordem dos pontos no arquivo, e o comportamento do Vista SAGA com
   nota 0 não foi testado. Para "quase sem atrito", use um valor pequeno, como 0,1. **Rasters de atrito
   antigos com valor 0 precisam ser revistos.**
-- NoData continua sendo barreira (sem resultado e sem passagem). A célula do polo é sempre dele.
+- **NoData do raster de atrito** (e de qualquer superfície da combinação): **sem resultado, atravessável
+  com nota 1** (dev6), a mesma regra da área sem polígono do atrito vetorial. Até a dev5 era barreira.
+  Um centro sobre NoData continua recusado. A célula do polo é sempre dele.
 - Empates: vence o polo que vem primeiro na lista (mesma regra do Vista SAGA).
 - As duas modalidades deixam de ser marcadas como "experimentais".
 
@@ -94,6 +96,26 @@ regiões e execução em segundo plano, com porcentagem e botão Cancelar. O cas
 **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução escolhidas),
 pela regra do centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA.
 
+**Ajustes da dev6 (teste da dev5 com dados reais; decisões do autor):**
+
+- **Guia Raster recorta pela área de estudo** quando a extensão vem de uma camada poligonal: só as
+  células com o centro dentro da área recebem resultado, como o recorte da guia Vetorial. Antes, a guia
+  Raster usava só o retângulo envolvente: Simples e Com Massa avaliavam o retângulo inteiro, e a "% da
+  área avaliada" não era comparável entre modalidades nem entre guias. No atrito, as células fora da
+  área continuam atravessáveis com a própria nota (só ficam sem resultado). Com atrito raster, a grade
+  continua sendo a do raster (sem recorte).
+- **Lascas do recorte final** (vetor direto com atrito): partes com largura média menor que 2 ×
+  tolerância (1 m, com a tolerância padrão), criadas onde uma fronteira encontra a borda da área de
+  estudo quase tangente, vão para a região vizinha de maior fronteira comum (no teste: 0,02 m e 0,08 m
+  de largura).
+- **Partes abaixo da escala só informadas:** o `_resumo.txt` do vetor direto lista, por região, as
+  partes com área menor que 25 m² ((5 m)², o PEC Classe A a 1:10.000); a geometria não muda. No teste
+  com dados reais eram cerca de 20 partes, de 1 a 2 m de largura, nas modalidades com atrito. O raster
+  também se fragmenta (até 37 partes por região): a fragmentação vem do modelo sobre um mosaico de uso
+  do solo fragmentado, não só do traçado.
+- `_resumo.txt`: tempo de cálculo no vetor direto; no raster com atrito, a regra de passagem conforme a
+  fonte (sem a frase antiga "NoData = barreira") e a linha do recorte.
+
 As duas guias dão resultados ligeiramente diferentes para a mesma entrada (veja a tabela abaixo):
 o modelo contínuo é o limite do modelo célula a célula quando a célula tende a zero.
 
@@ -145,4 +167,13 @@ linha **contadas a partir de 1**.
 - Teste do autor da dev4 (QGIS 4): nota 0 bloqueada; espaçamento automático; regiões inteiras e
   conferência sem divergências. **dev4 homologada.** Teste com dados reais: lentidão e regiões
   distorcidas (corrigidas na dev5).
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev5`), com os dados reais.
+- Teste do autor da dev5 (QGIS 4, dados reais: bacia de 2.343 ha, 10 polos, uso do solo): 10 regiões,
+  geometrias válidas, soma das áreas igual à da bacia nas quatro modalidades; conferência sem
+  divergências. Vetor × raster (5 m), célula a célula: Simples e Com Massa 100%; **Com Atrito 99,36% e
+  Com Massa e Atrito 99,14%** (15 a 20 ha de diferença, até 3,8 ha numa região, com deslocamento
+  sistemático). É a diferença entre o modelo contínuo e o célula a célula em percursos longos sobre um
+  mosaico fragmentado. **Qual dos dois se aproxima mais do Vista SAGA nesses dados não foi testado**:
+  só uma rodada da mesma bacia no Vista SAGA original decide.
+- dev6: suítes verdes (testes novos em `test_150_voronoi_dev6.py`); diálogo conferido em QGIS 3.34
+  sem interface gráfica com dados sintéticos (bacia côncava, raster de atrito com faixa NoData).
+- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev6`).

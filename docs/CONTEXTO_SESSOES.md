@@ -14,10 +14,10 @@ Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais r
 
 - **Branch:** `feat/voronoi-atrito-fiel` (último commit: dev5). **PR:**
   [ezrandrade/Vista-Saga-Plugin#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13), aberto,
-  sem merge. `metadata.txt` = 1.4.0; ZIPs de teste `-dev1` a `-dev5` (versão `-devN` só dentro do ZIP).
+  sem merge. `metadata.txt` = 1.4.0; ZIPs de teste `-dev1` a `-dev6` (versão `-devN` só dentro do ZIP).
 - **Homologadas pelo autor no QGIS 4:** dev3 (caso sintético, 5 m e 20 m) e dev4 (espaçamento automático,
-  nota 0 bloqueada). **dev5 enviada, aguardando o teste do autor com os dados reais** (bacia do
-  Reginaldo: uso do solo como atrito, centroides dos bairros com massas).
+  nota 0 bloqueada). dev5 testada com os dados reais (bacia do Reginaldo) e analisada na sessão 2.
+  **dev6 enviada (sessão 3), aguardando o teste do autor no QGIS 4.**
 - **Dados do autor** (uso do solo, bacia, centroides, resultados): só na sessão; nunca no repositório
   (`*.gpkg` é ignorado de propósito). Se precisar deles, peça ao autor que reenvie.
 - A **tese está fora destas sessões** (decisão do autor): não perguntar sobre mapas da tese.
@@ -52,8 +52,11 @@ recorta pela bacia, partes < 25 m² só informadas, NoData do atrito atravessáv
 
 ### Próximos passos
 
-**Atualizado na sessão 3 (18/11): decisões da dev6 tomadas pelo autor (aceitou as recomendações).**
-Escopo da dev6, em implementação:
+**Atualizado na sessão 3 (18/11): dev6 implementada, testada e enviada** (`Vista_Saga_Plugin_QGIS4_v1.4.0-dev6.zip`);
+aguardando o teste do autor no QGIS 4. O que conferir no teste: guia Raster com extensão = bacia (sem
+resultado fora da bacia; % comparável entre modalidades); raster de atrito com NoData (faixa sem
+resultado, polos alcançando o outro lado); vetor direto com atrito (sem lascas na borda; tempo e
+partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3):
 - (1) lascas < 1 m na borda após o recorte (vetor direto com atrito);
 - (2) cabeçalho do `_resumo.txt` raster conforme a fonte do atrito;
 - (3) tempo de cálculo no `_resumo.txt` do vetor direto;
@@ -90,6 +93,17 @@ Escopo da dev6, em implementação:
 - Código central: `geosaga/voronoi_friction_continuous.py` (modelo contínuo e traçado),
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
+
+## 18/11/2026 (sessão 3) — dev6 enviada ao autor
+
+- CHANGELOG e `NOTAS_DA_VERSAO_140.md` atualizados (seção "Ajustes da dev6"; NoData; resultado do teste
+  da dev5 com a ressalva vetor × raster com atrito, 15-20 ha, não decidido sem o Vista SAGA).
+- ZIP `Vista_Saga_Plugin_QGIS4_v1.4.0-dev6.zip` (versão `1.4.0-dev6` só no metadata do ZIP); conferido
+  extraindo o ZIP e rodando o roteiro do diálogo (QGIS 3.34 offscreen): os 6 cenários iguais aos do
+  repositório.
+- Não feito: `gui_monkey.py` (precisa da pasta de dados do smoke); integração antiga
+  `geosaga/tests/integration_voronoi_friction_qgis.py` usa nota 0 (recusada desde a dev4) e está
+  desatualizada (não roda nas suítes; corrigir no fechamento).
 
 ## 18/11/2026 (sessão 3) — dev6: código e testes dos itens 1-6
 
