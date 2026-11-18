@@ -131,6 +131,14 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   `[ATRITOS]` 1 (FUNDO) + os 10 valores na ordem dos bairros: só correto se o RS2 aberto tiver classe 0 =
   FUNDO e classes 1-10 = bairros nessa ordem; conferir na guia "Atrito Ambiental". Pendente: qual RS2 está
   aberto; se for de bairros, a comparação com a dev5 (uso do solo) não vale.
+- **Mapa aberto = uso do solo**, legenda com **códigos não consecutivos**: [0] FUNDO, [1] Classe 1, [3] Classe 3,
+  [5] Classe 5; notas exibidas 0, 3, 5, 1 (origem desconhecida: o arquivo do autor não tinha `[ATRITOS]`).
+  O arquivo "atrito por bairro" foi descartado (não se aplica). Questão de formato NÃO testada: com
+  códigos não consecutivos, o `[ATRITOS]` é lido por posição na legenda ou por código? Gerados (scratchpad)
+  `pontos_reginaldo_A_posicao.txt` (1, 1, 3, 5) e `pontos_reginaldo_B_codigo.txt` (1, 1, 1, 3, 1, 5; códigos
+  2 e 4 inexistentes com 1). Esperado na guia "Atrito Ambiental": FUNDO 1, Classe 1 1, Classe 3 3, Classe 5
+  5; a variante que der isso revela a regra. Suposição a confirmar: nota = código (1, 3, 5) e FUNDO = 1
+  (regra do plugin). Ainda pendente: como o RS2 e as coordenadas coluna:linha foram gerados.
 - Se o Vista SAGA ficar indisponível: a validação da bacia não acontece; a guia Raster reproduz o
   algoritmo do Vista SAGA (99,7% no caso sintético) e é a referência de fidelidade por inferência, não
   por teste em dados reais. Registrar como limitação.
