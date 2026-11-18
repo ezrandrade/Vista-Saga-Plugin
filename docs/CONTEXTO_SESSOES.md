@@ -95,6 +95,18 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
 
+## 18/11/2026 (sessão 3) — pergunta do autor: há no QGIS Voronoi com massa/atrito?
+
+- Busca na web (plugins.qgis.org e doc.esri.com bloqueados para leitura direta nesta sessão; só resultados
+  de busca): nenhum plugin QGIS encontrado de Voronoi ponderado (multiplicativo ou por massa), nem de
+  Voronoi com atrito na reta polo-ponto. Vizinhos: Simples = "Polígonos de Voronoi" do QGIS e
+  v.voronoi (GRASS); atrito = alocação por caminho de menor custo (GRASS r.cost `nearest`, SAGA
+  Accumulated Cost com Allocation, WhiteboxTools CostAllocation), modelo diferente do Vista SAGA
+  (caminho que contorna o atrito, custo Σ atrito × comprimento, sem peso pela distância ao polo, sem
+  massa). Fora do QGIS: ArcGIS Pro "Generate Weighted Voronoi" (aditivo, multiplicativo, potência,
+  expressão; sem atrito). Conclusão: nada substitui o Vista SAGA como referência da validação; r.cost
+  pode servir de análise de sensibilidade do método (decisão da tese, fora destas sessões).
+
 ## 18/11/2026 (sessão 3) — conversor do caso real para o Vista SAGA
 
 - O autor pediu o RS2 + arquivo de pontos da bacia para rodar no Vista SAGA (validação vetor × raster
