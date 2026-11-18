@@ -30,16 +30,17 @@ class FrictionVoronoiTests(unittest.TestCase):
         self.assertEqual(friction[0, 2], 2)
 
     def test_rating_is_the_cost_without_baseline(self):
-        # Nota direta (Vista SAGA): sem custo basal somado; nota 0 = custo zero.
+        # Nota direta (Vista SAGA): sem custo basal somado.
         raster = np.ones((1, 5), dtype=float)
         costs = _vista_saga_cost_batch(raster, 0, 0, np.array([2]), np.array([0]))
         self.assertEqual(costs.tolist(), [3.0])  # 1×1 + 2×1
-        raster = np.zeros((1, 5), dtype=float)
-        validate_friction(raster, self.t, self.points)
-        self.assertEqual(_vista_saga_cost_batch(raster, 0, 0, np.array([2]), np.array([0])).tolist(), [0.0])
-        # Tudo empata em zero: vence o primeiro polo, mas a célula de cada polo é dele.
-        self.assertEqual(assign_friction_window(self.points,raster,self.t,0,1).tolist(),
-                         [[1, 1, 1, 1, 2]])
+
+    def test_zero_rating_rejected(self):
+        # 1.4.0 (decisão do autor): nota 0 cria empates de custo zero, resolvidos pela ordem dos pontos.
+        raster = np.ones((1, 5), dtype=float)
+        raster[0, 2] = 0
+        with self.assertRaisesRegex(ValueError, 'maior que 0'):
+            validate_friction(raster, self.t, self.points)
 
     def test_cost_grows_with_squared_distance(self):
         # Nota uniforme: A cresce como d²/2 e a massa passa a valer como M/d².
@@ -83,7 +84,7 @@ class FrictionVoronoiTests(unittest.TestCase):
     def test_invalid_negative_and_outside_generator(self):
         r=np.ones((1,5))
         r[0,1]=-1
-        with self.assertRaisesRegex(ValueError,'negativos'):
+        with self.assertRaisesRegex(ValueError,'maior que 0'):
             validate_friction(r,self.t,self.points)
         r[0,1]=1
         with self.assertRaisesRegex(ValueError,'fora da extensão'):

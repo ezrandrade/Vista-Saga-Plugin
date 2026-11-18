@@ -221,6 +221,35 @@ class ContinuousPolygonsTests(unittest.TestCase):
                 checked += 1
             self.assertGreater(checked, 350)
 
+    def test_automatic_spacing_and_default_tolerance(self):
+        # 1.4.0-dev4 (decisões do autor): sem campo na interface; espaçamento pelos dados e tolerância
+        # padrão de 0,5 m (1/2000 do maior lado em extensões pequenas).
+        from geosaga.tests.test_140_voronoi_vista_saga_case import caso
+        from geosaga.voronoi_friction_continuous import (FrictionSurface, automatic_spacing, default_tolerance,
+                                                         friction_voronoi_polygons)
+        self.assertEqual(default_tolerance((0, 0, 5000, 3000)), 0.5)
+        self.assertAlmostEqual(default_tolerance((0, 0, 400, 300)), 0.2)
+        self.assertAlmostEqual(default_tolerance((0, 0, 5000, 3000), units_to_meters=0.3048), 0.5 / 0.3048)
+        bounds = (X0, Y1 - 600, X0 + 800, Y1)
+        surface = FrictionSurface(_case_features())
+        self.assertAlmostEqual(automatic_spacing(surface, bounds, 0.4), 8.0)        # 800 / 100
+        narrow = FrictionSurface(_case_features() + [(_rect(X0 + 100, Y1 - 300, X0 + 108, Y1 - 100), 2.)])
+        # Faixa de 8 m: 1/4 da largura média (1,9 m), mas com o piso de 8 × tolerância (3,2 m).
+        self.assertAlmostEqual(automatic_spacing(narrow, bounds, 0.4), 3.2)
+        self.assertAlmostEqual(automatic_spacing(narrow, bounds, 0.1), (480000 / 100000) ** 0.5)  # teto de nós
+        _, pontos = caso()
+        results, stats = friction_voronoi_polygons(pontos, _case_features(), bounds, mass_weighted=True)
+        self.assertTrue(stats['spacing_automatic'])
+        self.assertAlmostEqual(stats['tolerance'], 0.4)
+        self.assertEqual([geom.GetGeometryCount() for _, geom in results], [1, 1, 1])
+        self.assertEqual(stats['check']['divergent'], 0)
+        self._check_partition(results, 480000.)
+
+    def test_zero_rating_rejected(self):
+        from geosaga.voronoi_friction_continuous import FrictionSurface
+        with self.assertRaisesRegex(ValueError, 'maior que 0'):
+            FrictionSurface([(_rect(0, 0, 10, 10), 0.)])
+
     def test_invalid_parameters(self):
         from geosaga.voronoi_friction_continuous import friction_voronoi_polygons
         feats = [(_rect(0, 0, 10, 10), 1.)]

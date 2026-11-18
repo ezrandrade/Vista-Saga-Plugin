@@ -220,7 +220,7 @@ class VoronoiDialog(QDialog):
         self.friction_layer.setFilters(Qgis.LayerFilter.RasterLayer)
         self.friction_layer.setShowCrs(True)
         self.friction_label = QLabel(tr('Superfície de atrito:'))
-        self.friction_layer.setToolTip(tr('GeoTIFF monobanda: o valor de cada célula é a nota de atrito (>= 0); NoData é barreira.'))
+        self.friction_layer.setToolTip(tr('GeoTIFF monobanda: o valor de cada célula é a nota de atrito (> 0); NoData é barreira.'))
         form.addRow(self.friction_label,self.friction_layer)
         self.friction_vector_layer = QgsMapLayerComboBox()
         self.friction_vector_layer.setAllowEmptyLayer(True)
@@ -230,7 +230,7 @@ class VoronoiDialog(QDialog):
         self.friction_vector_label = QLabel(tr('Polígonos de atrito:'))
         form.addRow(self.friction_vector_label, self.friction_vector_layer)
         self.friction_rating_field = QComboBox()
-        self.friction_rating_field.setToolTip(tr('Coluna numérica com a nota de atrito de cada polígono (>= 0). '
+        self.friction_rating_field.setToolTip(tr('Coluna numérica com a nota de atrito de cada polígono (> 0). '
                                                  'Área sem polígono e feições com a coluna vazia são barreira.'))
         self.friction_rating_label = QLabel(tr('Coluna de atrito:'))
         form.addRow(self.friction_rating_label, self.friction_rating_field)
@@ -661,8 +661,9 @@ class VoronoiDialog(QDialog):
         vector_friction = self._vector_friction()
         raster_friction = friction and not vector_friction
         reference = self.extent_mode.currentData() == 'reference'
-        # Com atrito vetorial, a guia Vetorial também calcula numa grade: precisa de resolução.
-        gridded = (not vector or vector_friction) and not raster_friction
+        # Resolução só na guia Raster (grade da análise). Na guia Vetorial com atrito, o espaçamento da
+        # busca é automático desde a 1.4.0 (decisão do autor): o campo não aparece.
+        gridded = not vector and not raster_friction
         self.grid_layer.setVisible(gridded and reference and not vector)
         self.grid_label.setVisible(gridded and reference and not vector)
         self.resolution.setVisible(gridded and not reference)
@@ -671,12 +672,10 @@ class VoronoiDialog(QDialog):
         self.extent_mode.model().item(4).setEnabled(not vector)
         if vector and reference:
             self.extent_mode.setCurrentIndex(0)
-        self.resolution_label.setText(tr('Espaçamento da busca:') if vector and vector_friction
-                                      else tr('Resolução raster:'))
         if vector and vector_friction:
             note = ('Vetor direto com atrito (modelo contínuo): fronteiras traçadas sem grade, com tolerância '
-                    'de 1 cm. O espaçamento da busca controla os detalhes detectados: regiões menores '
-                    'que ele podem não aparecer. Área sem polígono e coluna vazia: barreira.')
+                    'de 0,5 m e conferência automática; o detalhamento da busca é escolhido pelos dados e '
+                    'informado no resumo. Área sem polígono e coluna vazia: barreira.')
         elif vector_friction:
             note = ('Atrito vetorial: os polígonos são convertidos em notas na grade da análise (extensão e '
                     'resolução escolhidas), pelo centro de cada célula; área sem polígono e coluna vazia: '
@@ -984,7 +983,7 @@ class VoronoiDialog(QDialog):
                           'mass' if self.mode.currentIndex()==1 else 'simple'),
                     study_geometry=study,progress=progress,cancelled=dialog.wasCanceled,
                     friction_features=friction_spec['features'] if friction_spec else None,
-                    search_spacing=self.resolution.value() if friction_spec else None,
+                    search_spacing=None,
                     friction_info=friction_spec)
             else:
                 if reference is not None:

@@ -17,20 +17,25 @@ import math
 import numpy as np
 
 BARRIER = 'barreira'
-_OUTSIDE = -1.0   # sentinela: célula sem polígono (notas são >= 0)
+_OUTSIDE = -1.0   # sentinela: célula sem polígono (notas são > 0)
 _BLOCKED = -2.0   # sentinela: polígono de classe marcada como barreira
 
 
 def check_rating(value, label):
-    """Nota finita e >= 0, ou a barreira; devolve float ou BARRIER."""
+    """Nota finita e > 0, ou a barreira; devolve float ou BARRIER.
+
+    Nota 0 é recusada desde a 1.4.0 (decisão do autor): custo zero cria empates entre polos,
+    resolvidos pela ordem dos pontos, e o comportamento do Vista SAGA com nota 0 não foi testado.
+    """
     if value == BARRIER:
         return BARRIER
     try:
         rating = float(value)
     except (TypeError, ValueError):
         raise ValueError(f'Nota de atrito não numérica: {label}.') from None
-    if not math.isfinite(rating) or rating < 0:
-        raise ValueError(f'Nota de atrito inválida (use valor >= 0): {label}.')
+    if not math.isfinite(rating) or rating <= 0:
+        raise ValueError(f'Nota de atrito inválida em {label}: use valor maior que 0 (para quase sem atrito, '
+                         'um valor pequeno, como 0,1).')
     return rating
 
 

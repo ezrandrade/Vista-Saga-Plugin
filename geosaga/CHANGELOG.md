@@ -27,10 +27,18 @@
     célula, com novo traçado local onde divergir (até 3 passadas). O `_resumo.txt` informa o
     resultado e avisa se restar divergência. Corrige a região partida em duas (espaçamento 20 m) do
     teste do autor.
+  - **Sem o campo "Espaçamento da busca" (dev4):** o espaçamento é escolhido pelos dados (maior lado
+    da extensão / 100, até 1/4 da largura do polígono de atrito mais estreito, com teto de 100 mil
+    nós) e a tolerância padrão é de 0,5 m (ou 1/2000 do maior lado em extensões pequenas), coerente
+    com mapas temáticos 1:10.000. Os dois valores saem no `_resumo.txt`.
   - **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução), pelo
     centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA (99,7%).
   - Sem reprojeção: a camada de polígonos define o SRC da análise.
-- Rasters de atrito antigos com valor 0 passam a ter custo zero: revise essas superfícies.
+- **Nota de atrito 0 recusada** (raster, coluna vetorial e combinação de superfícies): custo zero cria
+  empates resolvidos pela ordem dos pontos, e o comportamento do Vista SAGA com nota 0 não foi
+  testado. Para "quase sem atrito", use um valor pequeno, como 0,1. Rasters de atrito antigos com
+  valor 0 precisam ser revistos.
+- Sem opção do modelo da 1.3 na interface: para reproduzir resultados antigos, use o ZIP da 1.3.0.
 - Scripts de validação: `scripts/gerar_caso_atrito.py`, `scripts/comparar_caso_atrito.py`,
   `scripts/comparar_vetor_plugin.py`.
 - Guia Vetorial: vetor direto nas quatro modalidades (antes, com atrito, poligonização da grade).

@@ -26,7 +26,11 @@ célula do polo e a célula de destino, de
 - Com Atrito: vence o menor custo. Com Massa e Atrito: vence o menor custo / massa. Como o custo
   cresce com a distância ao quadrado, a massa vale como M/d², a mesma lei do Com Massa.
 - **A nota entra direto como custo** (nota 1 = custo basal do Vista SAGA). Antes, o plugin
-  somava 1 + atrito. **Rasters de atrito antigos com valor 0 passam a ter custo zero**: revise-os.
+  somava 1 + atrito.
+- **Nota 0 é recusada** (raster, coluna vetorial e combinação de superfícies): custo zero criaria
+  empates entre polos, resolvidos pela ordem dos pontos no arquivo, e o comportamento do Vista SAGA com
+  nota 0 não foi testado. Para "quase sem atrito", use um valor pequeno, como 0,1. **Rasters de atrito
+  antigos com valor 0 precisam ser revistos.**
 - NoData continua sendo barreira (sem resultado e sem passagem). A célula do polo é sempre dele.
 - Empates: vence o polo que vem primeiro na lista (mesma regra do Vista SAGA).
 - As duas modalidades deixam de ser marcadas como "experimentais".
@@ -66,6 +70,15 @@ O `_resumo.txt` informa quantos pontos foram conferidos e quantas divergências 
 alguma, avisa para repetir com espaçamento menor. Isso torna visível o que antes era silencioso. A
 limitação de fundo continua: um detalhe mais estreito que o espaçamento que não toque nenhum ponto
 conferido ainda pode escapar, mas agora com chance muito menor.
+
+**Sem parâmetros de traçado na interface (dev4).** O campo "Espaçamento da busca" saiu. O plugin escolhe
+o espaçamento pelos dados (maior lado da extensão / 100, nunca maior que 1/4 da largura média do
+polígono de atrito mais estreito, com teto de 100 mil nós) e usa a tolerância padrão de **0,5 m**
+(1/2000 do maior lado em extensões pequenas). Justificativa: as áreas de influência são estimativas; a
+incerteza das entradas domina (no caso de teste, +10% numa nota ou massa muda 0,4 a 1% da área), e
+mapas temáticos 1:10.000 têm erro-padrão de 3 m no PEC Classe A (Decreto 89.817/1984). A tolerância de
+0,5 m soma cerca de 1% a esse erro; a topologia (regiões inteiras, sem lacunas) continua garantida
+pela conferência automática. Os valores usados saem no `_resumo.txt`.
 
 **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução escolhidas),
 pela regra do centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA.
@@ -116,4 +129,6 @@ linha **contadas a partir de 1**.
 - Teste do autor da dev2 (QGIS 4): partição exata nas quatro modalidades; achou a região A partida
   em duas com espaçamento de 20 m (corrigido na dev3, junto com uma cunha cortada no canto do
   corredor e uma faixa estreita perdida nos testes com dados aleatórios).
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev3`).
+- Teste do autor da dev3 (QGIS 4), com 5 m e 20 m: regiões inteiras, partição exata, conferência sem
+  divergências, 99,60% (com massa) e 99,50% (sem massa) do Vista SAGA. **dev3 homologada.**
+- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev4`).

@@ -6,6 +6,24 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 18/11/2026 — 1.4.0-dev4 implementada
+
+- `voronoi_friction_continuous`: `default_tolerance` (0,5 m em metros, ≤ maior lado/2000) e
+  `automatic_spacing` (maior lado/100, ≤ 1/4 da menor largura média 2A/P dos polígonos que tocam a
+  extensão, ≥ √(área/100 mil) e ≥ 8 × tolerância); `friction_voronoi_polygons(spacing=None,
+  tolerance=None, units_to_meters=...)`. A fração passou de 1/200 (proposta) para 1/100: mesmo
+  resultado, 3,5× mais rápido no caso de teste (1,1 s × 3,8 s). No caso aleatório o limite pela largura
+  domina (~10 s).
+- `save_vector_voronoi(search_spacing=None, friction_tolerance_m=None)`; relatório com espaçamento e
+  tolerância usados. Diálogo: campo de resolução oculto na guia Vetorial; `search_spacing=None`.
+- Nota 0 recusada: `check_rating`, `FrictionSurface`, `validate_friction` (raster e polígonos
+  rasterizados), `parse_class_notes`; mensagens en/es; testes ajustados (074, 083, 130, 140).
+- Caso de teste automático: espaçamento 8 m, tolerância 0,4 m (extensão de 800 m), regiões inteiras,
+  conferência 0 divergências, 99,60% / 99,52% do Vista SAGA. Pontos fora da região na amostra
+  independente: todos a < 9 cm da fronteira (dentro da tolerância).
+- Suítes: 453 (3 pulados) + 36. QGIS 3.34 offscreen: guia Vetorial sem o campo, 99,60% / 99,48%;
+  Raster 99,69%; Com Massa 100%. ZIP `Vista_Saga_Plugin_QGIS4_v1.4.0-dev4.zip`.
+
 ## 18/11/2026 — resultados do teste da 1.4.0-dev3 recebidos
 
 - O autor enviou `voronoi_vetorial_5m.zip` e `voronoi_vetorial_20m.zip` (QGIS 4).

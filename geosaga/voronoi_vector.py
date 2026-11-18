@@ -257,14 +257,15 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,**kw):
 def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='simple',
                         study_geometry=None,progress=None,cancelled=None,
                         arc_tolerance_m=DEFAULT_ARC_TOLERANCE_M,friction_features=None,
-                        search_spacing=None,friction_info=None):
+                        search_spacing=None,friction_info=None,friction_tolerance_m=None):
     """Grava a camada vetorial (formato pela extensão) + CSV/TXT com substituição segura.
 
     mode: 'simple' (bissetrizes), 'mass' (maior M/d²; círculos de Apolônio com arcos de desvio
     máximo ``arc_tolerance_m`` metros) ou, desde a 1.4.0, 'friction' / 'mass_friction' (modelo
-    contínuo do atrito, voronoi_friction_continuous): friction_features = [(wkb, nota ou None)],
-    search_spacing = espaçamento da malha de busca (unidades do SRC); fronteiras com desvio máximo
-    ``arc_tolerance_m``. friction_info: camada, coluna e feições sem nota, para o relatório.
+    contínuo do atrito, voronoi_friction_continuous): friction_features = [(wkb, nota ou None)];
+    search_spacing = espaçamento da malha de busca (unidades do SRC; None = automático, o padrão da
+    interface desde a 1.4.0); friction_tolerance_m = tolerância das fronteiras em metros (None =
+    padrão de 0,5 m). friction_info: camada, coluna e feições sem nota, para o relatório.
     study_geometry: QgsGeometry já transformada para o SRC de saída.
     """
     from osgeo import ogr, osr
@@ -273,7 +274,7 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
     friction=mode in ('friction','mass_friction')
     if friction and not friction_features:
         raise ValueError('O vetor direto com atrito exige polígonos de atrito com a coluna de notas.')
-    if friction and not (search_spacing and math.isfinite(search_spacing) and search_spacing > 0):
+    if friction and search_spacing is not None and not (math.isfinite(search_spacing) and search_spacing > 0):
         raise ValueError('Informe o espaçamento da busca (positivo).')
     validate_generators(generators, weighted=mode in ('mass','mass_friction'))
     srs=osr.SpatialReference()
@@ -334,8 +335,10 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             if friction:
                 from .voronoi_friction_continuous import friction_voronoi_polygons
                 regions,friction_stats=friction_voronoi_polygons(
-                    generators,friction_features,bounds,spacing=float(search_spacing),
-                    tolerance=arc_tolerance_m/units,mass_weighted=mode=='mass_friction',
+                    generators,friction_features,bounds,
+                    spacing=None if search_spacing is None else float(search_spacing),
+                    tolerance=None if friction_tolerance_m is None else friction_tolerance_m/units,
+                    units_to_meters=units,mass_weighted=mode=='mass_friction',
                     cancelled=cancelled,progress=(lambda v: progress(int(v*.75))) if progress else None)
             else:
                 regions=mass_voronoi_polygons(generators,bounds,tolerance=arc_tolerance_m/units,
@@ -410,12 +413,14 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                              f"{info.get('rating_field','')}. Área sem polígono e feições com a coluna vazia "
                              f"({info.get('skipped',0)}): barreira (sem resultado e sem passagem). "
                              'Em sobreposições vale a última feição.\n')
-                report.write(f'Fronteiras traçadas numericamente: malha de busca de {float(search_spacing):g} unidades '
-                             f'do SRC, com refinamento local, e tolerância de {arc_tolerance_m:g} m (no caso de teste, '
-                             'mais de 99,9% dos pontos de fronteira a menos de 2 cm da fronteira do modelo). Pontas de '
-                             'cunhas muito finas e encontros de três regiões podem ficar encurtados em alguns '
-                             'decímetros (área desprezível). Regiões menores que a malha de busca podem não ser '
-                             'detectadas.\n')
+                spacing_used=friction_stats['spacing']*units
+                tolerance_used=friction_stats['tolerance']*units
+                report.write(f"Fronteiras traçadas numericamente, com refinamento local: espaçamento da busca de "
+                             f"{spacing_used:.3g} m ({'automático: maior lado da extensão / 100, até 1/4 da largura do polígono de atrito mais estreito' if friction_stats.get('spacing_automatic') else 'informado'}) "
+                             f"e tolerância de {tolerance_used:.3g} m (padrão: 0,5 m, ou 1/2000 do maior lado da extensão "
+                             "se for menor; coerente com mapas temáticos 1:10.000, de erro-padrão de 3 m no PEC Classe A). "
+                             "Regiões menores que o espaçamento podem não ser detectadas; a conferência automática abaixo "
+                             "verifica o resultado.\n")
                 report.write(f"Nós avaliados: {friction_stats['evaluations']}; células da malha adaptativa: "
                              f"{friction_stats['cells']}; vértices de fronteira: {friction_stats['boundary_vertices']}.\n")
                 check=friction_stats.get('check') or {}

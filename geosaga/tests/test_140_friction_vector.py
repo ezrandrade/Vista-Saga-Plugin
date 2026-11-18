@@ -14,16 +14,17 @@ except ImportError:  # pragma: no cover - depende do ambiente
 
 class RatingTests(unittest.TestCase):
     def test_column_values(self):
-        self.assertEqual(ratings_from_column([1, 0, None, '2.5']), [1.0, 0.0, None, 2.5])
-        for bad in (-1, float('nan'), 'abc'):
+        self.assertEqual(ratings_from_column([1, 0.1, None, '2.5']), [1.0, 0.1, None, 2.5])
+        for bad in (0, -1, float('nan'), 'abc'):
             with self.assertRaises(ValueError):
                 ratings_from_column([bad])
 
     def test_check_rating(self):
         self.assertEqual(check_rating(BARRIER, 'x'), BARRIER)
-        self.assertEqual(check_rating('0', 'x'), 0.0)
-        with self.assertRaisesRegex(ValueError, '>= 0'):
-            check_rating(-0.1, 'x')
+        self.assertEqual(check_rating('0.1', 'x'), 0.1)
+        for bad in ('0', -0.1):
+            with self.assertRaisesRegex(ValueError, 'maior que 0'):
+                check_rating(bad, 'x')
 
     def test_describe_lists_choices(self):
         spec = {'layer_name': 'uso', 'rating_field': 'ATRITO', 'skipped': 2}

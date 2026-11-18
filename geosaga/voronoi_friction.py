@@ -43,9 +43,11 @@ def validate_friction(raster, geotransform, generators):
     t = geotransform
     if t[1] <= 0 or t[5] >= 0 or t[2] != 0 or t[4] != 0:
         raise ValueError('A superfície de atrito precisa ser norte-acima, sem rotação ou cisalhamento.')
-    # A nota entra direto como custo (nota 0 = custo zero); NaN assinala barreira.
-    if np.any(np.isfinite(arr) & (arr < 0)):
-        raise ValueError('O atrito não admite valores negativos; use valores >= 0 ou NoData.')
+    # A nota entra direto como custo; NaN assinala barreira. Nota 0 é recusada desde a 1.4.0 (custo
+    # zero cria empates resolvidos pela ordem dos pontos; comportamento do Vista SAGA não testado).
+    if np.any(np.isfinite(arr) & (arr <= 0)):
+        raise ValueError('O atrito precisa ser maior que 0 em todas as células (NoData = barreira); para '
+                         'quase sem atrito, use um valor pequeno, como 0,1.')
     if np.any(np.isposinf(arr) | np.isneginf(arr)):
         raise ValueError('Use NoData para células inacessíveis; valores infinitos não são suportados.')
     width = arr.shape[1]

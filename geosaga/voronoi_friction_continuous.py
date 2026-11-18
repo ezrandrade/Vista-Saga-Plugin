@@ -33,7 +33,7 @@ class FrictionSurface:
     """Polígonos de atrito preparados para o cálculo vetorizado (arestas orientadas)."""
 
     def __init__(self, features, *, cancelled=None):
-        """features: [(wkb, nota >= 0 ou None)] na ordem das feições; None = barreira."""
+        """features: [(wkb, nota > 0 ou None)] na ordem das feições; None = barreira."""
         from osgeo import ogr
         from .gdal_scope import gdal_exceptions
         with gdal_exceptions():
@@ -42,8 +42,9 @@ class FrictionSurface:
                 if rating is None:
                     continue
                 rating = float(rating)
-                if not math.isfinite(rating) or rating < 0:
-                    raise ValueError('Nota de atrito inválida (use valor >= 0): {0}.'.format(rating))
+                if not math.isfinite(rating) or rating <= 0:
+                    raise ValueError('Nota de atrito inválida: {0}. Use valor maior que 0 (para quase sem '
+                                     'atrito, um valor pequeno, como 0,1).'.format(rating))
                 geometry = ogr.CreateGeometryFromWkb(bytes(wkb))
                 if geometry is None or geometry.IsEmpty():
                     continue
@@ -64,6 +65,13 @@ class FrictionSurface:
             resolved.reverse()
             self.union = covered
             edges, starts, ratings = [], [], []
+            # Largura média (2 × área / perímetro) e envelope de cada polígono: base do espaçamento
+            # automático da busca.
+            self.widths = []
+            for own, rating in resolved:
+                perimeter = own.Boundary().Length()
+                if perimeter > 0:
+                    self.widths.append((2.0 * own.GetArea() / perimeter, own.GetEnvelope()))
             for own, rating in resolved:
                 rings = _polygon_rings(own)
                 if not rings:
@@ -397,13 +405,48 @@ def _refine(model, segments, tolerance, cancelled, max_depth=16):
     return [((float(p[0]), float(p[1])), (float(q[0]), float(q[1]))) for p, q, *_ in done]
 
 
-def friction_voronoi_polygons(generators, features, bounds, *, spacing, tolerance=0.01,
-                              mass_weighted=False, cancelled=None, progress=None):
+# Padrões da 1.4.0 (decisões do autor, 18/11/2026): tolerância de 0,5 m, coerente com mapas temáticos
+# 1:10.000 (erro-padrão de 3 m no PEC Classe A), limitada a 1/2000 do maior lado em extensões pequenas;
+# espaçamento automático da busca.
+DEFAULT_TOLERANCE_M = 0.5
+_AUTO_FRACTION = 100          # espaçamento ≈ maior lado da extensão / 100 (1/200: mesmo resultado, 3,5× mais lento)
+_AUTO_WIDTH_DIVISOR = 4       # ... e nunca maior que 1/4 da largura do polígono mais estreito
+_AUTO_MAX_NODES = 100_000     # ... nem tão pequeno que a malha base passe deste número de nós
+
+
+def default_tolerance(bounds, units_to_meters=1.0):
+    """Tolerância padrão em unidades do SRC: 0,5 m, ou 1/2000 do maior lado se for menor."""
+    xmin, ymin, xmax, ymax = map(float, bounds)
+    return min(DEFAULT_TOLERANCE_M / units_to_meters, max(xmax - xmin, ymax - ymin) / 2000.0)
+
+
+def automatic_spacing(surface, bounds, tolerance):
+    """Espaçamento da malha de busca escolhido pelos dados (unidades do SRC).
+
+    Maior lado da extensão / 100, reduzido a 1/4 da largura média (2 × área / perímetro) do polígono
+    de atrito mais estreito que toca a extensão, e aumentado se a malha base passasse de 100 mil nós.
+    Nunca menor que 8 × a tolerância. A conferência automática corrige o que escapar a essa escolha.
+    """
+    xmin, ymin, xmax, ymax = map(float, bounds)
+    side = max(xmax - xmin, ymax - ymin)
+    spacing = side / _AUTO_FRACTION
+    widths = [w for w, (ex0, ex1, ey0, ey1) in surface.widths
+              if w > 0 and ex1 >= xmin and ex0 <= xmax and ey1 >= ymin and ey0 <= ymax]
+    if widths:
+        spacing = min(spacing, min(widths) / _AUTO_WIDTH_DIVISOR)
+    spacing = max(spacing, math.sqrt((xmax - xmin) * (ymax - ymin) / _AUTO_MAX_NODES), 8 * tolerance)
+    return spacing
+
+
+def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tolerance=None,
+                              mass_weighted=False, cancelled=None, progress=None, units_to_meters=1.0):
     """Regiões de influência com atrito em vetor direto (modelo contínuo).
 
     features: [(wkb, nota ou None)]; bounds: extensão (xmin, ymin, xmax, ymax) no SRC dos polígonos;
-    spacing: espaçamento da malha de busca (regiões menores que ele podem não ser detectadas);
-    tolerance: desvio máximo das fronteiras traçadas (unidades do SRC).
+    spacing: espaçamento da malha de busca (regiões menores que ele podem não ser detectadas); None =
+    automático (``automatic_spacing``). tolerance: tolerância das fronteiras traçadas (unidades do
+    SRC); None = padrão (``default_tolerance``: 0,5 m).
+    units_to_meters: metros por unidade do SRC (para a tolerância padrão).
     Retorna ([(centro, multipolígono OGR)], estatísticas).
     """
     from osgeo import ogr
@@ -411,11 +454,16 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
     xmin, ymin, xmax, ymax = map(float, bounds)
     if not all(math.isfinite(v) for v in (xmin, ymin, xmax, ymax)) or xmin >= xmax or ymin >= ymax:
         raise ValueError('A extensão do Voronoi precisa ter área positiva.')
+    surface = FrictionSurface(features, cancelled=cancelled)
+    automatic = spacing is None
+    if tolerance is None:
+        tolerance = default_tolerance((xmin, ymin, xmax, ymax), units_to_meters)
+    if automatic:
+        spacing = automatic_spacing(surface, (xmin, ymin, xmax, ymax), tolerance)
     if not (math.isfinite(spacing) and spacing > 0 and math.isfinite(tolerance) and 0 < tolerance < spacing):
         raise ValueError('Espaçamento da busca e tolerância inválidos (0 < tolerância < espaçamento).')
     if (xmax - xmin) * (ymax - ymin) / spacing ** 2 > 4_000_000:
         raise ValueError('Espaçamento da busca pequeno demais para a extensão (mais de 4 milhões de nós).')
-    surface = FrictionSurface(features, cancelled=cancelled)
     model = ContinuousModel(generators, surface, mass_weighted=mass_weighted)
     lattice = _Lattice(model, (xmin, ymin, xmax, ymax), spacing, tolerance)
     step = lattice.step
@@ -668,7 +716,8 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing, toleranc
              'forced_cells': len(forced), 'budget_hit': budget_hit}
     if progress:
         progress(90)
-    stats = {'spacing': spacing, 'tolerance': tolerance, 'base_nodes': int(base_nodes),
+    stats = {'spacing': spacing, 'spacing_automatic': automatic, 'tolerance': tolerance,
+             'base_nodes': int(base_nodes),
              'refined_cells': len(refined), 'cells': len(cells),
              'evaluations': model.evaluations, 'boundary_vertices': len(lines),
              'polygons': len(surface.ratings), 'min_rating': surface.min_rating,

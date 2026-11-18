@@ -11,8 +11,8 @@ class MultiFrictionTests(unittest.TestCase):
     def test_class_notes_and_reweighting(self):
         a = np.array([[1,2],[2,1]], dtype=float)
         b = np.array([[2,6],[2,6]], dtype=float)
-        got = combine_friction_arrays([a,b],[2,1],['1=0;2=9',''])
-        expected = (np.array([[0,9],[9,0]])*2+b)/3
+        got = combine_friction_arrays([a,b],[2,1],['1=0.5;2=9',''])
+        expected = (np.array([[0.5,9],[9,0.5]])*2+b)/3
         np.testing.assert_allclose(got, expected)
 
     def test_nodata_union_of_barriers(self):
