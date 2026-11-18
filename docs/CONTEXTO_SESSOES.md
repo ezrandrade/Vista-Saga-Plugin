@@ -77,8 +77,8 @@ Escopo da dev6, em implementação:
 
 ### Como trabalhar no contêiner
 
-- `apt-get install -y python3-gdal gdal-bin python3-pytest python3-matplotlib` e usar **python3.12**.
-  Suítes: `python3.12 -m unittest discover -s geosaga/tests -p 'test_*.py'` (455, 3 pulados) e
+- `apt-get update` e depois `apt-get install -y python3-gdal gdal-bin python3-pytest python3-shapely`; usar **python3.12**.
+  Suítes: `python3.12 -m unittest discover -s geosaga/tests -p 'test_*.py'` (465, 3 pulados) e
   `python3.12 -m pytest -q tests/unit` (36).
 - Fluxo real do diálogo: `apt-get install -y --no-install-recommends python3-qgis qgis-providers` (QGIS 3.34,
   não é o alvo, mas abre o diálogo) e rodar com `QT_QPA_PLATFORM=offscreen`; `tests/qgis/gui_monkey.py`
@@ -91,7 +91,7 @@ Escopo da dev6, em implementação:
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
 
-## 18/11/2026 (sessão 3) — dev6: código dos itens 1-6 (WIP, sem testes novos)
+## 18/11/2026 (sessão 3) — dev6: código e testes dos itens 1-6
 
 - (4) `run_voronoi(study_wkb=...)` + `_study_mask` (centro da célula); diálogo passa o WKB da área quando
   a extensão é "camada poligonal" na guia Raster (não com atrito raster: a grade é a do raster).
@@ -106,7 +106,13 @@ Escopo da dev6, em implementação:
   inalterada.
 - Textos de interface (NoData) e catálogos en/es atualizados. Suítes: 455 (11 pulados: Shapely ausente
   no contêiner) + 36, verdes. Contêiner: `apt-get update` antes do `apt-get install`.
-- Falta: testes novos dos 6 itens, conferência com o caso de teste, ZIP dev6.
+- Testes novos: `geosaga/tests/test_150_voronoi_dev6.py` (10): recorte Simples/Com Massa pelo centro
+  da célula (resultado dentro = sem recorte), atrito com recorte (custos inalterados), área vazia
+  recusada; faixa de NoData = nota 1 sem resultado (igual ao raster com 1 na faixa), centro sobre NoData
+  recusado; lasca de 2 cm movida e parte de 2 m mantida; partes < 25 m²; tempo e partes no resumo.
+  Obs.: o GDAL inclui célula com centro exatamente sobre a borda da área (teste ajustado para não
+  ter empate). Suítes: 465 (3 pulados) + 36, verdes (com `python3-shapely`).
+- Falta: conferência do diálogo no QGIS 3.34 offscreen, CHANGELOG/notas, ZIP dev6.
 
 ## 18/11/2026 (sessão 3) — decisões da dev6
 
