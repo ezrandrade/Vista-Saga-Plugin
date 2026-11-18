@@ -124,6 +124,13 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   códigos a partir da classe 0; se o erro sumir, a seção é obrigatória (anotar para a leitura/gravação
   do formato no plugin). Perguntado ao autor: como o RS2 e as coordenadas coluna:linha foram gerados
   (grade, resolução, origem, contagem a partir de 1?), classes e notas.
+- O autor mostrou a tabela dos polos (NM_BAIRRO, POP, MASSA = POP, **ATRITO por bairro**: 5, 5, 2, 6, 5, 2,
+  2, 6, 2, 9) e pediu o txt com esses atritos. **Alerta dado:** no Vista SAGA o `[ATRITOS]` é uma nota por
+  CLASSE do mapa (a partir da classe 0), não por polo; a dev5 usou o uso do solo (3 classes) como atrito.
+  Gerado (scratchpad, não versionado) `pontos_reginaldo_atrito_por_bairro.txt` = pontos do autor +
+  `[ATRITOS]` 1 (FUNDO) + os 10 valores na ordem dos bairros: só correto se o RS2 aberto tiver classe 0 =
+  FUNDO e classes 1-10 = bairros nessa ordem; conferir na guia "Atrito Ambiental". Pendente: qual RS2 está
+  aberto; se for de bairros, a comparação com a dev5 (uso do solo) não vale.
 - Se o Vista SAGA ficar indisponível: a validação da bacia não acontece; a guia Raster reproduz o
   algoritmo do Vista SAGA (99,7% no caso sintético) e é a referência de fidelidade por inferência, não
   por teste em dados reais. Registrar como limitação.
