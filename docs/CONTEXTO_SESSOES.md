@@ -95,6 +95,17 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
 
+## 18/11/2026 (sessão 3) — autor não consegue rodar o Voronoi no Vista SAGA
+
+- Relato: o módulo Voronoi do Vista SAGA não roda, nem em modo de compatibilidade. Em 17/11 o autor rodou
+  o caso sintético nele (R1-R4 recebidos). O RS2 da bacia ainda não foi gerado (dados não reenviados),
+  logo o problema não é o caso novo. Pedido diagnóstico caixa-preta (sem nova análise do executável,
+  decisão de 17/11): sintoma exato, mensagem, o que mudou desde 17/11, reteste com
+  `teste_atrito.rs2` + `pontos_pixel.txt` (`python3.12 scripts/gerar_caso_atrito.py PASTA`).
+- Se o Vista SAGA ficar indisponível: a validação da bacia não acontece; a guia Raster reproduz o
+  algoritmo do Vista SAGA (99,7% no caso sintético) e é a referência de fidelidade por inferência, não
+  por teste em dados reais. Registrar como limitação.
+
 ## 18/11/2026 (sessão 3) — pergunta do autor: há no QGIS Voronoi com massa/atrito?
 
 - Busca na web (plugins.qgis.org e doc.esri.com bloqueados para leitura direta nesta sessão; só resultados
