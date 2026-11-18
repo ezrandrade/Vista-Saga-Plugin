@@ -6,6 +6,23 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 18/11/2026 — proposta para a 1.4.0-dev4: padrão automático, tolerância pela escala dos dados
+
+- O autor questionou o campo "Espaçamento da busca" (parece raster) e propôs um padrão único, aceitando
+  a área de influência como estimativa. Discussão: (1) incerteza das entradas domina: +10% numa nota
+  ou massa muda 0,4-1% da área (0,2-0,5 ha no caso de teste); PEC Classe A (Decreto 89.817/1984) a
+  1:10.000 = 5 m (EP 3 m); logo 1 cm de tolerância é falsa precisão; (2) mas os defeitos corrigidos na
+  dev3 eram topológicos, sistemáticos, silenciosos e dependentes de parâmetro arbitrário: a conferência
+  automática (topologia) fica inegociável.
+- Escala dos polígonos de atrito do autor: **1:10.000**.
+- Medição (caso de teste, espaçamento 10): tolerância 0,01 / 0,1 / 0,5 / 1 m → vértices 902 / 520 /
+  385 / 371; 0,8 / 0,6 / 0,5 / 0,5 s; coincidência com o Vista SAGA 99,60% em todas; maior diferença de
+  área frente a 1 cm: 0 / 16 / 27 / 72 m².
+- **Proposta do orientador (a confirmar):** dev4 sem o campo; espaçamento automático (≈ 1/200 do maior
+  lado da extensão, ≤ 1/4 da largura média do polígono de atrito mais estreito, teto de ~100 mil nós);
+  tolerância padrão 0,5 m (1/6 do EP a 1:10.000), limitada a extensão/2000 em áreas pequenas; ambos
+  no `_resumo.txt`. Implementar depois do teste da dev3 pelo autor.
+
 ## 18/11/2026 — resultados do teste da 1.4.0-dev2 recebidos
 
 - O autor enviou `Voronoi_Vetorial.zip` (QGIS 4, guia Vetorial, 4 modalidades). Partição exata nas 4;
