@@ -111,6 +111,11 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   do programa em Arquivos de Programas), caminho com acento/espaço/longo/OneDrive, arquivo de pontos
   inexistente ou em codificação diferente. Pedido: em que passo aparece; teste com tudo em `C:\VSAGA\`,
   como administrador, com o caso de 17/11.
+- O erro aparece ao abrir o arquivo de pontos (o mesmo `pontos_pixel.txt` que funcionou em 17/11 no outro
+  PC; bytes idênticos). Logo, não é o formato: é onde/como o arquivo está neste PC. Hipóteses: aberto de
+  dentro do ZIP (sem extrair), caminho com acento/OneDrive/longo, arquivo somente leitura ou bloqueado
+  (o programa pode abrir para leitura e escrita), permissão. Pedido: extrair para `C:\VSAGA\teste\`,
+  nome curto (`P.TXT`), conferir Propriedades (Desbloquear, sem Somente leitura), executar como admin.
 - Se o Vista SAGA ficar indisponível: a validação da bacia não acontece; a guia Raster reproduz o
   algoritmo do Vista SAGA (99,7% no caso sintético) e é a referência de fidelidade por inferência, não
   por teste em dados reais. Registrar como limitação.
