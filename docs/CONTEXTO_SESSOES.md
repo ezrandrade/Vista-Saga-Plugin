@@ -47,24 +47,27 @@ Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais r
 
 M/d²; atrito vetorial só pela coluna; guia Vetorial com modelo contínuo; verificação automática com
 correção (opção 1); campo de espaçamento removido; tolerância 0,5 m (mapas 1:10.000, EP 3 m no PEC
-Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável com nota 1.
+Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável com nota 1; (dev6) Raster
+recorta pela bacia, partes < 25 m² só informadas, NoData do atrito atravessável com nota 1.
 
 ### Próximos passos
 
-**Atualizado na pausa da sessão 2 (18/11):** o teste da dev5 com dados reais foi recebido e analisado
-(ver a entrada "sessão 2" abaixo). Proposta da dev6 enviada ao autor, aguardando as decisões:
-- sem decisão de método (implementar direto): lascas < 1 m na borda após o recorte; cabeçalho do
-  `_resumo.txt` raster conforme a fonte do atrito; tempo de cálculo no `_resumo.txt` do vetor direto;
-- **decisões do autor pendentes:** (4) recortar pela bacia na guia Raster quando a extensão vier de
-  camada poligonal (recomendado: sim); (5) partes abaixo da escala: (a) só informar no resumo
-  (recomendado), (b) informar e incorporar ao vizinho, (c) nada; limiar sugerido 1 pixel ou 25 m²;
-  (6) NoData do raster de atrito atravessável com nota 1 (recomendado: sim);
-- fora da dev6, de maior peso para a tese: vetor × raster com atrito divergem 15-20 ha; só um teste da
-  bacia no próprio Vista SAGA decide qual modelo se aproxima mais (oferecido preparar RS2 + pontos).
+**Atualizado na sessão 3 (18/11): decisões da dev6 tomadas pelo autor (aceitou as recomendações).**
+Escopo da dev6, em implementação:
+- (1) lascas < 1 m na borda após o recorte (vetor direto com atrito);
+- (2) cabeçalho do `_resumo.txt` raster conforme a fonte do atrito;
+- (3) tempo de cálculo no `_resumo.txt` do vetor direto;
+- (4) **guia Raster recorta pela bacia** quando a extensão vem de camada poligonal (máscara; fora = sem
+  resultado), como a guia Vetorial;
+- (5a) **partes abaixo da escala só informadas no resumo**, sem alterar a geometria; limiar 25 m²
+  (= (5 m)², PEC Classe A a 1:10.000);
+- (6) **NoData do raster de atrito atravessável com nota 1, sem resultado** (como a área sem polígono).
+- Fora da dev6, de maior peso para a tese: vetor × raster com atrito divergem 15-20 ha; só um teste da
+  bacia no próprio Vista SAGA decide qual modelo se aproxima mais (oferecido preparar RS2 + pontos;
+  sem resposta do autor ainda).
 
 1. ~~Receber e analisar o teste da dev5 com os dados reais~~ (feito, sessão 2).
-2. **Pergunta em aberto ao autor:** o NoData de um raster de atrito (guia Raster) continua barreira; mudar
-   para "atravessável com nota 1, sem resultado", por coerência com a regra da área sem polígono?
+2. ~~Pergunta sobre o NoData do raster de atrito~~ (decidido na sessão 3: atravessável com nota 1).
 3. **Fechamento da 1.4.0** (depois do teste): registrar o tempo de cálculo no `_resumo.txt` do vetor direto;
    tirar "(em teste)" do CHANGELOG/notas; ZIP final `1.4.0`; o autor faz o merge do PR #13 e cria a tag
    `v1.4.0` (o proxy das sessões recusa criar tags).
@@ -87,6 +90,12 @@ Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável c
 - Código central: `geosaga/voronoi_friction_continuous.py` (modelo contínuo e traçado),
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
+
+## 18/11/2026 (sessão 3) — decisões da dev6
+
+- O autor aceitou as recomendações: (4) recorte pela bacia na guia Raster; (5a) partes < 25 m² só
+  informadas no resumo; (6) NoData do raster de atrito atravessável com nota 1, sem resultado.
+  Implementação da dev6 iniciada (itens 1-6 da retomada rápida).
 
 ## 18/11/2026 (sessão 3) — retomada após novo bloqueio
 
