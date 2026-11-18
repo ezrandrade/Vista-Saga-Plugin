@@ -6,21 +6,45 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 18/11/2026, início da sessão 3) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 18/11/2026, PAUSA da sessão 3) <<<
 
 Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
+**A versão válida deste arquivo é a do repositório** (branch `feat/voronoi-atrito-fiel`); cópias guardadas
+pelo autor podem estar desatualizadas (aconteceu na sessão 3).
 
 ### Onde está o trabalho
 
-- **Branch:** `feat/voronoi-atrito-fiel` (último commit: dev5). **PR:**
+- **Branch:** `feat/voronoi-atrito-fiel` (último commit de código: dev6). **PR:**
   [ezrandrade/Vista-Saga-Plugin#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13), aberto,
-  sem merge. `metadata.txt` = 1.4.0; ZIPs de teste `-dev1` a `-dev6` (versão `-devN` só dentro do ZIP).
-- **Homologadas pelo autor no QGIS 4:** dev3 (caso sintético, 5 m e 20 m) e dev4 (espaçamento automático,
-  nota 0 bloqueada). dev5 testada com os dados reais (bacia do Reginaldo) e analisada na sessão 2.
-  **dev6 enviada (sessão 3), aguardando o teste do autor no QGIS 4.**
-- **Dados do autor** (uso do solo, bacia, centroides, resultados): só na sessão; nunca no repositório
-  (`*.gpkg` é ignorado de propósito). Se precisar deles, peça ao autor que reenvie.
+  sem merge. `metadata.txt` = 1.4.0; ZIPs de teste `-dev1` a `-dev6` (versão `-devN` só dentro do ZIP;
+  `dist/` não é versionado: refazer com `python3.12 scripts/build_release.py` + troca da versão no
+  metadata do ZIP).
+- **Homologadas pelo autor no QGIS 4:** dev3 e dev4. dev5 testada com os dados reais (sessão 2).
+  **dev6 enviada (sessão 3), ainda não testada pelo autor no QGIS 4.**
+- **Dados do autor** (uso do solo, bacia, centroides, RS2, saídas): só na sessão; nunca no repositório.
+  Nesta sessão o autor enviou só o arquivo de pontos `pontos_reginaldo_vistasaga.txt` (10 polos, massas
+  = população, inteiras); se precisar dele de novo, pedir.
 - A **tese está fora destas sessões** (decisão do autor): não perguntar sobre mapas da tese.
+- **Protocolo (pedido do autor):** atualizar este arquivo a cada ação finalizada, commit + push imediato
+  e envio do arquivo ao autor. No contêiner: `apt-get update` antes do `apt-get install`.
+
+### Estado na pausa (sessão 3) — o que retomar
+
+1. **Validação da bacia no Vista SAGA (prioridade; decide a divergência vetor × raster com atrito de
+   15-20 ha da dev5).** O autor tem aberto no Vista SAGA o RS2 do uso do solo (legenda [0] FUNDO, [1]
+   Classe 1, [3] Classe 3, [5] Classe 5) e carregou `pontos_reginaldo_A_posicao.txt` (pontos do autor +
+   `[ATRITOS]` 1, 1, 3, 5), que mostrou FUNDO 1, Classe 1 1, Classe 3 3, Classe 5 5. **Achado: o
+   `[ATRITOS]` é lido por posição na legenda.** Pedido ao autor: rodar R1 Com Atrito, R2 Com Massa e
+   Atrito, R3 Com Massa, R4 Simples (Classes Excluídas vazia), anotar os tempos e enviar o RS2 de entrada
+   + os 4 RS2 de saída + o arquivo A. Comparação planejada: plugin raster sobre o MESMO RS2 (grade
+   idêntica) e vetor direto sobre o RS2 poligonizado; R3/R4 conferem a posição dos polos (classe
+   "Ponto"). Script de comparação ainda não escrito (pode ser adiantado; base: `scripts/comparar_caso_atrito.py`).
+2. **Perguntas em aberto ao autor:** a mensagem "Erro na tentativa de abertura de arquivo" sumiu com o
+   `[ATRITOS]`? (seção obrigatória?); notas do uso do solo = códigos (1, 3, 5) como nos testes da dev5?;
+   como o RS2 e as coordenadas coluna:linha foram gerados (resolução, origem, contagem a partir de 1)?
+3. **O Vista SAGA funciona no PC atual do autor** (o erro era do arquivo sem `[ATRITOS]`, não do PC).
+4. **Teste da dev6 no QGIS 4** (o que conferir: ver "Próximos passos" abaixo).
+5. Depois: fechamento da 1.4.0 (item 3 dos próximos passos).
 
 ### O que a 1.4.0 contém (estado atual)
 
@@ -67,8 +91,8 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
 - (6) **NoData do raster de atrito atravessável com nota 1, sem resultado** (como a área sem polígono).
 - Fora da dev6, de maior peso para a tese: vetor × raster com atrito divergem 15-20 ha; só um teste da
   bacia no próprio Vista SAGA decide qual modelo se aproxima mais. **O autor pediu o caso (sessão 3):**
-  conversor `scripts/preparar_caso_vista_saga.py` pronto; **aguardando o reenvio dos dados** (uso do
-  solo, bacia, centroides com massa) para gerar RS2 + pontos.
+  conversor `scripts/preparar_caso_vista_saga.py` pronto, mas o autor já tinha RS2 + pontos próprios:
+  ver "Estado na pausa", item 1.
 
 1. ~~Receber e analisar o teste da dev5 com os dados reais~~ (feito, sessão 2).
 2. ~~Pergunta sobre o NoData do raster de atrito~~ (decidido na sessão 3: atravessável com nota 1).
@@ -94,6 +118,14 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
 - Código central: `geosaga/voronoi_friction_continuous.py` (modelo contínuo e traçado),
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
+
+## 18/11/2026 (sessão 3) — pausa pedida pelo autor
+
+- Retomar pela seção "Estado na pausa" da Retomada rápida. Commits da sessão 3: contexto e `CLAUDE.md`
+  (regra de atualizar a cada ação), dev6 (código, testes, notas, CHANGELOG), conversor
+  `scripts/preparar_caso_vista_saga.py` + teste, registros do diagnóstico do Vista SAGA.
+- Arquivos entregues ao autor fora do repositório: ZIP dev6, caso de 17/11 (`teste_voronoi_atrito.zip`),
+  `pontos_reginaldo_A_posicao.txt` e `pontos_reginaldo_B_codigo.txt` (variantes do `[ATRITOS]`).
 
 ## 18/11/2026 (sessão 3) — autor não consegue rodar o Voronoi no Vista SAGA
 
