@@ -57,7 +57,9 @@ class DirectVectorTests(unittest.TestCase):
         self.assertIn('self.mass_field.setVisible(weighted)',content)
         # 1.4.0: vetor direto nas quatro modalidades (com atrito, modelo contínuo).
         self.assertIn("direct=kind=='vector'\n",content)
-        self.assertIn('friction_features=friction_spec',content)
+        # dev5: com atrito, o vetor direto roda em segundo plano (QgsTask), com progresso.
+        self.assertIn('task = VoronoiVectorTask(', content)
+        self.assertIn("friction_features=self.friction_spec['features']", content)
         self.assertIn('self.extent_mode.addItem',content)
 
 if __name__=='__main__': unittest.main()
