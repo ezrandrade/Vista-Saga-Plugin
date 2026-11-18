@@ -6,6 +6,79 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## >>> RETOMADA RÁPIDA (atualizada em 18/11/2026, fim da sessão) <<<
+
+Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
+
+### Onde está o trabalho
+
+- **Branch:** `feat/voronoi-atrito-fiel` (último commit: dev5). **PR:**
+  [ezrandrade/Vista-Saga-Plugin#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13), aberto,
+  sem merge. `metadata.txt` = 1.4.0; ZIPs de teste `-dev1` a `-dev5` (versão `-devN` só dentro do ZIP).
+- **Homologadas pelo autor no QGIS 4:** dev3 (caso sintético, 5 m e 20 m) e dev4 (espaçamento automático,
+  nota 0 bloqueada). **dev5 enviada, aguardando o teste do autor com os dados reais** (bacia do
+  Reginaldo: uso do solo como atrito, centroides dos bairros com massas).
+- **Dados do autor** (uso do solo, bacia, centroides, resultados): só na sessão; nunca no repositório
+  (`*.gpkg` é ignorado de propósito). Se precisar deles, peça ao autor que reenvie.
+- A **tese está fora destas sessões** (decisão do autor): não perguntar sobre mapas da tese.
+
+### O que a 1.4.0 contém (estado atual)
+
+1. **Com Massa = M/d²** (Vista SAGA; antes M/d). Raster d²/M; vetor exato com discos de Apolônio de razão √M.
+   Validado: 100% das células do Vista SAGA (exceto empates).
+2. **Atrito, guia Raster:** modelo célula a célula do Vista SAGA (Σ distância ao polo × nota × passo, reta
+   de Bresenham; com massa, ÷ M); nota direta como custo (sem 1 + C). Validado: 99,67% / 99,69%.
+3. **Atrito, guia Vetorial: vetor direto, modelo contínuo** (∫ s·nota ds no segmento polo-ponto, exato
+   pelos cruzamentos com as bordas; índice angular de arestas por polo). Fronteiras traçadas numa malha
+   adaptativa com conferência automática (lados, interior e conferência final por carimbo, correção em até
+   3 passadas, orçamento de 400 mil células). Validado: 99,60% (com massa) / 99,52% (sem massa) do Vista
+   SAGA; com nota uniforme reproduz Apolônio a < 1 cm. Dados reais: ~2 min, 0 divergências.
+4. **Superfície de atrito vetorial** pela **coluna de atrito** (sem tabela manual), nas duas guias.
+5. **Sem campo de espaçamento** na guia Vetorial: espaçamento automático (maior lado / 100, ≤ 1/4 da
+   largura do polígono mais estreito, teto de 100 mil nós, ≥ 8 × tolerância); **tolerância 0,5 m**
+   (≤ maior lado / 2000). Valores e conferência no `_resumo.txt`.
+6. **Nota 0 recusada** (raster, coluna, combinação de superfícies).
+7. **Área sem polígono e coluna vazia: sem resultado, atravessáveis com nota 1** (dev5; antes barreira).
+8. Vetor direto com atrito roda em **QgsTask** (`VoronoiVectorTask`), com progresso e cancelamento.
+9. Modalidades com atrito sem "(experimental)"; **sem opção do modelo da 1.3** (reproduzir resultados
+   antigos com o ZIP da 1.3.0).
+
+### Decisões do autor já tomadas (não reabrir sem pedido)
+
+M/d²; atrito vetorial só pela coluna; guia Vetorial com modelo contínuo; verificação automática com
+correção (opção 1); campo de espaçamento removido; tolerância 0,5 m (mapas 1:10.000, EP 3 m no PEC
+Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável com nota 1.
+
+### Próximos passos
+
+1. **Receber e analisar o teste da dev5 com os dados reais** (tempo, progresso, `_resumo.txt`, regiões).
+   Para validar: comparar áreas com o modelo calculado ponto a ponto (grade de 50 m) e ver a linha
+   "Conferência automática" (esperado: 0 divergências).
+2. **Pergunta em aberto ao autor:** o NoData de um raster de atrito (guia Raster) continua barreira; mudar
+   para "atravessável com nota 1, sem resultado", por coerência com a regra da área sem polígono?
+3. **Fechamento da 1.4.0** (depois do teste): registrar o tempo de cálculo no `_resumo.txt` do vetor direto;
+   tirar "(em teste)" do CHANGELOG/notas; ZIP final `1.4.0`; o autor faz o merge do PR #13 e cria a tag
+   `v1.4.0` (o proxy das sessões recusa criar tags).
+4. Pendências antigas, sem urgência: tags v1.0.5-v1.3.0 (ver `CLAUDE.md`); leitura/gravação do arquivo
+   de pontos do Vista SAGA (`Nome;Massa;X:Y`, coluna:linha contadas a partir de 1); critério escrito de
+   "plugin finalizado".
+
+### Como trabalhar no contêiner
+
+- `apt-get install -y python3-gdal gdal-bin python3-pytest python3-matplotlib` e usar **python3.12**.
+  Suítes: `python3.12 -m unittest discover -s geosaga/tests -p 'test_*.py'` (455, 3 pulados) e
+  `python3.12 -m pytest -q tests/unit` (36).
+- Fluxo real do diálogo: `apt-get install -y --no-install-recommends python3-qgis qgis-providers` (QGIS 3.34,
+  não é o alvo, mas abre o diálogo) e rodar com `QT_QPA_PLATFORM=offscreen`; `tests/qgis/gui_monkey.py`
+  precisa de `QGIS_PY=/usr/share/qgis/python` (as 4 exceções de `Qgis.ProcessingSourceType` são da API do
+  QGIS 4, esperadas no 3.34).
+- Scripts de validação no repositório: `scripts/gerar_caso_atrito.py`, `scripts/comparar_caso_atrito.py`,
+  `scripts/comparar_vetor_plugin.py`. As saídas do Vista SAGA do caso de teste não estão no repositório
+  (o autor pode reenviar `teste_voronoi_atrito_2.zip`).
+- Código central: `geosaga/voronoi_friction_continuous.py` (modelo contínuo e traçado),
+  `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
+  `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
+
 ## 18/11/2026 — 1.4.0-dev5 implementada (dados reais)
 
 - Regra nova: área sem polígono/coluna vazia atravessável com nota 1, sem resultado, nas duas guias
