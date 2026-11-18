@@ -139,6 +139,15 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   2 e 4 inexistentes com 1). Esperado na guia "Atrito Ambiental": FUNDO 1, Classe 1 1, Classe 3 3, Classe 5
   5; a variante que der isso revela a regra. Suposição a confirmar: nota = código (1, 3, 5) e FUNDO = 1
   (regra do plugin). Ainda pendente: como o RS2 e as coordenadas coluna:linha foram gerados.
+- **CONFIRMADO (caixa-preta, 18/11): o `[ATRITOS]` é lido POR POSIÇÃO NA LEGENDA**, não por código. Com a
+  legenda 0, 1, 3, 5, a variante A (1, 1, 3, 5) deu FUNDO 1, Classe 1 1, Classe 3 3, Classe 5 5. Vale para a
+  futura leitura/gravação do formato no plugin (usar `RS2Header.legend()` na ordem gravada). Pendente:
+  se a mensagem de erro sumiu com a seção (seção obrigatória?).
+- Plano: o autor roda no Vista SAGA as 4 modalidades sobre o RS2 do uso do solo com a variante A e envia o
+  RS2 de entrada + os 4 RS2 de saída + tempos. Comparação: plugin raster sobre o MESMO RS2 (convertido em
+  raster de notas, grade idêntica) e plugin vetor direto sobre o RS2 poligonizado (bordas das células),
+  para isolar a diferença de modelo da diferença de rasterização. Simples e Com Massa conferem a posição
+  dos polos (classe 0 "Ponto" da saída).
 - Se o Vista SAGA ficar indisponível: a validação da bacia não acontece; a guia Raster reproduz o
   algoritmo do Vista SAGA (99,7% no caso sintético) e é a referência de fidelidade por inferência, não
   por teste em dados reais. Registrar como limitação.
@@ -170,7 +179,7 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   (separador não verificado), dois polos na mesma célula. Teste: `tests/unit/test_preparar_caso_vista_saga.py`.
   Conferido com dados sintéticos: o plugin sobre `atrito_grade.tif` + `pontos_centros.csv` dá a célula de
   cada polo ao próprio polo.
-- Plano da comparação (quando vierem as saídas do Vista SAGA): só dentro da bacia (o recorte não muda os
+- Plano da comparação (atualizado adiante: comparar sobre o RS2 do autor) (quando vierem as saídas do Vista SAGA): só dentro da bacia (o recorte não muda os
   custos); Vista SAGA × plugin raster na MESMA grade (modelo discreto em dados reais) e × vetor direto
   (modelo contínuo, rasterizado pelo centro). Script de comparação ainda não escrito.
 
