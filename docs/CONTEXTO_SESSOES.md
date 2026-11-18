@@ -17,6 +17,11 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
   1 m (não 20). Está correto (99,60%, 1 parte por região), mas o teste-chave (Massa e Atrito, dev3,
   20 m, o caso que partia a região A) ficou sem resultado. Pedido ao autor: repetir só esse caso na
   dev3 (na dev4 o espaçamento deixa de ser escolhido).
+- **Teste-chave recebido (`voronoi_vetorial_dev3.zip`): Massa e Atrito, dev3, 20 m:** 1 parte por região
+  (na dev2 a região A saía em 2), partição exata, 99,60% do Vista SAGA, conferência 0 divergências
+  (1.200 pontos). Com Atrito 20 m repetido: idêntico ao anterior. **dev3 homologada pelo autor no
+  QGIS 4.** Próximo passo: dev4 (espaçamento automático, tolerância 0,5 m, valores no relatório, nota 0
+  bloqueada).
 
 ## 18/11/2026 — decisões pendentes da dev1 fechadas pelo autor
 
