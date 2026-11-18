@@ -6,6 +6,11 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 18/11/2026 — resultados do teste da 1.4.0-dev3 recebidos
+
+- O autor enviou `voronoi_vetorial_5m.zip` e `voronoi_vetorial_20m.zip` (QGIS 4, dev3). Análise em
+  andamento nesta sessão.
+
 ## 18/11/2026 — decisões pendentes da dev1 fechadas pelo autor
 
 O autor acatou as três recomendações (entram na dev4, junto com o padrão automático e a tolerância de
