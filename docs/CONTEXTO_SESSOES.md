@@ -17,6 +17,10 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
   segunda (858 m²) é real: cunha de C no alto da faixa de atrito alto, separada do corpo de C pela
   região B (conferido no modelo ponto a ponto).
 - **dev4 homologada pelo autor no QGIS 4.**
+- **Próximo passo (decisão do autor):** teste da dev4 com dados reais do autor antes de fechar a 1.4.0
+  (medir tempo com muitos polos/polígonos; geometrias irregulares, buracos e lascas). Dados reais não
+  vão para o repositório. Sugestão anotada para o fechamento: registrar o tempo de cálculo no
+  `_resumo.txt` do vetor direto (hoje só o raster com atrito o registra).
 
 ## 18/11/2026 — 1.4.0-dev4 implementada
 
