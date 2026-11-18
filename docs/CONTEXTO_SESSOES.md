@@ -79,6 +79,40 @@ Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável c
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
 
+## 18/11/2026 (sessão 2) — resultados da dev5 com dados reais recebidos e analisados
+
+- Repositório anexado depois, com autorização do autor. Análise feita sobre as saídas enviadas (`dev5-gpkg.rar`, `dev5-geotif.rar`). Dois arquivos do RAR vieram
+  corrompidos (`Reginaldo_Massa_Atrito_dev5_resumo.txt`, `Reginaldo_Massa_dev5_centros.csv`); áreas
+  recalculadas a partir dos GPKG.
+- Vetor (GPKG): 10 regiões, geometrias válidas, soma = 2.343,27 ha nas 4 modalidades. Com Atrito:
+  espaçamento 23,4 m, tolerância 0,5 m, 3,0 milhões de nós, conferência 100.276 pontos, 0 divergências
+  após 2 passadas (correção em 153 células). Partes: Simples 10, Massa 11, Atrito 100, Massa e Atrito 95.
+- Raster (GeoTIFF, 5 m): cálculo matricial 219 s (Atrito) e 319 s (Massa e Atrito).
+- Vetor × raster, pixel a pixel (vetor rasterizado pelo centro na grade do GeoTIFF): Simples 100%,
+  Com Massa 100% (3 px), **Atrito 99,36% (6.024 px), Massa e Atrito 99,14% (8.074 px)**. Mediana da
+  distância à fronteira 0 m; p95 15-18 m; manchas de até 1,4 ha. Maior diferença de área: Massa e
+  Atrito, Jacintinho +3,83 ha e Poço -2,58 ha no raster (deslocamento sistemático, ao sul). É a diferença
+  entre o modelo contínuo e o discreto em percursos longos sobre mosaico fragmentado; qual dos dois
+  reproduz o Vista SAGA nos dados reais não se sabe sem rodar o caso no Vista SAGA.
+- Achados:
+  1. Lascas que escaparam da regra das faces-fio: 2 partes na borda do domínio (0,023 m², largura
+     0,017 m; 0,38 m², largura 0,077 m). Provável recorte pelo domínio depois da eliminação. Defeito
+     pequeno, a corrigir.
+  2. Enclaves abaixo da escala: 23 (Atrito) e 21 (Massa e Atrito) partes < 25 m² (menores que 1 pixel),
+     largura 1-2 m (menor que o EP de 3 m a 1:10.000). O raster também é fragmentado (até 37 partes por
+     região), logo a fragmentação vem do modelo + mosaico, não só do traçado. Decisão do autor pendente:
+     unidade mínima de mapeamento?
+  3. Resumo do raster com atrito: cabeçalho diz "NoData no caminho = barreira" e o rodapé diz "área sem
+     polígono atravessável com nota 1". Texto a condicionar à fonte (conferir no código).
+  4. Raster Simples/Com Massa avaliaram o retângulo inteiro (2.190.870 px = 5.477 ha; "excluídos por
+     máscara: 0"), enquanto com atrito avaliaram só a cobertura de uso do solo (937.388 px). A "% da área
+     avaliada" não é comparável entre modalidades na guia Raster. Conferido no código: a guia Raster usa
+     só o retângulo envolvente da "Extensão de camada poligonal" (`run_voronoi(mask=...)` existe, mas o
+     diálogo não o usa); a guia Vetorial recorta pelo polígono. Incoerência entre as guias.
+  5. Raster com atrito tem 108 px (0,27 ha) fora do domínio do vetor: a cobertura do uso do solo passa
+     um pouco da bacia; o raster não recorta pela bacia.
+- Pendente: tempo e comportamento da barra de progresso do vetor direto (não está no `_resumo.txt`).
+
 ## 18/11/2026 — 1.4.0-dev5 implementada (dados reais)
 
 - Regra nova: área sem polígono/coluna vazia atravessável com nota 1, sem resultado, nas duas guias
