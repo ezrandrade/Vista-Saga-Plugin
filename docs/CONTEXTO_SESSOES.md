@@ -6,7 +6,7 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 18/11/2026, fim da sessão) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 18/11/2026, pausa da sessão 2) <<<
 
 Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
 
@@ -51,9 +51,18 @@ Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável c
 
 ### Próximos passos
 
-1. **Receber e analisar o teste da dev5 com os dados reais** (tempo, progresso, `_resumo.txt`, regiões).
-   Para validar: comparar áreas com o modelo calculado ponto a ponto (grade de 50 m) e ver a linha
-   "Conferência automática" (esperado: 0 divergências).
+**Atualizado na pausa da sessão 2 (18/11):** o teste da dev5 com dados reais foi recebido e analisado
+(ver a entrada "sessão 2" abaixo). Proposta da dev6 enviada ao autor, aguardando as decisões:
+- sem decisão de método (implementar direto): lascas < 1 m na borda após o recorte; cabeçalho do
+  `_resumo.txt` raster conforme a fonte do atrito; tempo de cálculo no `_resumo.txt` do vetor direto;
+- **decisões do autor pendentes:** (4) recortar pela bacia na guia Raster quando a extensão vier de
+  camada poligonal (recomendado: sim); (5) partes abaixo da escala: (a) só informar no resumo
+  (recomendado), (b) informar e incorporar ao vizinho, (c) nada; limiar sugerido 1 pixel ou 25 m²;
+  (6) NoData do raster de atrito atravessável com nota 1 (recomendado: sim);
+- fora da dev6, de maior peso para a tese: vetor × raster com atrito divergem 15-20 ha; só um teste da
+  bacia no próprio Vista SAGA decide qual modelo se aproxima mais (oferecido preparar RS2 + pontos).
+
+1. ~~Receber e analisar o teste da dev5 com os dados reais~~ (feito, sessão 2).
 2. **Pergunta em aberto ao autor:** o NoData de um raster de atrito (guia Raster) continua barreira; mudar
    para "atravessável com nota 1, sem resultado", por coerência com a regra da área sem polígono?
 3. **Fechamento da 1.4.0** (depois do teste): registrar o tempo de cálculo no `_resumo.txt` do vetor direto;
