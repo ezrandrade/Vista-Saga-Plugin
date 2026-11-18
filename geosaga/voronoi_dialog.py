@@ -129,6 +129,47 @@ class VoronoiRasterTask(QgsTask):
             callback(self, bool(success))
 
 
+class VoronoiVectorTask(QgsTask):
+    """Vetor direto com atrito em segundo plano (1.4.0-dev5): pode levar minutos com dados reais.
+
+    Só dados isolados (WKB, notas, pontos); nada de QgsMapLayer em run(). Progresso em porcentagem
+    pelo QgsTask e cancelamento pelo botão do diálogo ou do gerenciador de tarefas do QGIS.
+    """
+    def __init__(self, points, bounds, destination, wkt, mode, study_geometry, friction_spec):
+        super().__init__('Vista Saga - Voronoi vetorial com atrito', QgsTask.Flag.CanCancel)
+        self.points = tuple(points)
+        self.bounds = tuple(float(v) for v in bounds)
+        self.destination = str(destination)
+        self.wkt = str(wkt)
+        self.mode = str(mode)
+        self.study_geometry = QgsGeometry(study_geometry) if study_geometry is not None else None
+        self.friction_spec = dict(friction_spec)
+        self.result = None
+        self.error = None
+        self.ui_callback = None
+
+    def run(self):
+        try:
+            self.result = save_vector_voronoi(
+                self.points, self.bounds, self.destination, self.wkt, mode=self.mode,
+                study_geometry=self.study_geometry, progress=self.setProgress, cancelled=self.isCanceled,
+                friction_features=self.friction_spec['features'], search_spacing=None,
+                friction_info=self.friction_spec)
+            return not self.isCanceled()
+        except InterruptedError:
+            return False
+        except Exception as exc:
+            log_exception()
+            self.error = str(exc)
+            return False
+
+    def finished(self, success):
+        callback = self.ui_callback
+        self.ui_callback = None
+        if callback is not None:
+            callback(self, bool(success))
+
+
 class VoronoiDialog(QDialog):
     """Quatro modalidades no modelo do Vista SAGA; atrito raster ou vetorial (1.4.0)."""
     def __init__(self, iface, parent=None):
@@ -976,15 +1017,29 @@ class VoronoiDialog(QDialog):
             def progress(value):
                 dialog.setValue(int(value))
                 QApplication.processEvents()
+            if direct and friction_spec:
+                # Com atrito, o vetor direto pode levar minutos: tarefa em segundo plano, com progresso.
+                task = VoronoiVectorTask(points, bounds, destination, crs.toWkt(),
+                                         'mass_friction' if self.mode.currentIndex()==3 else 'friction',
+                                         study, friction_spec)
+                task.ui_callback = self._on_raster_task_finished
+                task.progressChanged.connect(self._on_raster_task_progress)
+                dialog.canceled.connect(task.cancel)
+                self._task = task
+                self._progress_dialog = dialog
+                try:
+                    QgsApplication.taskManager().addTask(task)
+                except Exception:
+                    self._task = None
+                    self._progress_dialog = None
+                    task.ui_callback = None
+                    raise
+                asynchronous = True
+                return
             if direct:
                 result=save_vector_voronoi(points,bounds,destination,crs.toWkt(),
-                    mode=('mass_friction' if self.mode.currentIndex()==3 else
-                          'friction' if self.mode.currentIndex()==2 else
-                          'mass' if self.mode.currentIndex()==1 else 'simple'),
-                    study_geometry=study,progress=progress,cancelled=dialog.wasCanceled,
-                    friction_features=friction_spec['features'] if friction_spec else None,
-                    search_spacing=None,
-                    friction_info=friction_spec)
+                    mode='mass' if self.mode.currentIndex()==1 else 'simple',
+                    study_geometry=study,progress=progress,cancelled=dialog.wasCanceled)
             else:
                 if reference is not None:
                     from .raster_engine import file_source
@@ -1068,9 +1123,13 @@ class VoronoiDialog(QDialog):
         if success and task.result:
             try:
                 self._load_output(task.result)
-                self.status.setText(
-                    tr(f'Voronoi concluído: {len(task.points)} centros; '
-                    f'{task.result["pixels_valid"]:,} pixels classificados.'))
+                if task.result.get('vector_direct'):
+                    self.status.setText(tr('Voronoi vetorial concluído: {count} regiões.').format(
+                        count=len(task.result['rows'])))
+                else:
+                    self.status.setText(
+                        tr(f'Voronoi concluído: {len(task.points)} centros; '
+                        f'{task.result["pixels_valid"]:,} pixels classificados.'))
                 QMessageBox.information(self,tr('Voronoi concluído'),self._result_message(task.result))
             except Exception as exc:
                 log_exception()

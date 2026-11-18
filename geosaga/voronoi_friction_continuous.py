@@ -23,6 +23,8 @@ import numpy as np
 
 # Limite de elementos por bloco (pontos × arestas) nas matrizes de cruzamento.
 _BLOCK = 1_500_000
+# Limite de pares (ponto, aresta candidata) por bloco no cálculo com índice angular.
+_PAIRS = 2_000_000
 # Deslocamento ínfimo do polo nos testes de cruzamento (unidades do SRC, ~1 µm em metros): sem ele,
 # um segmento que passa exatamente por um vértice (comum com polos no centro de células e polígonos
 # em coordenadas redondas) conta o cruzamento errado. Efeito no custo: desprezível.
@@ -32,8 +34,12 @@ _NUDGE_X, _NUDGE_Y = 1.1e-6, 0.7e-6
 class FrictionSurface:
     """Polígonos de atrito preparados para o cálculo vetorizado (arestas orientadas)."""
 
-    def __init__(self, features, *, cancelled=None):
-        """features: [(wkb, nota > 0 ou None)] na ordem das feições; None = barreira."""
+    def __init__(self, features, *, cancelled=None, outside_rating=None):
+        """features: [(wkb, nota > 0 ou None)] na ordem das feições.
+
+        outside_rating: nota da área sem polígono (e das feições sem nota) para a PASSAGEM; ela nunca
+        recebe resultado. None = barreira (sem passagem).
+        """
         from osgeo import ogr
         from .gdal_scope import gdal_exceptions
         with gdal_exceptions():
@@ -85,10 +91,22 @@ class FrictionSurface:
             self.edges = np.array([e for block in edges for e in block], dtype=np.float64)
             self.starts = np.array(starts, dtype=np.int64)
             self.ratings = np.array(ratings, dtype=np.float64)
-            self.edge_rating = np.repeat(self.ratings, np.diff(np.append(self.starts, len(self.edges))))
-            self.union_edges = np.array([e for ring, _ in _polygon_rings(covered)
-                                         for e in _ring_edges(ring, ccw=True)], dtype=np.float64)
-            self.min_rating = float(self.ratings.min())
+            sizes = np.diff(np.append(self.starts, len(self.edges)))
+            self.edge_rating = np.repeat(self.ratings, sizes)
+            self.edge_poly = np.repeat(np.arange(len(self.ratings)), sizes)
+            # Borda da cobertura com o interior (área coberta) à esquerda: exterior anti-horário,
+            # buracos horários. Serve para detectar a saída da cobertura e, com outside_rating, para
+            # somar o custo do trecho fora dela.
+            self.union_edges = np.array([e for ring, exterior in _polygon_rings(covered)
+                                         for e in _ring_edges(ring, ccw=exterior)], dtype=np.float64)
+            if outside_rating is not None:
+                outside_rating = float(outside_rating)
+                if not math.isfinite(outside_rating) or outside_rating <= 0:
+                    raise ValueError('Nota de atrito inválida: {0}. Use valor maior que 0 (para quase sem '
+                                     'atrito, um valor pequeno, como 0,1).'.format(outside_rating))
+            self.outside_rating = outside_rating
+            self.min_rating = float(self.ratings.min() if outside_rating is None
+                                    else min(self.ratings.min(), outside_rating))
             xs, ys = self.edges[:, [0, 2]], self.edges[:, [1, 3]]
             self.envelope = (float(xs.min()), float(ys.min()), float(xs.max()), float(ys.max()))
 
@@ -112,29 +130,133 @@ class FrictionSurface:
 
         g_inside: vetor booleano (por polígono) dos polígonos que contêm o polo deslocado
         (``locate`` no polo deslocado de _NUDGE).
+
+        Exato e rápido (1.4.0-dev5): um segmento G → x só pode cruzar as arestas cuja faixa de
+        direções, vista de G, contém a direção de x. As arestas são indexadas por setor angular
+        (``_AngularIndex``, guardado por polo) e cada ponto é testado só contra as do seu setor.
         """
-        x = np.asarray(x, dtype=np.float64)
-        y = np.asarray(y, dtype=np.float64)
+        x = np.asarray(x, dtype=np.float64).ravel()
+        y = np.asarray(y, dtype=np.float64).ravel()
+        ox, oy = gx + _NUDGE_X, gy + _NUDGE_Y
+        key = (float(ox), float(oy))
+        cache = self.__dict__.setdefault('_indexes', {})
+        if key not in cache:
+            cache[key] = (_AngularIndex(self.edges, ox, oy), _AngularIndex(self.union_edges, ox, oy))
+        rated, union = cache[key]
+        npoly = len(self.ratings)
         out = np.empty(x.size, dtype=np.float64)
-        for sl in _slices(x.size, len(self.edges) + len(self.union_edges)):
+        theta = np.mod(np.arctan2(y - oy, x - ox), 2 * np.pi)
+        sector_r = rated.sector(theta)
+        sector_u = union.sector(theta)
+        start = 0
+        while start < x.size:
+            # Bloco de pontos limitado pelo número de pares (ponto, aresta candidata).
+            counts = rated.counts(sector_r[start:]) + union.counts(sector_u[start:])
+            cum = np.cumsum(counts)
+            stop = start + max(1, int(np.searchsorted(cum, _PAIRS, side='right')))
+            sl = slice(start, min(stop, x.size))
             xs, ys = x[sl], y[sl]
-            gxs, gys = np.full(xs.size, gx + _NUDGE_X), np.full(xs.size, gy + _NUDGE_Y)
-            valid, tau, denom = _crossings(gxs, gys, xs, ys, self.edges)
-            signed = np.where(denom < 0, -1.0, 1.0) * tau * tau * self.edge_rating[None, :]
-            total = np.where(valid, signed, 0.0).sum(axis=1) / 2.0
-            parity = (np.add.reduceat(valid, self.starts, axis=1) % 2) == 1
-            inside = parity ^ g_inside[None, :]
+            n = xs.size
+            k, e = rated.pairs(sector_r[sl])
+            total = np.zeros(n)
+            inside = np.zeros((n, npoly), dtype=bool)
+            if k.size:
+                valid, tau, denom = _pair_crossings(ox, oy, xs[k], ys[k], self.edges[e])
+                kv, ev = k[valid], e[valid]
+                signed = np.where(denom[valid] < 0, -1.0, 1.0) * tau[valid] ** 2 * self.edge_rating[ev]
+                total = np.bincount(kv, weights=signed, minlength=n) / 2.0
+                parity = np.bincount(kv * npoly + self.edge_poly[ev], minlength=n * npoly).reshape(n, npoly) % 2
+                inside = parity.astype(bool)
+            inside ^= g_inside[None, :]
             covered = inside.any(axis=1)
             end_rating = np.where(covered, self.ratings[inside.argmax(axis=1)], 0.0)
-            leaves, _, _ = _crossings(gxs, gys, xs, ys, self.union_edges)
+            k, e = union.pairs(sector_u[sl])
+            leaves = np.zeros(n, dtype=bool)
+            if k.size:
+                valid, tau_u, denom_u = _pair_crossings(ox, oy, xs[k], ys[k], self.union_edges[e])
+                if self.outside_rating is None:
+                    leaves[np.unique(k[valid])] = True
+                else:
+                    # Trecho fora da cobertura: atravessável com a nota da área sem polígono. Sair da
+                    # cobertura é entrar nesse trecho (sinal oposto ao de entrar na cobertura).
+                    signed_u = -np.where(denom_u[valid] < 0, -1.0, 1.0) * tau_u[valid] ** 2 * self.outside_rating
+                    total += np.bincount(k[valid], weights=signed_u, minlength=n) / 2.0
             d2 = (xs - gx) ** 2 + (ys - gy) ** 2
             value = d2 * (total + end_rating / 2.0)
             # Arredondamento: a soma ± pode dar um negativo ínfimo; o custo real é >= 0.
             value = np.maximum(value, 0.0)
-            value[~covered | leaves.any(axis=1)] = np.inf
+            value[~covered | leaves] = np.inf
             value[d2 == 0] = 0.0
             out[sl] = value
+            start = sl.stop
         return out
+
+
+class _AngularIndex:
+    """Arestas indexadas pelo setor angular que ocupam, vistas de um ponto (o polo).
+
+    Uma aresta (segmento que não contém o polo) ocupa o arco menor entre as direções das suas
+    pontas; ela é registrada em todos os setores desse arco, mais um de folga de cada lado.
+    Arestas quase alinhadas com o polo ocupam todos os setores. O segmento polo → x cruza uma
+    aresta só se a direção de x está no arco dela, logo testar o setor de x basta (exato).
+    """
+
+    def __init__(self, edges, ox, oy):
+        count = len(edges)
+        self.n = int(min(16384, max(256, 2 ** math.ceil(math.log2(max(count, 1) / 4)))))
+        width = 2 * math.pi / self.n
+        self.width = width
+        if not count:
+            self.ptr = np.zeros(self.n + 1, dtype=np.int64)
+            self.index = np.zeros(0, dtype=np.int64)
+            return
+        a1 = np.arctan2(edges[:, 1] - oy, edges[:, 0] - ox)
+        a2 = np.arctan2(edges[:, 3] - oy, edges[:, 2] - ox)
+        d = np.mod(a2 - a1 + np.pi, 2 * np.pi) - np.pi          # arco menor, em (−π, π]
+        begin = np.where(d >= 0, a1, a2)
+        span = np.abs(d)
+        first = np.floor(np.mod(begin, 2 * np.pi) / width).astype(np.int64) - 1
+        many = (span / width).astype(np.int64) + 3
+        many = np.where(span > np.pi - 1e-9, self.n, np.minimum(many, self.n))
+        ids = np.repeat(np.arange(count), many)
+        offset = np.arange(ids.size) - np.repeat(np.cumsum(many) - many, many)
+        sectors = np.mod(np.repeat(first, many) + offset, self.n)
+        order = np.argsort(sectors, kind='stable')
+        self.index = ids[order]
+        self.ptr = np.concatenate(([0], np.cumsum(np.bincount(sectors, minlength=self.n))))
+
+    def sector(self, theta):
+        return np.minimum((theta / self.width).astype(np.int64), self.n - 1)
+
+    def counts(self, sectors):
+        return self.ptr[sectors + 1] - self.ptr[sectors]
+
+    def pairs(self, sectors):
+        """(índice do ponto, índice da aresta) de todos os pares candidatos."""
+        counts = self.counts(sectors)
+        total = int(counts.sum())
+        if not total:
+            return np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64)
+        k = np.repeat(np.arange(sectors.size), counts)
+        offset = np.arange(total) - np.repeat(np.cumsum(counts) - counts, counts)
+        e = self.index[np.repeat(self.ptr[sectors], counts) + offset]
+        return k, e
+
+
+def _pair_crossings(ox, oy, x1, y1, edges):
+    """Como ``_crossings``, mas para pares (ponto i, aresta i): vetores 1D."""
+    dx = x1 - ox
+    dy = y1 - oy
+    ex = edges[:, 2] - edges[:, 0]
+    ey = edges[:, 3] - edges[:, 1]
+    wx = edges[:, 0] - ox
+    wy = edges[:, 1] - oy
+    denom = dx * ey - dy * ex
+    with np.errstate(divide='ignore', invalid='ignore'):
+        tau = (wx * ey - wy * ex) / denom
+        t = (wx * dy - wy * dx) / denom
+    valid = (denom != 0) & (tau > 0) & (tau < 1) & (t >= 0) & (t < 1)
+    return valid, tau, denom
 
 
 def _slices(count, width):
@@ -278,15 +400,20 @@ class _Lattice:
         return [self.cache[k] for k in keys]
 
 
-def _bisect_edges(lattice, edges, cancelled):
+def _bisect_edges(lattice, edges, cancelled, progress=None):
     """Para cada lado (i0, j0, di, dj, tamanho) com rótulos diferentes nas pontas, acha o par de nós
     vizinhos da malha fina em que o rótulo muda. Devolve [(ponto, rótulo antes, rótulo depois)]."""
     lo = np.zeros(len(edges), dtype=np.int64)
     hi = np.array([e[4] for e in edges], dtype=np.int64)
     first = np.array(lattice.labels([(e[0], e[1]) for e in edges]), dtype=np.int64)
+    levels = max(1, int(math.ceil(math.log2(max(2, int(hi.max()) if hi.size else 2)))))
+    done = 0
     while np.any(hi - lo > 1):
         if cancelled and cancelled():
             raise InterruptedError('Voronoi cancelado.')
+        if progress:
+            progress(min(1.0, done / levels))
+        done += 1
         mid = np.where(hi - lo > 1, (lo + hi) // 2, lo)
         keys = [(e[0] + e[2] * m, e[1] + e[3] * m) for e, m in zip(edges, mid)]
         values = np.array(lattice.labels(keys), dtype=np.int64)
@@ -322,7 +449,7 @@ def _junction(lattice, i0, j0, size):
     return float(x), float(y)
 
 
-def _refine(model, segments, tolerance, cancelled, max_depth=16):
+def _refine(model, segments, tolerance, cancelled, max_depth=16, progress=None):
     """Insere vértices até a corda ficar a menos de ``tolerance`` da fronteira verdadeira.
 
     segments: [(P, Q, a, b)], fronteira entre os rótulos a e b. A corda é conferida em 1/4, 1/2 e
@@ -336,9 +463,13 @@ def _refine(model, segments, tolerance, cancelled, max_depth=16):
     nf = fractions.size
     done = []
     work = [(np.array(p, float), np.array(q, float), a, b, 0) for p, q, a, b in segments]
+    level = 0
     while work:
         if cancelled and cancelled():
             raise InterruptedError('Voronoi cancelado.')
+        if progress:
+            progress(min(1.0, level / 10))
+        level += 1
         keep = [w for w in work if w[4] < max_depth and np.hypot(*(w[1] - w[0])) > 2 * tolerance]
         done.extend(w for w in work if not (w[4] < max_depth and np.hypot(*(w[1] - w[0])) > 2 * tolerance))
         if not keep:
@@ -439,7 +570,8 @@ def automatic_spacing(surface, bounds, tolerance):
 
 
 def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tolerance=None,
-                              mass_weighted=False, cancelled=None, progress=None, units_to_meters=1.0):
+                              mass_weighted=False, cancelled=None, progress=None, units_to_meters=1.0,
+                              outside_rating=None):
     """Regiões de influência com atrito em vetor direto (modelo contínuo).
 
     features: [(wkb, nota ou None)]; bounds: extensão (xmin, ymin, xmax, ymax) no SRC dos polígonos;
@@ -447,6 +579,7 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
     automático (``automatic_spacing``). tolerance: tolerância das fronteiras traçadas (unidades do
     SRC); None = padrão (``default_tolerance``: 0,5 m).
     units_to_meters: metros por unidade do SRC (para a tolerância padrão).
+    outside_rating: nota de passagem da área sem polígono (sem resultado); None = barreira.
     Retorna ([(centro, multipolígono OGR)], estatísticas).
     """
     from osgeo import ogr
@@ -454,7 +587,7 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
     xmin, ymin, xmax, ymax = map(float, bounds)
     if not all(math.isfinite(v) for v in (xmin, ymin, xmax, ymax)) or xmin >= xmax or ymin >= ymax:
         raise ValueError('A extensão do Voronoi precisa ter área positiva.')
-    surface = FrictionSurface(features, cancelled=cancelled)
+    surface = FrictionSurface(features, cancelled=cancelled, outside_rating=outside_rating)
     automatic = spacing is None
     if tolerance is None:
         tolerance = default_tolerance((xmin, ymin, xmax, ymax), units_to_meters)
@@ -470,10 +603,21 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
     # 1. Rótulos nos nós base.
     nx, ny = lattice.nx, lattice.ny
     ii, jj = np.meshgrid(np.arange(nx), np.arange(ny))
-    lattice.labels(list(zip((ii.ravel() * step).tolist(), (jj.ravel() * step).tolist())))
+    # Progresso em porcentagem (1.4.0-dev5): etapas com faixas fixas; dentro das etapas longas, avanço
+    # por blocos ou por rodadas (o número de rodadas não é conhecido de antemão).
+    def report(value):
+        if progress:
+            progress(int(max(0, min(99, value))))
+        if cancelled and cancelled():
+            raise InterruptedError('Voronoi cancelado.')
+
+    report(5)
+    keys = list(zip((ii.ravel() * step).tolist(), (jj.ravel() * step).tolist()))
+    chunk = 20_000
+    for start in range(0, len(keys), chunk):
+        lattice.labels(keys[start:start + chunk])
+        report(5 + 15 * min(1.0, (start + chunk) / len(keys)))
     base_nodes = nx * ny
-    if progress:
-        progress(20)
     R = 2 ** _REFINE_LEVEL
     sub = step // R
 
@@ -492,10 +636,9 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
             kinds = len(set(c))
             if kinds >= 3 or (kinds == 2 and c[0] == c[2] and c[1] == c[3] and c[0] != c[1]):
                 initial.add((i, j))
-    if progress:
-        progress(25)
+    report(22)
 
-    def trace(forced):
+    def trace(forced, lo, hi):
         """Malha adaptativa → pontos de fronteira → segmentos → linhas → regiões, com as células
         base de ``forced`` ({(i, j): profundidade}) pré-divididas em (2**3)**profundidade partes por
         lado. Devolve (regiões {id: geometria}, informações)."""
@@ -559,10 +702,20 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
                 inner += [(i0 + q, j0 + q), (i0 + 3 * q, j0 + q), (i0 + 3 * q, j0 + 3 * q), (i0 + q, j0 + 3 * q)]
             return sides, inner
 
+        span = hi - lo
         dirty = set(cells)
-        for _ in range(lattice.level + 2):
-            if cancelled and cancelled():
-                raise InterruptedError('Voronoi cancelado.')
+        rounds = 0
+        # Até estabilizar: cada rodada divide células, e o tamanho mínimo (1 nó da malha fina) garante
+        # o fim. Um limite fixo pequeno deixava lados incoerentes entre células grossas e finas (pontas
+        # soltas na rede de fronteiras e regiões fundidas), como no teste com dados reais.
+        def tick(part):
+            # Avanço assintótico por rodada (o total de rodadas não é conhecido), com marcos dentro dela.
+            r = rounds - 1 + part
+            report(lo + span * 0.45 * r / (r + 4))
+
+        while True:
+            rounds += 1
+            tick(0.0)
             # Pontos de fronteira (bisseção diádica) nos lados novos com pontas diferentes.
             new_sides = [key for i0, j0, size in cells for key in side_keys(i0, j0, size) if key not in found]
             new_sides = list(dict.fromkeys(new_sides))
@@ -576,9 +729,13 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
                     found[key] = None
                 else:
                     pending.append((key, a, b))
+            tick(0.2)
             if pending:
-                for (key, a, b), point in zip(pending, _bisect_edges(lattice, [k for k, _, _ in pending], cancelled)):
+                bisected = _bisect_edges(lattice, [k for k, _, _ in pending], cancelled,
+                                         progress=lambda f: tick(0.2 + 0.4 * f))
+                for (key, a, b), point in zip(pending, bisected):
                     found[key] = (point, point[1] != a or point[2] != b)
+            tick(0.6)
             # Conferência das células novas e das vizinhas das divididas: (1) lado com duas trocas
             # achado na bisseção; (2) nos lados, pontos intermediários (1/4, 1/2, 3/4 e os cantos das
             # vizinhas menores) com mais trocas do que o lado representa; (3) no interior (centro e
@@ -591,7 +748,9 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
                 need.extend(inner)
                 i0, j0, size = cell
                 need.extend([(i0, j0), (i0 + size, j0), (i0 + size, j0 + size), (i0, j0 + size)])
-            lattice.labels(need)
+            for start in range(0, len(need), 50_000):
+                lattice.labels(need[start:start + 50_000])
+                tick(0.6 + 0.35 * min(1.0, (start + 50_000) / max(1, len(need))))
             split = set()
             for cell, (sides, inner) in plans.items():
                 i0, j0, size = cell
@@ -653,9 +812,14 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
                 for s_ in present:
                     p, a, b = points[s_]
                     segments.append((p, hub, a, b))
-        lines = _refine(model, segments, tolerance, cancelled)
+        report(lo + span * 0.5)
+        lines = _refine(model, segments, tolerance, cancelled,
+                        progress=lambda f: report(lo + span * (0.5 + 0.3 * f)))
+        report(lo + span * 0.8)
         regions, absorbed = _assemble(model, surface, lines, lattice, (xmin, ymin, xmax, ymax), tolerance)
-        return regions, {'cells': len(cells), 'boundary_vertices': len(lines), 'absorbed_residues': absorbed}
+        report(lo + span * 0.95)
+        return regions, {'cells': len(cells), 'boundary_vertices': len(lines), 'absorbed_residues': absorbed,
+                         'rounds': rounds}
 
     # Conferência final, independente do traçado: o modelo em um ponto de cada célula base (posição
     # fixa, fora dos nós) contra os polígonos traçados. Divergência longe da fronteira (> 5 ×
@@ -672,10 +836,12 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
     passes, divergent, budget_hit = 0, [], False
     while True:
         passes += 1
-        regions, info = trace(forced)
-        if progress:
-            progress(min(85, 40 + 15 * passes))
-        divergent = _divergent_samples(regions, sample_x, sample_y, expected, 5 * tolerance)
+        # 1ª passada: 22-80%; passadas de correção: o restante até 95%.
+        lo, hi = (22, 80) if passes == 1 else (80 + 7 * (passes - 2), 87 + 7 * (passes - 2))
+        regions, info = trace(forced, lo, hi)
+        report(hi)
+        divergent = _divergent_samples(regions, sample_x, sample_y, expected, 5 * tolerance,
+                                       grid=(lattice, spacing, sample_i, sample_j))
         if not divergent or passes >= 3:
             break
         # A célula base da amostra divergente desce um nível; as vizinhas, pelo menos ao primeiro.
@@ -804,20 +970,50 @@ def _assemble(model, surface, lines, lattice, bounds, tolerance):
     return regions, absorbed
 
 
-def _divergent_samples(regions, xs, ys, expected, margin):
+def _divergent_samples(regions, xs, ys, expected, margin, grid=None):
     """Índices das amostras cujo rótulo do modelo não é o da região traçada que as contém, a mais de
-    ``margin`` da fronteira traçada (perto dela, a diferença está dentro da tolerância)."""
-    from osgeo import ogr
+    ``margin`` da fronteira traçada (perto dela, a diferença está dentro da tolerância).
+
+    grid = (malha, espaçamento, i, j): as amostras formam uma grade regular (uma por célula base, na
+    posição fixa 0,618/0,414); as regiões são então "carimbadas" de uma vez nessa grade (GDAL, regra do
+    centro do pixel), sem um teste de ponto em polígono por amostra.
+    """
+    from osgeo import gdal, ogr
+    from .gdal_scope import gdal_exceptions
     got = np.zeros(xs.size, dtype=np.int64)
-    for ident, region in regions.items():
-        prepared = region
-        env = region.GetEnvelope()
-        cand = np.flatnonzero((got == 0) & (xs >= env[0]) & (xs <= env[1]) & (ys >= env[2]) & (ys <= env[3]))
-        for k in cand:
-            point = ogr.Geometry(ogr.wkbPoint)
-            point.AddPoint_2D(float(xs[k]), float(ys[k]))
-            if prepared.Contains(point):
-                got[k] = ident
+    if grid is not None and regions:
+        lattice, spacing, si, sj = grid
+        cols, rows = lattice.nx - 1, lattice.ny - 1
+        with gdal_exceptions():
+            target = gdal.GetDriverByName('MEM').Create('', int(cols), int(rows), 1, gdal.GDT_Int32)
+            target.SetGeoTransform((lattice.x0 + (0.6180339887 - 0.5) * spacing, spacing, 0.0,
+                                    lattice.y0 + (rows + 0.4142135624 - 0.5) * spacing, 0.0, -spacing))
+            source = None
+            for name in ('Memory', 'MEM'):
+                driver = ogr.GetDriverByName(name)
+                if driver is not None and driver.GetMetadataItem('DCAP_VECTOR') == 'YES':
+                    source = driver.CreateDataSource('regioes')
+                    break
+            layer = source.CreateLayer('regioes', None, ogr.wkbMultiPolygon)
+            layer.CreateField(ogr.FieldDefn('ID', ogr.OFTInteger))
+            for ident, region in regions.items():
+                feature = ogr.Feature(layer.GetLayerDefn())
+                feature.SetField('ID', int(ident))
+                feature.SetGeometry(region)
+                layer.CreateFeature(feature)
+            gdal.RasterizeLayer(target, [1], layer, options=['ATTRIBUTE=ID'])
+            stamp = target.GetRasterBand(1).ReadAsArray()
+            target = source = None
+        got = stamp[rows - 1 - np.asarray(sj), np.asarray(si)].astype(np.int64)
+    else:
+        for ident, region in regions.items():
+            env = region.GetEnvelope()
+            cand = np.flatnonzero((got == 0) & (xs >= env[0]) & (xs <= env[1]) & (ys >= env[2]) & (ys <= env[3]))
+            for k in cand:
+                point = ogr.Geometry(ogr.wkbPoint)
+                point.AddPoint_2D(float(xs[k]), float(ys[k]))
+                if region.Contains(point):
+                    got[k] = ident
     out = []
     boundaries = None
     for k in np.flatnonzero(got != expected):

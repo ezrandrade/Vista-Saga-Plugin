@@ -11,7 +11,27 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 - O autor enviou dados reais (uso do solo como atrito, pontos com massas e limite da área de
   interesse, resultados Simples e Com Massa). **Dados do autor: só na sessão, nunca no repositório.**
 - Relato: Voronoi com atrito (guia Vetorial) rodando há 18 min sem indicação de andamento; falta barra
-  de progresso em porcentagem. Investigação em andamento nesta sessão.
+  de progresso em porcentagem.
+- Dados: 3 classes de uso do solo (multipolígonos com 151-519 partes; 40.785 vértices), 10 polos, bacia
+  de ~5 × 11 km (2.343 ha). Espaçamento automático 23,4 m (teto de 100 mil nós), tolerância 0,5 m.
+- **Achados e correções (WIP, dev5):**
+  1. Lentidão: 6,5 ms por ponto (segmento × 39.451 arestas). **Índice angular de arestas por polo**
+     (`_AngularIndex`, exato: diferença 1e-15): 0,09 ms por ponto (70×).
+  2. **Regra "área sem polígono = barreira" quebra áreas côncavas:** a bacia é côncava; reta polo-ponto
+     que sai da bacia ficava bloqueada (confirmado 100% em 1.200 segmentos); polos alcançavam 48-96% da
+     bacia. Recomendação minha da dev2, errada, e nem fiel ao Vista SAGA (lá a área fora é a classe
+     FUNDO, com nota; classes excluídas são atravessadas sem resultado). Implementado
+     `outside_rating` (passagem com nota, sem resultado), conferido contra integral numérica numa área em
+     L. **Decisão do autor pendente** (nota da passagem).
+  3. **Laço de refinamento com limite fixo (nível + 2 rodadas) terminava antes de estabilizar**: 70 pontas
+     soltas na rede de fronteiras, regiões fundidas (Jardim Petrópolis com 1.306 ha), conferência com 25%
+     de divergência. Laço agora vai até estabilizar: 0 pontas soltas, 0 divergências; áreas traçadas =
+     modelo ponto a ponto (grade de 50 m) a ≤ 2 ha. Regiões multipartes são reais (enclaves do mosaico).
+  4. Conferência final: carimbo das regiões na grade de amostras (GDAL) em vez de 100 mil testes de ponto
+     em polígono (100 s → ~1 s).
+  5. Progresso em porcentagem com marcos dentro das rodadas (máximo de 7 s sem atualização) e execução do
+     vetor direto com atrito em `VoronoiVectorTask` (QgsTask, cancelável).
+- Tempo com os dados reais: ~2 min (Com Atrito 111 s; Com Massa e Atrito 129 s), antes > 18 min sem fim.
 
 ## 18/11/2026 — resultados do teste da 1.4.0-dev4 recebidos
 
