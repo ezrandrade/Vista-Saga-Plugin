@@ -6,7 +6,7 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 18/11/2026, pausa da sessão 2) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 18/11/2026, início da sessão 3) <<<
 
 Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
 
@@ -87,6 +87,18 @@ Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável c
 - Código central: `geosaga/voronoi_friction_continuous.py` (modelo contínuo e traçado),
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
+
+## 18/11/2026 (sessão 3) — retomada após novo bloqueio
+
+- A sessão anterior foi bloqueada depois do último commit de contexto (`1c36c55`, 10:17 UTC, "pausa").
+  O que aconteceu nela depois desse commit não está registrado: **perguntar ao autor se respondeu às
+  decisões 4, 5 e 6 da dev6** ou enviou algo novo.
+- O autor reenviou um arquivo de contexto **desatualizado** (sem as entradas da sessão 2). A versão
+  válida é sempre a do repositório (`docs/CONTEXTO_SESSOES.md` na branch `feat/voronoi-atrito-fiel`).
+- **Regra nova (pedido do autor, 18/11):** atualizar este arquivo **a cada ação finalizada**, com
+  commit + push imediato, e enviar o arquivo ao autor. Registrada também no `CLAUDE.md`.
+- Repositório anexado com autorização do autor (o primeiro pedido foi recusado pelo filtro de
+  permissões da sessão).
 
 ## 18/11/2026 (sessão 2) — resultados da dev5 com dados reais recebidos e analisados
 
