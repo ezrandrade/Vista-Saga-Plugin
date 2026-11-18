@@ -6,6 +6,21 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 18/11/2026 — decisões pendentes da dev1 fechadas pelo autor
+
+O autor acatou as três recomendações (entram na dev4, junto com o padrão automático e a tolerância de
+0,5 m):
+
+1. **Área sem polígono e coluna de atrito vazia = barreira** (sem resultado e sem passagem); o plugin
+   não inventa nota; o relatório informa as feições com a coluna vazia. (Já é o comportamento atual.)
+2. **Sem opção "legado 1.3"** na interface; resultados antigos se reproduzem com o ZIP/tag da 1.3.0.
+   (Já é o comportamento atual; registrar nas notas da versão.)
+3. **Nota de atrito 0 bloqueada:** exigir nota > 0 (raster, coluna vetorial e combinação de superfícies),
+   com mensagem sugerindo um valor pequeno (ex.: 0,1) para "quase sem atrito". Motivo: custo zero cria
+   empates resolvidos pela ordem dos pontos, e o comportamento do Vista SAGA com nota 0 não foi testado.
+   **A implementar na dev4** (`check_rating`, `validate_friction`, `voronoi_friction_stack`, mensagens
+   en/es, testes que hoje usam nota 0).
+
 ## 18/11/2026 — proposta para a 1.4.0-dev4: padrão automático, tolerância pela escala dos dados
 
 - O autor questionou o campo "Espaçamento da busca" (parece raster) e propôs um padrão único, aceitando
