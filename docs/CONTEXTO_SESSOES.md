@@ -6,6 +6,13 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 18/11/2026 — teste da dev4 com dados reais: atrito vetorial sem fim aparente
+
+- O autor enviou dados reais (uso do solo como atrito, pontos com massas e limite da área de
+  interesse, resultados Simples e Com Massa). **Dados do autor: só na sessão, nunca no repositório.**
+- Relato: Voronoi com atrito (guia Vetorial) rodando há 18 min sem indicação de andamento; falta barra
+  de progresso em porcentagem. Investigação em andamento nesta sessão.
+
 ## 18/11/2026 — resultados do teste da 1.4.0-dev4 recebidos
 
 - `voronoi_vetorial_dev4.zip`. O autor testou nota 0 na coluna ATRITO: o processo foi bloqueado (como
