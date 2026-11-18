@@ -356,14 +356,11 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
         rows = counts_as_rows(points,count,geotransform,units_to_meters)
         local_csv = os.path.join(stage,os.path.basename(files[1]))
         local_txt = os.path.join(stage,os.path.basename(files[2]))
+        # Regra de passagem conforme a fonte do atrito; a vetorial já sai em describe(), mais abaixo.
         passage_note = None
-        if mode in ('friction','mass_friction'):
-            if vector_stats is not None:
-                passage_note = ('Área sem polígono e feições com a coluna vazia: sem resultado, atravessáveis com '
-                                'nota 1 (custo basal do Vista SAGA, padrão da classe FUNDO).')
-            else:
-                passage_note = (f'NoData da superfície de atrito ({nodata_cells} células): sem resultado, '
-                                'atravessável com nota 1 (custo basal do Vista SAGA, padrão da classe FUNDO).')
+        if mode in ('friction','mass_friction') and vector_stats is None:
+            passage_note = (f'NoData da superfície de atrito ({nodata_cells} células): sem resultado, '
+                            'atravessável com nota 1 (custo basal do Vista SAGA, padrão da classe FUNDO).')
         _write_reports(local_csv,local_txt,mode,rows,excluded,pixel_area_m2(geotransform,units_to_meters),
                        passage_note=passage_note, study_cells=study_cells)
         if mode in ('friction','mass_friction'):

@@ -112,7 +112,13 @@ Escopo da dev6, em implementação:
   recusado; lasca de 2 cm movida e parte de 2 m mantida; partes < 25 m²; tempo e partes no resumo.
   Obs.: o GDAL inclui célula com centro exatamente sobre a borda da área (teste ajustado para não
   ter empate). Suítes: 465 (3 pulados) + 36, verdes (com `python3-shapely`).
-- Falta: conferência do diálogo no QGIS 3.34 offscreen, CHANGELOG/notas, ZIP dev6.
+- Diálogo real (QGIS 3.34 offscreen, dados sintéticos: bacia em L, uso do solo passando 20 m da bacia,
+  raster de atrito com faixa NoData): Raster Simples, Com Massa e Atrito vetorial com extensão = bacia →
+  0 células com resultado fora da bacia, 0 sem resultado dentro; Massa e Atrito raster → faixa NoData sem
+  resultado, as 3 regiões alcançam o lado leste; Vetorial Com Atrito e Com Massa → tempo e linha das
+  partes < 25 m² no resumo. Corrigida linha duplicada no resumo do raster com atrito vetorial.
+  Roteiro no scratchpad (não versionado).
+- Falta: CHANGELOG/notas, ZIP dev6.
 
 ## 18/11/2026 (sessão 3) — decisões da dev6
 
