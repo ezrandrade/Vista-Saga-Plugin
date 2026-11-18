@@ -245,6 +245,19 @@ class ContinuousPolygonsTests(unittest.TestCase):
         self.assertEqual(stats['check']['divergent'], 0)
         self._check_partition(results, 480000.)
 
+    def test_concave_area_outside_passable_with_rating_one(self):
+        # Dados reais (bacia côncava, dev4): com barreira, retas que saem pela reentrância bloqueavam os
+        # polos. dev5 (decisão do autor): a área sem polígono é atravessável com nota 1, sem resultado.
+        from geosaga.voronoi_friction_continuous import friction_voronoi_polygons
+        features = [(_rect(0, 0, 100, 50), 2.), (_rect(0, 50, 50, 100), 2.)]
+        # Os dois polos no braço de baixo: o topo do braço de cima só é visto por retas que cruzam o canto vazio.
+        points = [Generator(1, 95., 45., 1.), Generator(2, 70., 10., 1.)]
+        results, stats = friction_voronoi_polygons(points, features, (0., 0., 100., 100.), outside_rating=1.)
+        self._check_partition(results, 7500.)          # todo o L, nada no canto vazio
+        self.assertEqual(stats['check']['divergent'], 0)
+        barrier, _ = friction_voronoi_polygons(points, features, (0., 0., 100., 100.))
+        self.assertLess(sum(g.GetArea() for _, g in barrier), 7400.)   # com barreira, parte do L fica sem polo
+
     def test_zero_rating_rejected(self):
         from geosaga.voronoi_friction_continuous import FrictionSurface
         with self.assertRaisesRegex(ValueError, 'maior que 0'):

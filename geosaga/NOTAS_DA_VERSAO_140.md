@@ -40,7 +40,10 @@ célula do polo e a célula de destino, de
 Em Com Atrito e Com Massa e Atrito, a superfície de atrito pode ser uma **camada de polígonos**
 com a nota numa **coluna de atrito** (escolhida em "Coluna de atrito"; sem atribuição manual).
 
-- Área sem polígono e feições com a coluna vazia são **barreira** (sem resultado e sem passagem).
+- Área sem polígono e feições com a coluna vazia **não recebem resultado, mas podem ser atravessadas
+  com nota 1** (custo basal do Vista SAGA, padrão da classe FUNDO). Até a dev4 eram barreira; o teste
+  com dados reais (uma bacia hidrográfica, côncava) mostrou que a barreira bloqueava a reta polo-ponto
+  que sai da área e volta, e os polos alcançavam só 48 a 96% da bacia.
 - Em sobreposições vale a última feição.
 - **Sem reprojeção:** a camada de polígonos define o SRC da análise (os pontos são convertidos para
   ele, como no atrito raster).
@@ -79,6 +82,14 @@ incerteza das entradas domina (no caso de teste, +10% numa nota ou massa muda 0,
 mapas temáticos 1:10.000 têm erro-padrão de 3 m no PEC Classe A (Decreto 89.817/1984). A tolerância de
 0,5 m soma cerca de 1% a esse erro; a topologia (regiões inteiras, sem lacunas) continua garantida
 pela conferência automática. Os valores usados saem no `_resumo.txt`.
+
+**Desempenho e progresso (dev5).** Com dados reais (uso do solo com 3 classes em cerca de 980 manchas,
+40 mil vértices; 10 polos; 2.343 ha), o cálculo não terminava em mais de 18 minutos e não mostrava
+andamento. Agora: índice angular das arestas por polo (exato, 70 vezes mais rápido), refinamento até
+estabilizar (um limite fixo de rodadas deixava pontas soltas na rede de fronteiras e regiões fundidas,
+o que a conferência automática denunciou com 25% de divergência), conferência final por carimbo das
+regiões e execução em segundo plano, com porcentagem e botão Cancelar. O caso real leva cerca de
+2 minutos, com conferência sem divergências; as áreas coincidem com o modelo calculado ponto a ponto.
 
 **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução escolhidas),
 pela regra do centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA.
@@ -131,4 +142,7 @@ linha **contadas a partir de 1**.
   corredor e uma faixa estreita perdida nos testes com dados aleatórios).
 - Teste do autor da dev3 (QGIS 4), com 5 m e 20 m: regiões inteiras, partição exata, conferência sem
   divergências, 99,60% (com massa) e 99,50% (sem massa) do Vista SAGA. **dev3 homologada.**
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev4`).
+- Teste do autor da dev4 (QGIS 4): nota 0 bloqueada; espaçamento automático; regiões inteiras e
+  conferência sem divergências. **dev4 homologada.** Teste com dados reais: lentidão e regiões
+  distorcidas (corrigidas na dev5).
+- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev5`), com os dados reais.

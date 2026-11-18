@@ -75,7 +75,7 @@ class FrictionSurface:
             # automático da busca.
             self.widths = []
             for own, rating in resolved:
-                perimeter = own.Boundary().Length()
+                perimeter = _length(own.Boundary())
                 if perimeter > 0:
                     self.widths.append((2.0 * own.GetArea() / perimeter, own.GetEnvelope()))
             for own, rating in resolved:
@@ -710,8 +710,9 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
         # soltas na rede de fronteiras e regiões fundidas), como no teste com dados reais.
         def tick(part):
             # Avanço assintótico por rodada (o total de rodadas não é conhecido), com marcos dentro dela.
+            # A 1ª rodada (todas as células) é a mais pesada: leva metade da faixa das rodadas.
             r = rounds - 1 + part
-            report(lo + span * 0.45 * r / (r + 4))
+            report(lo + span * 0.45 * (1 - 0.5 ** r))
 
         while True:
             rounds += 1
@@ -816,7 +817,8 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
         lines = _refine(model, segments, tolerance, cancelled,
                         progress=lambda f: report(lo + span * (0.5 + 0.3 * f)))
         report(lo + span * 0.8)
-        regions, absorbed = _assemble(model, surface, lines, lattice, (xmin, ymin, xmax, ymax), tolerance)
+        regions, absorbed = _assemble(model, surface, lines, lattice, (xmin, ymin, xmax, ymax), tolerance,
+                                      progress=lambda f: report(lo + span * (0.8 + 0.15 * f)))
         report(lo + span * 0.95)
         return regions, {'cells': len(cells), 'boundary_vertices': len(lines), 'absorbed_residues': absorbed,
                          'rounds': rounds}
@@ -836,8 +838,8 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
     passes, divergent, budget_hit = 0, [], False
     while True:
         passes += 1
-        # 1ª passada: 22-80%; passadas de correção: o restante até 95%.
-        lo, hi = (22, 80) if passes == 1 else (80 + 7 * (passes - 2), 87 + 7 * (passes - 2))
+        # 1ª passada: 22-70%; correções (o traçado é refeito por inteiro): 70-88% e 88-95%.
+        lo, hi = {1: (22, 70), 2: (70, 88)}.get(passes, (88, 95))
         regions, info = trace(forced, lo, hi)
         report(hi)
         divergent = _divergent_samples(regions, sample_x, sample_y, expected, 5 * tolerance,
@@ -891,7 +893,7 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
     return results, stats
 
 
-def _assemble(model, surface, lines, lattice, bounds, tolerance):
+def _assemble(model, surface, lines, lattice, bounds, tolerance, progress=None):
     """Linhas + contorno da malha → poligonização → rótulo de cada face → união por polo.
 
     Devolve ({identificador: geometria}, resíduos absorvidos).
@@ -913,7 +915,11 @@ def _assemble(model, surface, lines, lattice, bounds, tolerance):
         # Noding das linhas (GEOS): UnaryUnion na GDAL >= 3.7; antes, a união com uma das próprias
         # linhas produz o mesmo resultado.
         noded = net.UnaryUnion() if hasattr(net, 'UnaryUnion') else net.Union(net.GetGeometryRef(0).Clone())
+        if progress:
+            progress(0.15)
         faces = noded.Polygonize()
+        if progress:
+            progress(0.3)
         if faces is None:
             raise RuntimeError('Falha ao montar os polígonos do Voronoi com atrito.')
         extent = ogr.Geometry(ogr.wkbPolygon)
@@ -926,7 +932,10 @@ def _assemble(model, surface, lines, lattice, bounds, tolerance):
         # Cada face é recortada pelo domínio ANTES de receber o rótulo; o recorte pode partir uma face
         # em vários pedaços, e cada pedaço recebe o próprio rótulo.
         pieces = ogr.Geometry(ogr.wkbMultiPolygon)
+        total_faces = max(1, faces.GetGeometryCount())
         for k in range(faces.GetGeometryCount()):
+            if progress and k % 200 == 0:
+                progress(0.3 + 0.3 * k / total_faces)
             clipped = faces.GetGeometryRef(k).Intersection(domain)
             if clipped is not None and not clipped.IsEmpty():
                 _collect(clipped, pieces)
@@ -934,8 +943,13 @@ def _assemble(model, surface, lines, lattice, bounds, tolerance):
         inner = [part.PointOnSurface() for part in parts]
         face_labels = model.labels(np.array([p.GetX() for p in inner]), np.array([p.GetY() for p in inner]))
         face_labels = _absorb_slivers(parts, face_labels, tolerance)
+        if progress:
+            progress(0.7)
         regions = {}
-        for ident in sorted({int(v) for v in face_labels if v}):
+        idents = sorted({int(v) for v in face_labels if v})
+        for n_ident, ident in enumerate(idents):
+            if progress:
+                progress(0.7 + 0.25 * n_ident / max(1, len(idents)))
             group = ogr.Geometry(ogr.wkbMultiPolygon)
             for part, label in zip(parts, face_labels):
                 if label == ident:
@@ -957,11 +971,11 @@ def _assemble(model, surface, lines, lattice, bounds, tolerance):
                 _collect(rest, leftovers)
             for k in range(leftovers.GetGeometryCount()):
                 piece = leftovers.GetGeometryRef(k).Clone()
-                perimeter = piece.Boundary().Length()
+                perimeter = _length(piece.Boundary())
                 if perimeter <= 0 or 2 * piece.GetArea() / perimeter >= 2 * tolerance:
                     continue
                 edge = piece.Boundary()
-                shared = {ident: (edge.Intersection(region).Length() if edge.Intersects(region) else 0.0)
+                shared = {ident: (_length(edge.Intersection(region)) if edge.Intersects(region) else 0.0)
                           for ident, region in regions.items()}
                 ident = max(shared, key=shared.get)
                 if shared[ident] > 0:
@@ -1001,7 +1015,11 @@ def _divergent_samples(regions, xs, ys, expected, margin, grid=None):
                 feature.SetField('ID', int(ident))
                 feature.SetGeometry(region)
                 layer.CreateFeature(feature)
-            gdal.RasterizeLayer(target, [1], layer, options=['ATTRIBUTE=ID'])
+            gdal.PushErrorHandler('CPLQuietErrorHandler')   # camada e grade sem SRC: mesmo SRC por construção
+            try:
+                gdal.RasterizeLayer(target, [1], layer, options=['ATTRIBUTE=ID'])
+            finally:
+                gdal.PopErrorHandler()
             stamp = target.GetRasterBand(1).ReadAsArray()
             target = source = None
         got = stamp[rows - 1 - np.asarray(sj), np.asarray(si)].astype(np.int64)
@@ -1044,7 +1062,7 @@ def _absorb_slivers(parts, labels, tolerance):
     labels = np.array(labels, dtype=np.int64)
     widths = []
     for part in parts:
-        perimeter = part.Boundary().Length()
+        perimeter = _length(part.Boundary())
         widths.append(2 * part.GetArea() / perimeter if perimeter > 0 else 0.0)
     thin = [k for k, w in enumerate(widths) if w < 2 * tolerance]
     if not thin:
@@ -1058,12 +1076,26 @@ def _absorb_slivers(parts, labels, tolerance):
         for n, (a0, a1, b0, b1) in enumerate(envelopes):
             if n == k or n in thin_set or a1 < x0 or a0 > x1 or b1 < y0 or b0 > y1:
                 continue
-            length = edge.Intersection(parts[n].Boundary()).Length()
+            length = _length(edge.Intersection(parts[n].Boundary()))
             if length > 0:
                 shared[labels[n]] = shared.get(labels[n], 0.0) + length
         if shared:
             labels[k] = max(shared, key=shared.get)
     return labels
+
+
+def _length(geometry):
+    """Comprimento só das partes lineares (uma interseção de bordas pode vir como ponto ou coleção;
+    pedir Length() a um ponto gera aviso do GDAL no log do QGIS)."""
+    from osgeo import ogr
+    if geometry is None or geometry.IsEmpty():
+        return 0.0
+    kind = ogr.GT_Flatten(geometry.GetGeometryType())
+    if kind in (ogr.wkbLineString, ogr.wkbLinearRing, ogr.wkbMultiLineString):
+        return geometry.Length()
+    if kind == ogr.wkbGeometryCollection:
+        return sum(_length(geometry.GetGeometryRef(i)) for i in range(geometry.GetGeometryCount()))
+    return 0.0
 
 
 def _collect(geometry, target):

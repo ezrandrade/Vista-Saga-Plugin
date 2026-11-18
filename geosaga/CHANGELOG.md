@@ -12,7 +12,9 @@
     do polo é sempre dele. Poda exata reformulada.
   - Com Atrito e Com Massa e Atrito deixam de ser "experimentais".
 - **Superfície de atrito vetorial** (Com Atrito e Com Massa e Atrito): polígonos com a nota na
-  **coluna de atrito** (sem atribuição manual). Área sem polígono e coluna vazia: barreira.
+  **coluna de atrito** (sem atribuição manual). Área sem polígono e coluna vazia: **sem resultado,
+  atravessáveis com nota 1** (custo basal do Vista SAGA, padrão da classe FUNDO; dev5). A regra
+  anterior (barreira) distorcia áreas de estudo côncavas: a reta que saía da área ficava bloqueada.
   - **Guia Vetorial: vetor direto, sem rasterização (modelo contínuo).** Custo = integral de
     distância ao polo × nota ao longo do segmento polo-ponto, calculada exatamente pelos
     cruzamentos com as bordas dos polígonos; com massa, dividido por M. Fronteiras traçadas
@@ -31,6 +33,11 @@
     da extensão / 100, até 1/4 da largura do polígono de atrito mais estreito, com teto de 100 mil
     nós) e a tolerância padrão é de 0,5 m (ou 1/2000 do maior lado em extensões pequenas), coerente
     com mapas temáticos 1:10.000. Os dois valores saem no `_resumo.txt`.
+  - **Desempenho e progresso (dev5, teste com dados reais do autor: 40 mil vértices, 10 polos):** índice
+    angular das arestas por polo (exato; 70× mais rápido); o refinamento vai até estabilizar (o limite
+    fixo de rodadas deixava pontas soltas e regiões fundidas); conferência final por carimbo das
+    regiões; execução em segundo plano (tarefa do QGIS) com progresso em porcentagem e cancelamento.
+    O caso real, que não terminava em mais de 18 min, leva cerca de 2 min.
   - **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução), pelo
     centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA (99,7%).
   - Sem reprojeção: a camada de polígonos define o SRC da análise.

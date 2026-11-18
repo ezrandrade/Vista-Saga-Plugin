@@ -146,7 +146,8 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
     points: lista de Generator com coordenadas no SRC da grade.
     mask: máscara numpy opcional (TRUE para células válidas); não usada no GUI 0.7.0.
     friction_vector: superfície de atrito vetorial (1.4.0), dicionário com 'features'
-    [(wkb, nota | 'barreira')], 'outside' e os campos descritivos de voronoi_friction_vector.describe;
+    [(wkb, nota | 'barreira')], 'outside' (nota de passagem da área sem polígono, sem resultado) e os
+    campos descritivos de voronoi_friction_vector.describe;
     os polígonos são rasterizados nesta grade.
     """
     from osgeo import gdal, osr
@@ -194,13 +195,20 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
     # sem compartilhar objetos GDAL ou objetos Qt entre threads.
     friction = None
     vector_stats = None
+    no_result = None
     if mode in ('friction','mass_friction') and friction_vector:
         from .voronoi_friction_vector import rasterize_friction
         if width*height > MAX_FRICTION_CELLS:
             raise ValueError('O atrito excede 8 milhões de células; recorte ou aumente a resolução.')
-        friction, vector_stats = rasterize_friction(friction_vector['features'], friction_vector.get('outside'),
-                                                    geotransform, width, height, projection_wkt)
+        friction, vector_stats, no_result = rasterize_friction(
+            friction_vector['features'], friction_vector.get('outside'), geotransform, width, height, projection_wkt)
         validate_friction(friction, geotransform, points)
+        if no_result is not None:
+            for point in points:
+                col = int((point.x - geotransform[0]) / geotransform[1])
+                row = int((point.y - geotransform[3]) / geotransform[5])
+                if no_result[row, col]:
+                    raise ValueError(f'Centro {point.identifier} fora dos polígonos de atrito (ou sobre barreira).')
     elif mode in ('friction','mass_friction') and friction_components:
         from .voronoi_friction_stack import read_friction_stack
         paths = [os.path.abspath(str(spec['path'])) for spec in friction_components]
@@ -281,6 +289,8 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
                 values = assign_friction_window(points,friction,geotransform,y,h,
                                                 cancelled=cancelled, mass_weighted=(mode == 'mass_friction'),
                                                 stats=friction_stats)
+                if no_result is not None:
+                    values[no_result[y:y+h]] = 0  # atravessadas, sem resultado
                 if segment is not None: values[~segment.astype(bool)] = 0
             elif mode == 'simple':
                 values = assign_window_nearest(points,geotransform,width,y,h,

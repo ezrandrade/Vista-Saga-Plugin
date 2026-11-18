@@ -334,8 +334,10 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                    if study_geometry is not None else None)
             if friction:
                 from .voronoi_friction_continuous import friction_voronoi_polygons
+                outside=(friction_info or {}).get('outside')
                 regions,friction_stats=friction_voronoi_polygons(
                     generators,friction_features,bounds,
+                    outside_rating=None if outside in (None,'barreira') else float(outside),
                     spacing=None if search_spacing is None else float(search_spacing),
                     tolerance=None if friction_tolerance_m is None else friction_tolerance_m/units,
                     units_to_meters=units,mass_weighted=mode=='mass_friction',
@@ -409,10 +411,14 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                              '99,52% (sem massa) das células coincidem com o Vista SAGA original; a guia Raster '
                              'usa o modelo célula a célula (99,7%).\n')
                 info=friction_info or {}
+                outside=info.get('outside')
                 report.write(f"Polígonos de atrito: {info.get('layer_name','')}; notas da coluna "
                              f"{info.get('rating_field','')}. Área sem polígono e feições com a coluna vazia "
-                             f"({info.get('skipped',0)}): barreira (sem resultado e sem passagem). "
-                             'Em sobreposições vale a última feição.\n')
+                             f"({info.get('skipped',0)}): "
+                             + ('barreira (sem resultado e sem passagem). ' if outside in (None,'barreira') else
+                                f'sem resultado, atravessáveis com nota {float(outside):g} (custo basal do Vista SAGA, '
+                                'padrão da classe FUNDO). ')
+                             + 'Em sobreposições vale a última feição.\n')
                 spacing_used=friction_stats['spacing']*units
                 tolerance_used=friction_stats['tolerance']*units
                 report.write(f"Fronteiras traçadas numericamente, com refinamento local: espaçamento da busca de "

@@ -6,6 +6,19 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 18/11/2026 — 1.4.0-dev5 implementada (dados reais)
+
+- Regra nova: área sem polígono/coluna vazia atravessável com nota 1, sem resultado, nas duas guias
+  (`OUTSIDE_RATING`; Raster: máscara `no_result` em `rasterize_friction`/`run_voronoi`; Vetorial:
+  `outside_rating` em `FrictionSurface`, custo do trecho fora pela borda orientada da cobertura).
+- Progresso: faixas fixas por etapa, marcos dentro das rodadas (1ª rodada com metade da faixa),
+  bisseção e montagem com progresso; `VoronoiVectorTask` (QgsTask) para o vetor direto com atrito.
+- Avisos do GDAL eliminados (`_length` só mede partes lineares; rasterização da conferência silenciosa).
+- Dados reais no diálogo (QGIS 3.34 offscreen, extensão pela bacia): Com Massa e Atrito 115-129 s,
+  0 divergências, áreas = modelo ponto a ponto; paradas da barra de até ~16 s em blocos indivisíveis.
+- Testes novos: área em L atravessável (raster e contínuo). Suítes: 455 (3 pulados) + 36.
+- ZIP `Vista_Saga_Plugin_QGIS4_v1.4.0-dev5.zip`. Pendente: teste do autor com os dados reais.
+
 ## 18/11/2026 — teste da dev4 com dados reais: atrito vetorial sem fim aparente
 
 - O autor enviou dados reais (uso do solo como atrito, pontos com massas e limite da área de

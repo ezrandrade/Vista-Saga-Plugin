@@ -272,7 +272,8 @@ class VoronoiDialog(QDialog):
         form.addRow(self.friction_vector_label, self.friction_vector_layer)
         self.friction_rating_field = QComboBox()
         self.friction_rating_field.setToolTip(tr('Coluna numérica com a nota de atrito de cada polígono (> 0). '
-                                                 'Área sem polígono e feições com a coluna vazia são barreira.'))
+                                                 'Área sem polígono e feições com a coluna vazia ficam sem resultado '
+                                                 'e são atravessadas com nota 1.'))
         self.friction_rating_label = QLabel(tr('Coluna de atrito:'))
         form.addRow(self.friction_rating_label, self.friction_rating_field)
         self.multi_friction = QCheckBox(tr('Combinar múltiplas superfícies de atrito (pesos e notas)'))
@@ -583,9 +584,10 @@ class VoronoiDialog(QDialog):
     def _friction_vector_spec(self, crs):
         """Extrai WKB e nota (coluna de atrito) das feições, na thread principal; sem reprojeção.
 
-        Área sem polígono e feições com a coluna vazia são barreira (decisão da 1.4.0).
+        Área sem polígono e feições com a coluna vazia: sem resultado, atravessáveis com nota 1 (custo
+        basal do Vista SAGA; decisão do autor na 1.4.0-dev5).
         """
-        from .voronoi_friction_vector import BARRIER, ratings_from_column
+        from .voronoi_friction_vector import OUTSIDE_RATING, ratings_from_column
         layer = self.friction_vector_layer.currentLayer()
         if not isinstance(layer, QgsVectorLayer) or not layer.isValid():
             raise ValueError('Selecione a camada de polígonos de atrito.')
@@ -608,7 +610,7 @@ class VoronoiDialog(QDialog):
         ratings = ratings_from_column(values)
         if all(rating is None for rating in ratings):
             raise ValueError('A coluna de atrito está vazia em todas as feições.')
-        return {'features': list(zip(geometries, ratings)), 'outside': BARRIER,
+        return {'features': list(zip(geometries, ratings)), 'outside': OUTSIDE_RATING,
                 'layer_name': layer.name(), 'rating_field': name,
                 'skipped': sum(1 for v in values if v is None), 'source': layer.source()}
 
@@ -716,11 +718,11 @@ class VoronoiDialog(QDialog):
         if vector and vector_friction:
             note = ('Vetor direto com atrito (modelo contínuo): fronteiras traçadas sem grade, com tolerância '
                     'de 0,5 m e conferência automática; o detalhamento da busca é escolhido pelos dados e '
-                    'informado no resumo. Área sem polígono e coluna vazia: barreira.')
+                    'informado no resumo. Área sem polígono e coluna vazia: sem resultado, atravessadas com nota 1.')
         elif vector_friction:
             note = ('Atrito vetorial: os polígonos são convertidos em notas na grade da análise (extensão e '
-                    'resolução escolhidas), pelo centro de cada célula; área sem polígono e coluna vazia: '
-                    'barreira. O resultado segue essa grade.')
+                    'resolução escolhidas), pelo centro de cada célula; área sem polígono e coluna vazia: sem '
+                    'resultado, atravessadas com nota 1. O resultado segue essa grade.')
         elif friction:
             note = ('Com Atrito: extensão, resolução e SRC herdados do raster de atrito; '
                     'a grade não será reprojetada.')

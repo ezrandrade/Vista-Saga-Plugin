@@ -6,8 +6,10 @@ célula recebe a nota do polígono que contém o seu centro). Onde polígonos se
 último na ordem das feições.
 
 A nota de cada polígono vem de uma coluna numérica da camada (decisão do autor: sem atribuição
-manual). A área sem polígono e as feições com a coluna vazia são barreira = NoData: a célula não
-recebe resultado e nenhuma reta passa por ela; o plugin nunca supõe uma nota.
+manual). A área sem polígono e as feições com a coluna vazia não recebem resultado, mas podem ser
+atravessadas com a nota 1 (``OUTSIDE_RATING``, custo basal do Vista SAGA, padrão da classe FUNDO;
+decisão do autor na 1.4.0-dev5). Antes eram barreira, o que distorcia áreas de estudo côncavas: a
+reta polo-ponto que saía da área ficava bloqueada.
 
 Os dados chegam já extraídos do QGIS na thread principal (WKB + nota); aqui só há GDAL/OGR, na
 thread da tarefa. Sem reprojeção: as geometrias precisam estar no SRC da grade.
@@ -17,6 +19,8 @@ import math
 import numpy as np
 
 BARRIER = 'barreira'
+# Nota de passagem da área sem polígono (sem resultado): custo basal do Vista SAGA (classe FUNDO).
+OUTSIDE_RATING = 1.0
 _OUTSIDE = -1.0   # sentinela: célula sem polígono (notas são > 0)
 _BLOCKED = -2.0   # sentinela: polígono de classe marcada como barreira
 
@@ -48,8 +52,9 @@ def ratings_from_column(values):
 def rasterize_friction(features, outside, geotransform, width, height, projection_wkt):
     """Grade float64 de notas (NaN = barreira) a partir de [(wkb, nota | BARRIER)].
 
-    outside: nota da área sem polígono, BARRIER, ou None (exige cobertura total; células
-    descobertas geram erro). Retorna (grade, estatísticas).
+    outside: nota de PASSAGEM da área sem polígono (essas células não recebem resultado: ver a
+    máscara devolvida), BARRIER, ou None (exige cobertura total; células
+    descobertas geram erro). Retorna (grade, estatísticas, máscara das células sem resultado ou None).
     """
     from osgeo import gdal, ogr, osr
     from .gdal_scope import with_gdal_exceptions
@@ -104,18 +109,21 @@ def rasterize_friction(features, outside, geotransform, width, height, projectio
                              'polígonos: informe a nota da área sem polígono ou marque-a como barreira.')
         grid[uncovered] = np.nan if outside == BARRIER else check_rating(outside, 'área sem polígono')
     grid[blocked] = np.nan
-    return grid, stats
+    # Células sem polígono atravessáveis: participam das retas, mas ficam sem resultado.
+    no_result = uncovered if (uncovered.any() and outside not in (None, BARRIER)) else None
+    stats['no_result_cells'] = int(no_result.sum()) if no_result is not None else 0
+    return grid, stats, no_result
 
 
 def describe(spec, stats, resolution):
     """Linhas do relatório _resumo.txt sobre a superfície vetorial."""
     lines = ['', 'Superfície de atrito vetorial',
              f"Camada: {spec.get('layer_name', '')}; notas da coluna {spec.get('rating_field', '')}.",
-             'Área sem polígono e feições com a coluna vazia: barreira (sem resultado e sem passagem).',
+             'Área sem polígono e feições com a coluna vazia: sem resultado, atravessáveis com nota 1 '
+             '(custo basal do Vista SAGA, padrão da classe FUNDO).',
              f'Rasterização pelo centro da célula, resolução {resolution:g} unidades do SRC; '
              'em sobreposições vale a última feição.',
-             f"Feições usadas: {stats['features']}; células sem polígono: {stats['uncovered_cells']}; "
-             f"células de barreira: {stats['barrier_cells']}."]
+             f"Feições usadas: {stats['features']}; células sem polígono: {stats['uncovered_cells']}."]
     if spec.get('skipped'):
         lines.append(f"Feições com a coluna vazia: {spec['skipped']}.")
     return '\n'.join(lines) + '\n'
