@@ -1084,6 +1084,52 @@ def _absorb_slivers(parts, labels, tolerance):
     return labels
 
 
+def absorb_clip_slivers(regions, tolerance):
+    """Lascas criadas pelo recorte final (área de estudo) ficam com a região vizinha (1.4.0-dev6).
+
+    O recorte pela área de estudo vem depois da eliminação das faces-fio do traçado; onde uma
+    fronteira encontra a borda da área quase tangente, sobra uma parte de largura milimétrica (no
+    teste da dev5 com dados reais: 0,017 m e 0,077 m). Mesma regra de ``_absorb_slivers``: parte com
+    largura média 2A/P < 2 × tolerância vai para a região de maior fronteira comum; sem vizinha,
+    fica onde está. regions: [(centro, multipolígono OGR)]. Devolve (regiões, partes movidas).
+    """
+    from osgeo import ogr
+    parts, owners = [], []
+    for index, (_, geometry) in enumerate(regions):
+        for k in range(geometry.GetGeometryCount()):
+            parts.append(geometry.GetGeometryRef(k).Clone())
+            owners.append(index + 1)
+    if not parts:
+        return regions, 0
+    labels = _absorb_slivers(parts, owners, tolerance)
+    moved = int(sum(1 for a, b in zip(owners, labels) if a != b))
+    if not moved:
+        return regions, 0
+    result = []
+    for index, (generator, _) in enumerate(regions):
+        group = ogr.Geometry(ogr.wkbMultiPolygon)
+        for part, label in zip(parts, labels):
+            if label == index + 1:
+                group.AddGeometry(part)
+        merged = ogr.Geometry(ogr.wkbMultiPolygon)
+        if group.GetGeometryCount():
+            _collect(group.UnionCascaded(), merged)
+        result.append((generator, merged))
+    return result, moved
+
+
+def small_parts(regions, units_to_meters, threshold_m2):
+    """Partes com área < threshold_m2 (m²), por região: [(centro, quantidade, área total em m²)]."""
+    found = []
+    for generator, geometry in regions:
+        areas = [geometry.GetGeometryRef(k).GetArea() * units_to_meters ** 2
+                 for k in range(geometry.GetGeometryCount())]
+        small = [a for a in areas if a < threshold_m2]
+        if small:
+            found.append((generator, len(small), float(sum(small))))
+    return found
+
+
 def _length(geometry):
     """Comprimento só das partes lineares (uma interseção de bordas pode vir como ponto ou coleção;
     pedir Length() a um ponto gera aviso do GDAL no log do QGIS)."""

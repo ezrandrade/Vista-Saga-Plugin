@@ -8,6 +8,7 @@ import math
 import os
 import shutil
 import tempfile
+import time
 from .voronoi_core import validate_generators
 from .voronoi_output import LAYER_NAME, VECTOR_FORMATS, export_vector, publish_outputs
 
@@ -249,6 +250,35 @@ def mass_voronoi_polygons(generators, bounds, *, tolerance, cancelled=None, prog
     return results
 
 
+# Partes abaixo da escala (1.4.0-dev6, decisão do autor): só informadas no resumo, sem alterar a
+# geometria. Limiar = (5 m)², o PEC Classe A a 1:10.000 (Decreto 89.817/1984), escala dos mapas
+# de atrito do autor; igual a 1 pixel de 5 m.
+SMALL_PART_M2 = 25.0
+
+
+def _small_parts_text(records, units):
+    """Linhas do resumo sobre partes com área < SMALL_PART_M2 (geometria inalterada)."""
+    from osgeo import ogr
+    from .voronoi_friction_continuous import small_parts
+    regions = []
+    for generator, geometry, _ in records:
+        if not isinstance(geometry, ogr.Geometry):
+            geometry = ogr.CreateGeometryFromWkb(bytes(geometry.asWkb()))
+        if ogr.GT_Flatten(geometry.GetGeometryType()) == ogr.wkbPolygon:
+            geometry = ogr.ForceToMultiPolygon(geometry)
+        regions.append((generator, geometry))
+    found = small_parts(regions, units, SMALL_PART_M2)
+    head = f'Partes com área menor que {SMALL_PART_M2:g} m² ((5 m)², abaixo da escala 1:10.000; PEC Classe A): '
+    if not found:
+        return head + 'nenhuma.\n'
+    count = sum(n for _, n, _ in found)
+    area = sum(a for _, _, a in found)
+    lines = [head + f'{count}, somando {area:.1f} m². Mantidas na geometria (só informadas):']
+    for generator, n, a in found:
+        lines.append(f'  {generator.label or f"Centro {generator.identifier}"}: {n} parte(s), {a:.1f} m²')
+    return '\n'.join(lines) + '\n'
+
+
 def save_simple_voronoi(generators,bounds,destination,projection_wkt,**kw):
     """Compatibilidade: Voronoi Simples vetorial direto."""
     return save_vector_voronoi(generators,bounds,destination,projection_wkt,mode='simple',**kw)
@@ -314,6 +344,8 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             if layer.CreateField(ogr.FieldDefn(name,kind)) != ogr.OGRERR_NONE:
                 raise OSError(f'Falha ao criar campo {name}')
         records=[]
+        started=time.perf_counter()
+        clip_slivers=0
         if mode=='simple':
             from qgis.core import QgsGeometry, QgsPointXY
             for generator,ring in simple_voronoi_polygons(generators,bounds,cancelled=cancelled,progress=progress):
@@ -345,12 +377,20 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             else:
                 regions=mass_voronoi_polygons(generators,bounds,tolerance=arc_tolerance_m/units,
                                               cancelled=cancelled,progress=progress)
-            for generator,geometry in regions:
-                if study is not None:
+            if study is not None:
+                clipped_regions=[]
+                for generator,geometry in regions:
                     clipped=_clean(geometry.Intersection(study))
                     geometry=ogr.Geometry(ogr.wkbMultiPolygon)
                     if clipped is not None and not clipped.IsEmpty():
                         _collect_polygons(clipped,geometry)
+                    clipped_regions.append((generator,geometry))
+                regions=clipped_regions
+                if friction:
+                    # Lascas do recorte final: mesma regra das faces-fio do traçado (1.4.0-dev6).
+                    from .voronoi_friction_continuous import absorb_clip_slivers
+                    regions,clip_slivers=absorb_clip_slivers(regions,friction_stats['tolerance'])
+            for generator,geometry in regions:
                 if geometry.IsEmpty() or not geometry.GetGeometryCount():
                     continue
                 if not geometry.IsValid():
@@ -359,6 +399,7 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                 if area<=1.e-10:
                     continue
                 records.append((generator,geometry,area))
+        elapsed=time.perf_counter()-started
         total=sum(entry[2] for entry in records)
         if not total:
             raise ValueError('A área de análise não contém regiões de influência válidas.')
@@ -435,6 +476,10 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                              f"{check.get('passes',0)} passada(s) de traçado"
                              + (f" (correção local em {check.get('forced_cells',0)} célula(s))" if check.get('forced_cells') else '')
                              + '.\n')
+                if clip_slivers:
+                    report.write(f"Recorte pela área de estudo: {clip_slivers} lasca(s) de largura média menor que "
+                                 f"{2*tolerance_used:.3g} m (2 × tolerância) incorporada(s) à região vizinha de maior "
+                                 "fronteira comum.\n")
                 if check.get('divergent'):
                     report.write('ATENÇÃO: restaram divergências entre os polígonos e o modelo'
                                  + (' (limite de memória da correção atingido)' if check.get('budget_hit') else '')
@@ -445,6 +490,8 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                              f'aproximados por segmentos com desvio máximo de {2*arc_tolerance_m/3:.4g} m '
                              f'(tolerância {arc_tolerance_m:g} m); massas iguais: bissetrizes. '
                              'Regiões podem ter mais de uma parte (multipolígono).\n')
+            report.write(f'Tempo de cálculo (s): {elapsed:.1f}\n')
+            report.write(_small_parts_text(records,units))
             report.write(f'Formato: {VECTOR_FORMATS[os.path.splitext(destination)[1].lower()][1]}\n')
             report.write('Extensão finita definida pelo usuário; distâncias euclidianas no SRC projetado.\n')
             report.write('Áreas métricas planares calculadas nas unidades lineares do SRC.\n\n')

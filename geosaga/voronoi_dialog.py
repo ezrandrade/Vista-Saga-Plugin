@@ -83,7 +83,7 @@ class VoronoiRasterTask(QgsTask):
     no método finished(), que o QGIS invoca na thread principal.
     """
     def __init__(self, points, destination, wkt, transform, width, height, mode, vectorize, friction_path=None, friction_components=None,
-                 vector_format='.gpkg', keep_raster=True, friction_vector=None):
+                 vector_format='.gpkg', keep_raster=True, friction_vector=None, study_wkb=None):
         super().__init__('Vista Saga - Voronoi raster', QgsTask.Flag.CanCancel)
         self.points = tuple(points)  # Generator é uma dataclass simples, sem QObject.
         self.destination = str(destination)
@@ -99,6 +99,8 @@ class VoronoiRasterTask(QgsTask):
         self.friction_components = tuple(dict(spec) for spec in friction_components) if friction_components else None
         # Atrito vetorial: WKB e notas já extraídos na thread principal (sem QgsVectorLayer aqui).
         self.friction_vector = dict(friction_vector) if friction_vector else None
+        # Área de estudo (WKB) para o recorte da guia Raster (1.4.0-dev6).
+        self.study_wkb = bytes(study_wkb) if study_wkb else None
         self.result = None
         self.error = None
         self.ui_callback = None
@@ -111,7 +113,7 @@ class VoronoiRasterTask(QgsTask):
                 progress=self.setProgress, cancelled=self.isCanceled,
                 friction_path=self.friction_path, friction_components=self.friction_components,
                 vector_format=self.vector_format, keep_raster=self.keep_raster,
-                friction_vector=self.friction_vector,
+                friction_vector=self.friction_vector, study_wkb=self.study_wkb,
             )
             return not self.isCanceled()
         except InterruptedError:
@@ -261,7 +263,7 @@ class VoronoiDialog(QDialog):
         self.friction_layer.setFilters(Qgis.LayerFilter.RasterLayer)
         self.friction_layer.setShowCrs(True)
         self.friction_label = QLabel(tr('Superfície de atrito:'))
-        self.friction_layer.setToolTip(tr('GeoTIFF monobanda: o valor de cada célula é a nota de atrito (> 0); NoData é barreira.'))
+        self.friction_layer.setToolTip(tr('GeoTIFF monobanda: o valor de cada célula é a nota de atrito (> 0); NoData fica sem resultado e é atravessado com nota 1.'))
         form.addRow(self.friction_label,self.friction_layer)
         self.friction_vector_layer = QgsMapLayerComboBox()
         self.friction_vector_layer.setAllowEmptyLayer(True)
@@ -299,7 +301,7 @@ class VoronoiDialog(QDialog):
         stack_hint = QLabel(tr('Selecione até 12 rasters. Edite o peso positivo e, se necessário, as notas '
                             'por classe (ex.: 1=2;2=8) dando dois cliques nas células. '
                             'Sem notas, serão usados os valores originais. '
-                            'NoData em qualquer mapa será barreira.'))
+                            'NoData em qualquer mapa: célula sem resultado, atravessada com nota 1.'))
         stack_hint.setWordWrap(True)
         stack_dialog_box.addWidget(stack_hint)
         self.friction_stack_table = QTableWidget(0, 3)
@@ -662,11 +664,12 @@ class VoronoiDialog(QDialog):
             if weighted:
                 self.method_note.setText(tr('Com Massa e Atrito (modelo do Vista SAGA): menor custo acumulado '
                                             '(distância ao polo × nota × passo, na reta polo-célula) dividido '
-                                            'pela massa, o que equivale a M/d²; NoData é barreira.'))
+                                            'pela massa, o que equivale a M/d²; células sem nota ficam sem '
+                                            'resultado e são atravessadas com nota 1.'))
             else:
                 self.method_note.setText(tr('Com Atrito (modelo do Vista SAGA): menor custo acumulado '
                                             '(distância ao polo × nota × passo, na reta polo-célula); '
-                                            'NoData é barreira.'))
+                                            'células sem nota ficam sem resultado e são atravessadas com nota 1.'))
         elif weighted:
             self.method_note.setText(tr('Com Massa: maximiza M/d², como no Vista SAGA; selecione campo numérico positivo.'))
         else:
@@ -732,7 +735,7 @@ class VoronoiDialog(QDialog):
         elif vector:
             note = 'Vetor direto: polígonos exatos recortados à extensão e à área poligonal.'
         else:
-            note = 'Raster: resolução necessária. A extensão poligonal define o retângulo envolvente.'
+            note = 'Raster: resolução necessária. Com extensão de camada poligonal, só as células com o centro dentro da área recebem resultado.'
         self.grid_note.setText(tr(note))
 
     def _choose_output(self, index):
@@ -991,6 +994,12 @@ class VoronoiDialog(QDialog):
                         raise ValueError('A análise exige SRC projetado. Reprojete os dados.')
                     points=self._get_generators(crs)
                     transform,width,height,crs,wkt=self._get_grid(layer,points)
+                # Guia Raster com extensão de camada poligonal: recorte pela área de estudo, como na
+                # guia Vetorial (1.4.0-dev6). Com atrito raster, a grade é a do próprio raster.
+                study_wkb = None
+                if self.extent_mode.currentData() == 'polygon' and not (friction_mode and not friction_vector):
+                    _, study_geometry = self._analysis_extent(crs, points)
+                    study_wkb = bytes(study_geometry.asWkb())
             if kind=='raster':
                 suffix='.tif'
                 if chosen and not chosen.lower().endswith(('.tif','.tiff')):
@@ -1058,7 +1067,7 @@ class VoronoiDialog(QDialog):
                     friction_components=friction_components if friction_mode else None,
                     friction_vector=friction_vector if friction_mode else None,
                     vector_format=suffix if kind=='vector' else '.gpkg',
-                    keep_raster=kind=='raster')
+                    keep_raster=kind=='raster', study_wkb=study_wkb)
                 # Recebe o resultado na thread principal; NUNCA processEvents()
                 # nem acesso ao QGIS/Qt no worker raster.
                 task.ui_callback = self._on_raster_task_finished

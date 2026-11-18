@@ -91,6 +91,23 @@ Escopo da dev6, em implementação:
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
 
+## 18/11/2026 (sessão 3) — dev6: código dos itens 1-6 (WIP, sem testes novos)
+
+- (4) `run_voronoi(study_wkb=...)` + `_study_mask` (centro da célula); diálogo passa o WKB da área quando
+  a extensão é "camada poligonal" na guia Raster (não com atrito raster: a grade é a do raster).
+- (6) `_nodata_as_passage`: NoData do raster de atrito e da combinação de superfícies → nota 1, sem
+  resultado; centro sobre NoData continua recusado.
+- (2) resumo raster: linha de passagem conforme a fonte (vetorial: área sem polígono; raster: NoData,
+  com a contagem); linha do recorte; "Pixels sem resultado" no lugar de "excluídos por máscara".
+- (1) `absorb_clip_slivers` (voronoi_friction_continuous): lascas do recorte final, largura média
+  < 2 × tolerância, à região de maior fronteira comum (só modalidades com atrito).
+- (3) "Tempo de cálculo (s)" no resumo do vetor direto (todas as modalidades).
+- (5a) `SMALL_PART_M2 = 25`: partes < 25 m² listadas por região no resumo do vetor direto; geometria
+  inalterada.
+- Textos de interface (NoData) e catálogos en/es atualizados. Suítes: 455 (11 pulados: Shapely ausente
+  no contêiner) + 36, verdes. Contêiner: `apt-get update` antes do `apt-get install`.
+- Falta: testes novos dos 6 itens, conferência com o caso de teste, ZIP dev6.
+
 ## 18/11/2026 (sessão 3) — decisões da dev6
 
 - O autor aceitou as recomendações: (4) recorte pela bacia na guia Raster; (5a) partes < 25 m² só

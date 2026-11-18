@@ -11,8 +11,10 @@ Sem massa, vence o menor A; com massa, o menor A / M. Como A cresce com d², a m
 M/d², a mesma lei da modalidade Com Massa. Empates: vence o polo que vem primeiro na lista; a célula
 do próprio polo é sempre dele.
 
-A nota de cada célula entra direto como custo (nota 1 = custo basal). NoData é barreira: a célula
-não recebe resultado e nenhuma reta passa por ela.
+A nota de cada célula entra direto como custo (nota 1 = custo basal). Aqui, NaN é barreira (a reta
+que passa por ele tem custo infinito); desde a 1.4.0-dev6, o motor (voronoi_engine) troca o NoData do
+raster de atrito por nota 1 antes do cálculo, e essas células ficam só sem resultado (decisão do autor,
+pela coerência com a área sem polígono do atrito vetorial).
 
 Validação caixa-preta contra o Vista SAGA original (caso sintético de 80 × 60 células, 17/11/2026):
 99,67% das células sem massa e 99,69% com massa; as diferenças ficam todas na fronteira entre
@@ -46,7 +48,7 @@ def validate_friction(raster, geotransform, generators):
     # A nota entra direto como custo; NaN assinala barreira. Nota 0 é recusada desde a 1.4.0 (custo
     # zero cria empates resolvidos pela ordem dos pontos; comportamento do Vista SAGA não testado).
     if np.any(np.isfinite(arr) & (arr <= 0)):
-        raise ValueError('O atrito precisa ser maior que 0 em todas as células (NoData = barreira); para '
+        raise ValueError('O atrito precisa ser maior que 0 em todas as células; para '
                          'quase sem atrito, use um valor pequeno, como 0,1.')
     if np.any(np.isposinf(arr) | np.isneginf(arr)):
         raise ValueError('Use NoData para células inacessíveis; valores infinitos não são suportados.')
