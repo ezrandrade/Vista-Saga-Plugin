@@ -6,6 +6,11 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
+## 18/11/2026 — resultados do teste da 1.4.0-dev4 recebidos
+
+- `voronoi_vetorial_dev4.zip`. O autor testou nota 0 na coluna ATRITO: o processo foi bloqueado (como
+  decidido) e ele rodou com 0,1. Análise em andamento nesta sessão.
+
 ## 18/11/2026 — 1.4.0-dev4 implementada
 
 - `voronoi_friction_continuous`: `default_tolerance` (0,5 m em metros, ≤ maior lado/2000) e
