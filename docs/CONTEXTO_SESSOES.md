@@ -22,7 +22,9 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
      bacia. Recomendação minha da dev2, errada, e nem fiel ao Vista SAGA (lá a área fora é a classe
      FUNDO, com nota; classes excluídas são atravessadas sem resultado). Implementado
      `outside_rating` (passagem com nota, sem resultado), conferido contra integral numérica numa área em
-     L. **Decisão do autor pendente** (nota da passagem).
+     L. **Decisão do autor (18/11): opção 1, nota 1** (custo basal do Vista SAGA, padrão da classe FUNDO):
+     área sem polígono e coluna vazia = atravessáveis com nota 1, sem resultado. Vale para as guias
+     Vetorial (modelo contínuo) e Raster (modelo célula a célula). Substitui a regra da barreira (dev2).
   3. **Laço de refinamento com limite fixo (nível + 2 rodadas) terminava antes de estabilizar**: 70 pontas
      soltas na rede de fronteiras, regiões fundidas (Jardim Petrópolis com 1.306 ha), conferência com 25%
      de divergência. Laço agora vai até estabilizar: 0 pontas soltas, 0 divergências; áreas traçadas =
