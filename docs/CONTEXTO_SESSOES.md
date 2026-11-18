@@ -8,8 +8,15 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ## 18/11/2026 — resultados do teste da 1.4.0-dev3 recebidos
 
-- O autor enviou `voronoi_vetorial_5m.zip` e `voronoi_vetorial_20m.zip` (QGIS 4, dev3). Análise em
-  andamento nesta sessão.
+- O autor enviou `voronoi_vetorial_5m.zip` e `voronoi_vetorial_20m.zip` (QGIS 4).
+- dev3, espaçamento 5 m: Simples 99,96% (2 empates), Com Massa 100%, Atrito 99,50%, Massa e Atrito
+  99,60%; todas com 1 parte por região, partição exata, conferência automática 0 divergências (19.200
+  pontos). Atrito também com 20 m: 99,50%, 1 parte por região, 0 divergências (1.200 pontos). Atrito
+  5 m × 20 m: diferença média 0,13-0,18 cm.
+- **`Massa_Atrito_03` (pasta de 20 m) não é da dev3:** relatório no formato da dev2 e malha de busca de
+  1 m (não 20). Está correto (99,60%, 1 parte por região), mas o teste-chave (Massa e Atrito, dev3,
+  20 m, o caso que partia a região A) ficou sem resultado. Pedido ao autor: repetir só esse caso na
+  dev3 (na dev4 o espaçamento deixa de ser escolhido).
 
 ## 18/11/2026 — decisões pendentes da dev1 fechadas pelo autor
 
