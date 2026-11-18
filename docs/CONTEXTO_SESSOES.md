@@ -102,6 +102,10 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   logo o problema não é o caso novo. Pedido diagnóstico caixa-preta (sem nova análise do executável,
   decisão de 17/11): sintoma exato, mensagem, o que mudou desde 17/11, reteste com
   `teste_atrito.rs2` + `pontos_pixel.txt` (`python3.12 scripts/gerar_caso_atrito.py PASTA`).
+- **Esclarecido:** o autor está em outro computador, longe do PC em que rodou os testes de 17/11. Falha
+  atribuída ao ambiente; não investigar este PC. Rodar o caso da bacia no PC de 17/11, quando o autor
+  voltar a ele. Enquanto isso: teste da dev6 no QGIS 4 (se houver neste PC), reenvio dos dados para
+  deixar RS2 + pontos prontos, script de comparação escrito antes.
 - Se o Vista SAGA ficar indisponível: a validação da bacia não acontece; a guia Raster reproduz o
   algoritmo do Vista SAGA (99,7% no caso sintético) e é a referência de fidelidade por inferência, não
   por teste em dados reais. Registrar como limitação.
