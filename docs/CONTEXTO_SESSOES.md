@@ -66,8 +66,9 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   (= (5 m)², PEC Classe A a 1:10.000);
 - (6) **NoData do raster de atrito atravessável com nota 1, sem resultado** (como a área sem polígono).
 - Fora da dev6, de maior peso para a tese: vetor × raster com atrito divergem 15-20 ha; só um teste da
-  bacia no próprio Vista SAGA decide qual modelo se aproxima mais (oferecido preparar RS2 + pontos;
-  sem resposta do autor ainda).
+  bacia no próprio Vista SAGA decide qual modelo se aproxima mais. **O autor pediu o caso (sessão 3):**
+  conversor `scripts/preparar_caso_vista_saga.py` pronto; **aguardando o reenvio dos dados** (uso do
+  solo, bacia, centroides com massa) para gerar RS2 + pontos.
 
 1. ~~Receber e analisar o teste da dev5 com os dados reais~~ (feito, sessão 2).
 2. ~~Pergunta sobre o NoData do raster de atrito~~ (decidido na sessão 3: atravessável com nota 1).
@@ -93,6 +94,25 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
 - Código central: `geosaga/voronoi_friction_continuous.py` (modelo contínuo e traçado),
   `voronoi_friction.py` (modelo discreto), `voronoi_friction_vector.py` (polígonos → grade),
   `voronoi_vector.py` (`save_vector_voronoi`), `voronoi_engine.py` (`run_voronoi`), `voronoi_dialog.py`.
+
+## 18/11/2026 (sessão 3) — conversor do caso real para o Vista SAGA
+
+- O autor pediu o RS2 + arquivo de pontos da bacia para rodar no Vista SAGA (validação vetor × raster
+  com atrito). **Os dados do autor não estão no contêiner** (ficaram na sessão 2): pedido o reenvio
+  (uso do solo com a coluna de nota, bacia, centroides com massa).
+- Enquanto isso: `scripts/preparar_caso_vista_saga.py` (genérico, sem dados): grade = retângulo da bacia
+  alinhado a múltiplos inteiros da resolução (bordas do RS2 são inteiros; padrão 5 m, como o raster da
+  dev5); classes = FUNDO (0, nota 1) + notas distintas (ou `--campo-classe`); rasterização do plugin
+  (centro da célula, última feição); `pontos_vista_saga.txt` (coluna:linha a partir de 1, CP1252, CRLF,
+  `[ATRITOS]`); `pontos_centros.csv` (polos no centro das células, para o plugin usar posições
+  idênticas); `atrito_grade.tif` (mesma grade); `caso.json`; `previa.png`. Recusa: SRC diferentes,
+  massas não inteiras sem `--escala-massa` (Vista SAGA lê inteiro), notas não inteiras sem `--decimal`
+  (separador não verificado), dois polos na mesma célula. Teste: `tests/unit/test_preparar_caso_vista_saga.py`.
+  Conferido com dados sintéticos: o plugin sobre `atrito_grade.tif` + `pontos_centros.csv` dá a célula de
+  cada polo ao próprio polo.
+- Plano da comparação (quando vierem as saídas do Vista SAGA): só dentro da bacia (o recorte não muda os
+  custos); Vista SAGA × plugin raster na MESMA grade (modelo discreto em dados reais) e × vetor direto
+  (modelo contínuo, rasterizado pelo centro). Script de comparação ainda não escrito.
 
 ## 18/11/2026 (sessão 3) — dev6 enviada ao autor
 
