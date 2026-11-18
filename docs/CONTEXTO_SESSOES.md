@@ -116,6 +116,14 @@ partes < 25 m² no `_resumo.txt`). Escopo da dev6 (decisões do autor, sessão 3
   dentro do ZIP (sem extrair), caminho com acento/OneDrive/longo, arquivo somente leitura ou bloqueado
   (o programa pode abrir para leitura e escrita), permissão. Pedido: extrair para `C:\VSAGA\teste\`,
   nome curto (`P.TXT`), conferir Propriedades (Desbloquear, sem Somente leitura), executar como admin.
+- **Corrigido:** o arquivo que dá o erro não é o do caso de 17/11, e sim um arquivo do autor para a bacia
+  (`pontos_reginaldo_vistasaga.txt`: 10 polos, massas inteiras de 4.261 a 73.139, coluna:linha até
+  923:1991; ASCII, CRLF, sem BOM, **sem a seção `[ATRITOS]`**). Depois do OK no erro, o Vista SAGA carrega
+  os 10 pontos (nomes e massas certos). Hipótese principal (não confirmada): o erro vem da falta do
+  `[ATRITOS]`. Teste proposto: acrescentar `[ATRITOS]` com uma nota por classe do RS2 aberto, na ordem dos
+  códigos a partir da classe 0; se o erro sumir, a seção é obrigatória (anotar para a leitura/gravação
+  do formato no plugin). Perguntado ao autor: como o RS2 e as coordenadas coluna:linha foram gerados
+  (grade, resolução, origem, contagem a partir de 1?), classes e notas.
 - Se o Vista SAGA ficar indisponível: a validação da bacia não acontece; a guia Raster reproduz o
   algoritmo do Vista SAGA (99,7% no caso sintético) e é a referência de fidelidade por inferência, não
   por teste em dados reais. Registrar como limitação.
