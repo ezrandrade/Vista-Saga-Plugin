@@ -37,7 +37,8 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   a partir de 1.
 - **Com Atrito e Com Massa e Atrito em 5 m: saídas vazias.** Os dois RS2 são idênticos byte a byte;
   495 × 1.107 células de 10 m (metade da grade), todas com o código 11 (fora da legenda), sem células
-  "Ponto". Tempo relatado ~5 s. Causa desconhecida (hipóteses: limite de tamanho da grade no atrito do
+  "Ponto". Tempo relatado ~5 s; na tela, mapa todo amarelo, sem regiões (relato do autor: falha visível,
+  sem mensagem). Causa desconhecida (hipóteses: limite de tamanho da grade no atrito do
   Vista SAGA de 32 bits, que reduz a grade sem converter os pontos; ou rodada abortada).
 - **Enviado ao autor:** `validacao_atrito.zip` com o caso em 10 m (495 × 1.107) e 20 m (247 × 553), gerado do
   `Uso_Atrito_Reginaldo.rs2` (moda por bloco, empate → nota maior; pontos convertidos). Aguardando as saídas
