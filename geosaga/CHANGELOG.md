@@ -1,4 +1,4 @@
-## 1.4.0 — Voronoi fiel ao Vista SAGA e atrito vetorial (em teste)
+## 1.4.0 — Voronoi fiel ao Vista SAGA e atrito vetorial (2026-11-19)
 
 - **Mudança de método, validada contra o Vista SAGA original** (caso sintético de 80 × 60
   células, comparação célula a célula; ver `NOTAS_DA_VERSAO_140.md`):
@@ -18,12 +18,12 @@
   - **Guia Vetorial: vetor direto, sem rasterização (modelo contínuo).** Custo = integral de
     distância ao polo × nota ao longo do segmento polo-ponto, calculada exatamente pelos
     cruzamentos com as bordas dos polígonos; com massa, dividido por M. Fronteiras traçadas
-    numericamente (malha de busca deslocada, refinamento local, tolerância de 1 cm; pontas de
-    cunhas finas e junções podem ficar encurtadas em alguns decímetros); partição
+    numericamente (malha de busca deslocada, refinamento local, tolerância de 0,5 m desde a dev4;
+    pontas de cunhas finas e junções podem ficar encurtadas); partição
     sem sobreposições nem lacunas; recorte exato pela cobertura dos polígonos. Coincide com o
     Vista SAGA em 99,60% (com massa) e 99,52% (sem massa) das células; com nota uniforme,
-    reproduz os discos de Apolônio do Com Massa a menos de 1 cm. "Espaçamento da busca": regiões
-    menores que ele podem não ser detectadas.
+    reproduz os discos de Apolônio do Com Massa a menos de 1 cm. Regiões menores que o espaçamento
+    da busca podem não ser detectadas (a conferência automática reduz essa chance).
   - **Conferência automática do traçado:** cada célula é testada nos lados e no interior, com
     subdivisão onde houver suspeita; depois, o modelo é comparado com os polígonos em um ponto por
     célula, com novo traçado local onde divergir (até 3 passadas). O `_resumo.txt` informa o

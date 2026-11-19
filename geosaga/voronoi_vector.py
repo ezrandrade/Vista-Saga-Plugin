@@ -448,9 +448,10 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                              + '; saída vetorial direta (modelo contínuo, sem rasterização)\n')
                 report.write('Critério: menor custo A = integral de s × nota ao longo do segmento reto polo-ponto '
                              '(s = distância ao polo)' + (', dividido pela massa (equivale a M/d²)' if mode=='mass_friction' else '')
-                             + '. Versão contínua do atrito do Vista SAGA: no caso de teste, 99,60% (com massa) e '
-                             '99,52% (sem massa) das células coincidem com o Vista SAGA original; a guia Raster '
-                             'usa o modelo célula a célula (99,7%).\n')
+                             + '. Versão contínua do atrito do Vista SAGA (não é cópia do cálculo célula a célula): coincide '
+                             'com o Vista SAGA original em 99,5% a 99,6% das células no caso sintético e em 99,1% a 99,3% '
+                             'numa bacia real (grade de 10 m), com diferenças também longe da fronteira. Para reproduzir '
+                             'o Vista SAGA, use a guia Raster (99,4% a 99,7%).\n')
                 info=friction_info or {}
                 outside=info.get('outside')
                 report.write(f"Polígonos de atrito: {info.get('layer_name','')}; notas da coluna "
@@ -501,7 +502,8 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                              f"{row['AREA_M2']:.3f} | {row['AREA_HA']:.6f} | {row['PCT_AREA']:.4f}\n")
             if mode in ('simple','mass'):
                 report.write('\nSimples e Com Massa reproduziram 100% das células do Vista SAGA original no caso '
-                             'de teste, exceto empates.\n')
+                             'sintético e numa bacia real (esta pela guia Raster, que coincide com este vetor '
+                             'no centro das células), exceto empates.\n')
         # Mesmo padrão de backup/rollback do módulo raster (família vetorial inteira).
         publish_outputs(stage,outputs)
         if progress: progress(100)

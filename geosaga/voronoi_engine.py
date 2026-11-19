@@ -60,8 +60,9 @@ def _write_reports(csv_path, txt_path, mode, rows, excluded, pixel_area, passage
             f.write('Critério (modelo do Vista SAGA): menor custo acumulado A = soma de\n'
                     'distância ao polo × nota × passo (diagonal = √2) nas células da reta polo-célula.\n'
                     'A nota entra direto como custo (nota 1 = custo basal).\n'
-                    'Não é percurso de custo mínimo. Validado contra o Vista SAGA original: 99,7% das células\n'
-                    'no caso de teste; as diferenças ficam na fronteira entre regiões.\n')
+                    'Não é percurso de custo mínimo. Validado contra o Vista SAGA original, célula a célula:\n'
+                    '99,7% das células no caso sintético e 99,4% a 99,6% numa bacia real (grade de 10 m);\n'
+                    'as diferenças ficam na fronteira entre regiões.\n')
             if passage_note:
                 f.write(passage_note + '\n')
             if mode == 'mass_friction':
@@ -84,7 +85,7 @@ def _write_reports(csv_path, txt_path, mode, rows, excluded, pixel_area, passage
             f.write(f"{item['ID']} | {item['CENTRO']} | {item['MASSA']:.6g} | "
                     f"{item['PIXELS']} | {item['AREA_HA']:.6f} | {item['PCT_AREA']:.4f}\n")
         f.write('\nNota: os limites são discretizados na grade raster. Simples e Com Massa reproduziram\n'
-                '100% das células do Vista SAGA original no caso de teste, exceto empates.\n')
+                '100% das células do Vista SAGA original (caso sintético e bacia real), exceto empates.\n')
 
 
 def _polygonize(raster_path, vector_path, generator_rows, units_to_meters, cancelled=None):
@@ -340,7 +341,7 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
             raster.SetMetadataItem('VISTASAGA_FRICTION_SEARCH','Exact lower-bound pruning; no approximation')
             if mode == 'mass_friction':
                 raster.SetMetadataItem('VISTASAGA_MASS_MODEL','A / M (equivale a M / d2)')
-            raster.SetMetadataItem('VISTASAGA_FRICTION_VALIDATION','Vista SAGA original, caso sintetico 80x60: 99,7% das celulas')
+            raster.SetMetadataItem('VISTASAGA_FRICTION_VALIDATION','Vista SAGA original: caso sintetico 80x60, 99,7% das celulas; bacia real 495x1107 (10 m), 99,4 a 99,6%')
             raster.SetMetadataItem('VISTASAGA_TESTED_CANDIDATES',str(friction_stats['candidate_pairs']))
             raster.SetMetadataItem('VISTASAGA_TRACED_PATHS',str(friction_stats['traced_paths']))
             raster.SetMetadataItem('VISTASAGA_VISITED_CELLS',str(friction_stats['visited_cells']))

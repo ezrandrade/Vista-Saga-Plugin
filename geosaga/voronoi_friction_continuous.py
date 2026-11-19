@@ -7,7 +7,9 @@ Modelo (versão contínua do atrito do Vista SAGA): para um polo G e um ponto x,
 ao longo do segmento reto G → x (D = |x − G|, u = direção), com f = nota de atrito do polígono
 atravessado. Com nota uniforme, A = f·D²/2, e o Com Massa e Atrito (menor A / M) se reduz a M/d².
 É o limite do modelo discreto da guia Raster quando a célula tende a zero; no caso de teste
-validado, coincide com o Vista SAGA em 99,50% (sem massa) e 99,60% (com massa) das células.
+validado, coincide com o Vista SAGA em 99,50% (sem massa) e 99,60% (com massa) das células; numa bacia
+real (grade de 10 m), em 99,29% / 99,06% dentro da bacia, com diferenças também longe da fronteira
+(não cumpre o critério 2 de comparabilidade; ver NOTAS_DA_VERSAO_140.md).
 
 Cálculo exato, sem amostragem: com τ = fração do segmento até cada cruzamento com a borda de um
 polígono de nota f, A = D² × [Σ ± f·τ²/2 + f(x)/2] (− ao entrar, + ao sair; anéis orientados com o

@@ -1,6 +1,6 @@
-# Vista Saga Plugin 1.4.0 — notas da versão (em teste)
+# Vista Saga Plugin 1.4.0 — notas da versão
 
-> Versão em teste (17/11/2026). Inclui tudo da 1.3.0. **Muda o método** das modalidades Com
+> Versão estável (19/11/2026). Inclui tudo da 1.3.0. **Muda o método** das modalidades Com
 > Massa, Com Atrito e Com Massa e Atrito do Voronoi, para reproduzir o Vista SAGA original.
 > Resultados gerados com a 1.3.0 ou anterior nessas modalidades não são reproduzidos pela 1.4.0;
 > para reproduzi-los, use o ZIP da versão em que foram gerados.
@@ -57,11 +57,10 @@ grade. O plugin usa a **versão contínua** do modelo do Vista SAGA:
 
 calculado exatamente pelos cruzamentos do segmento com as bordas dos polígonos (com massa,
 dividido por M). As fronteiras entre as regiões não têm fórmula fechada: são traçadas
-numericamente, com tolerância de 1 cm, a partir de uma malha de busca ("Espaçamento da busca")
-com refinamento local. No caso de teste, mais de 99,9% dos pontos de fronteira ficam a menos de 2 cm
-da fronteira do modelo, com qualquer espaçamento de 5 a 40 m; pontas de cunhas muito finas e
-encontros de três regiões podem ficar encurtados em alguns decímetros (área desprezível). Regiões menores que o espaçamento da busca podem não ser
-detectadas; use um espaçamento menor que os menores detalhes que importam. A partição não tem
+numericamente, com a tolerância de 0,5 m (dev4; até a dev3 era 1 cm), a partir de uma malha de busca
+escolhida pelo plugin, com refinamento local. Pontas de cunhas muito finas e encontros de três regiões
+podem ficar encurtados (área desprezível). Regiões menores que o espaçamento da busca podem não ser
+detectadas; a conferência automática (abaixo) reduz muito essa chance. A partição não tem
 sobreposições nem lacunas, e a fronteira com a área sem polígono é a borda exata dos polígonos.
 
 **Conferência automática (dev3).** O traçado se confere sozinho, em duas camadas:
