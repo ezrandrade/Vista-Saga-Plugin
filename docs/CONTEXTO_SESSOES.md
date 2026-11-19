@@ -61,6 +61,12 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   módulos usam "Vista SAGA" como nome de formato (RS2, relatório TXT), não de modelo. A chave antiga
   "Os modelos que utilizam atrito ainda exigem validação com o Vista SAGA original" continua nos catálogos,
   sem uso no código. ZIP final 1.4.0 refeito.
+- **Pedido do autor (19/11): padronizar a interface de todos os módulos → versão 1.4.1** (branch e PR
+  próprios, dependentes do PR #13; só interface, sem cálculo). Decisões do autor: botão de ação
+  "Executar" em todos os módulos; rodapé padrão [Executar] [Fechar], com [Validar] só na Avaliação (única
+  exceção); progresso e Cancelar numa janela que aparece só durante a execução (como Voronoi e
+  Combinação), saindo a barra e o Cancelar fixos do rodapé (Monitoria raster, Avaliação raster); a linha de
+  status à esquerda do rodapé sai.
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
