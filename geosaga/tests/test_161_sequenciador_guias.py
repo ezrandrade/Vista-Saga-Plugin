@@ -23,6 +23,9 @@ class GuiasDoSequenciador161(unittest.TestCase):
         self.assertIn('def minimumSizeHint(self):', code)       # o mínimo também vinha da maior guia
         self.assertIn('QSizePolicy.Policy.Maximum', code)       # não cresce além da guia aberta
         self.assertIn('self.currentChanged.connect(lambda *_: self.updateGeometry())', code)
+        # Texto quebrado (Vetorial, Mista): sem heightForWidth da maior guia, que deslocava a barra de abas.
+        self.assertIn('def hasHeightForWidth(self):\n        return False', code)
+        self.assertIn('page.heightForWidth(width)', code)
 
 
 if __name__ == '__main__':

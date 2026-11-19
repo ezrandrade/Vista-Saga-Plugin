@@ -37,6 +37,11 @@ class CurrentPageTabs(QTabWidget):
     com um espaço vazio grande abaixo dos botões e alongava a barra de rolagem. Aqui a sugestão de
     tamanho troca a altura da maior guia pela da guia aberta, e a política vertical "Maximum" impede
     que a área cresça além disso.
+
+    Guias com texto quebrado em linhas (Vetorial, Mista) fazem o Qt usar heightForWidth, que também
+    toma a maior guia: a área recebia uma faixa mais alta e ficava centralizada nela, com a barra de abas
+    descendo. Por isso a altura que depende da largura entra na própria sugestão de tamanho (pela guia
+    aberta, na largura atual) e hasHeightForWidth fica desligado.
     """
 
     def __init__(self, parent=None):
@@ -44,18 +49,40 @@ class CurrentPageTabs(QTabWidget):
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         self.currentChanged.connect(lambda *_: self.updateGeometry())
 
-    def _current_page(self, hint, page_hint):
+    def _page_height(self, page):
+        """Altura que a guia pede; com texto quebrado, na largura em que ela é (ou será) exibida."""
+        if page.hasHeightForWidth():
+            width = page.width() if page.isVisible() and page.width() > 0 else self.width() - 4
+            if width > 0:
+                return max(page.heightForWidth(width), page.minimumSizeHint().height())
+        return page.sizeHint().height()
+
+    def _current_page(self, hint, page_height):
         current = self.currentWidget()
         if current is None or not self.count():
             return hint
-        tallest = max(page_hint(self.widget(i)).height() for i in range(self.count()))
-        return QSize(hint.width(), hint.height() - tallest + page_hint(current).height())
+        tallest = max(page_height(self.widget(i)) for i in range(self.count()))
+        return QSize(hint.width(), hint.height() - tallest + page_height(current))
 
     def sizeHint(self):
-        return self._current_page(super().sizeHint(), lambda page: page.sizeHint())
+        overhead = super().sizeHint().height() - max(self.widget(i).sizeHint().height() for i in range(self.count())) \
+            if self.count() else 0
+        hint = super().sizeHint()
+        current = self.currentWidget()
+        if current is None:
+            return hint
+        return QSize(hint.width(), overhead + self._page_height(current))
 
     def minimumSizeHint(self):
-        return self._current_page(super().minimumSizeHint(), lambda page: page.minimumSizeHint())
+        return self._current_page(super().minimumSizeHint(), lambda page: page.minimumSizeHint().height())
+
+    def hasHeightForWidth(self):
+        return False
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if event.size().width() != event.oldSize().width():
+            self.updateGeometry()   # o texto quebrado muda de altura com a largura
 
 
 class ImageSequenceDialog(QDialog):
