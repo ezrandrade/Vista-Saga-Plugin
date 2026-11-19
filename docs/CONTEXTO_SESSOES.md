@@ -32,7 +32,10 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
 
 - **dev6 testada e APROVADA pelo autor no QGIS 4 (19/11).**
 - **Decisão do autor (19/11):** o Voronoi com atrito precisa ser comparável ao Vista SAGA, mas não
-  precisa coincidir 100%. Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
+  precisa coincidir 100%. **Critério de comparabilidade aceito pelo autor (19/11):** (1) ≥ 99% das células
+  da área de estudo iguais às do Vista SAGA na mesma grade; (2) ≥ 90% das divergências na fronteira entre
+  regiões; (3) nenhuma região com diferença de área > 1% da própria área. Raster passa nos 3 (bacia 10 m);
+  Vetorial passa em 1 e 3, não em 2 (54-58%): versão contínua do método, usar declarando-a. Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
   erro de abertura do arquivo de pontos. Notas 1, 1, 3, 5 (FUNDO, Classe 1, Classe 3, Classe 5).
