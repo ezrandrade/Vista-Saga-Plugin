@@ -90,8 +90,6 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   sem plugin JXL). Opções apresentadas ao autor: codificador próprio em Python puro (sem perdas, modular),
   programa externo (cjxl/ffmpeg) se instalado, ou quadros .jxl avulsos pelo GDAL. Suporte de navegadores
   a JXL animado não confirmado.
-- **Compatibilidade com QGIS 3.44 LTR:** discutida e adiada pelo autor para a 2.0 (não registrar como
-  pendência ativa antes disso).
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
