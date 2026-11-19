@@ -6,7 +6,7 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4: 1.4.0 fechada; 1.4.1-dev2 em teste) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4: 1.4.0 e 1.4.1 fechadas; merges e tags com o autor) <<<
 
 Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
 **A versão válida deste arquivo é a do repositório** (branch `feat/voronoi-atrito-fiel`); cópias guardadas
@@ -14,13 +14,15 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
 
 ### Onde está o trabalho
 
-- **Branch:** `feat/voronoi-atrito-fiel` (último commit de código: dev6). **PR:**
-  [ezrandrade/Vista-Saga-Plugin#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13), aberto,
-  sem merge. `metadata.txt` = 1.4.0; ZIPs de teste `-dev1` a `-dev6` (versão `-devN` só dentro do ZIP;
-  `dist/` não é versionado: refazer com `python3.12 scripts/build_release.py` + troca da versão no
-  metadata do ZIP).
-- **Homologadas pelo autor no QGIS 4:** dev3 e dev4. dev5 testada com os dados reais (sessão 2).
-  **dev6 enviada (sessão 3), ainda não testada pelo autor no QGIS 4.**
+- **1.4.0 (fechada e homologada):** branch `feat/voronoi-atrito-fiel`, PR
+  [ezrandrade/Vista-Saga-Plugin#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13), sem merge.
+- **1.4.1 (fechada e homologada, 19/11):** branch `feat/interface-padrao`, PR
+  [ezrandrade/Vista-Saga-Plugin#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14), base
+  `feat/voronoi-atrito-fiel`, sem merge. `metadata.txt` = 1.4.1.
+- **Ordem com o autor:** merge do #13 → tag `v1.4.0` → base do #14 para `main` → merge do #14 → tag
+  `v1.4.1` (o proxy das sessões recusa criar tags). `dist/` não é versionado: refazer o ZIP com
+  `python3.12 scripts/build_release.py` (versões `-devN` só dentro do ZIP).
+- **Próxima versão planejada pelo autor: 2.0** (temas adiados para ela; não abrir antes do pedido).
 - **Dados do autor** (uso do solo, bacia, centroides, RS2, saídas): só na sessão; nunca no repositório.
   Nesta sessão o autor enviou só o arquivo de pontos `pontos_reginaldo_vistasaga.txt` (10 polos, massas
   = população, inteiras); se precisar dele de novo, pedir.
@@ -85,11 +87,13 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   `Vista_Saga_Plugin_QGIS4_v1.4.1-dev2.zip`. Pendente: teste do autor no QGIS 4.
 - **Pedidos do autor para a dev3 (19/11), Sequenciador de Mapas:** (a) espaço vazio abaixo dos botões da
   guia Raster: FEITO (`CurrentPageTabs`: sizeHint e minimumSizeHint pela guia aberta, política vertical
-  Maximum; Raster 334 → 122 px; commit e183b86); (b) salvar a animação em **.jxl**: EM DECISÃO. Não há
-  codificador de JPEG XL animado no QGIS (GDAL JPEGXL só grava imagem única; Pillow não tem JXL nativo; Qt
-  sem plugin JXL). Opções apresentadas ao autor: codificador próprio em Python puro (sem perdas, modular),
-  programa externo (cjxl/ffmpeg) se instalado, ou quadros .jxl avulsos pelo GDAL. Suporte de navegadores
-  a JXL animado não confirmado.
+  Maximum; Raster 334 → 122 px; commit e183b86); (b) salvar a animação em **.jxl**: discussão encerrada pelo
+  autor até a versão 2.0 (não há codificador de JPEG XL animado no QGIS; opções levantadas: codificador
+  próprio, programa externo, quadros avulsos).
+- **1.4.1 FECHADA e HOMOLOGADA (19/11): dev1 a dev3 testadas e aprovadas pelo autor no QGIS 4.** Notas e
+  CHANGELOG sem "(em teste)"; ZIP final `Vista_Saga_Plugin_QGIS4_v1.4.1.zip`. PR #14 (base
+  `feat/voronoi-atrito-fiel`). **Falta (autor):** merge do #13, tag `v1.4.0`, mudar a base do #14 para
+  `main`, merge do #14, tag `v1.4.1`.
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o

@@ -1,4 +1,4 @@
-## 1.4.1 — Rodapé padrão em todos os módulos (em teste)
+## 1.4.1 — Rodapé padrão em todos os módulos (2026-11-19)
 
 - **Botão de ação "Executar" em todos os módulos** (antes: "Calcular assinatura", "Executar monitoria",
   "Executar avaliação", "Executar sobreposição e avaliação", "Gerar Voronoi", "Combinar mapas", "Gerar GIF";

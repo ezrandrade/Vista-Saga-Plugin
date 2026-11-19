@@ -1,7 +1,7 @@
-# Vista Saga Plugin 1.4.1 — notas da versão (em teste)
+# Vista Saga Plugin 1.4.1 — notas da versão
 
-> Versão em teste (19/11/2026). Inclui tudo da 1.4.0. **Só interface: nenhum cálculo muda**; resultados
-> da 1.4.0 se reproduzem byte a byte.
+> Versão estável (19/11/2026). Inclui tudo da 1.4.0. **Só interface: nenhum código de cálculo foi
+> alterado** (mudaram apenas as janelas dos módulos, `ui_shared.py`, traduções, testes e documentação).
 
 ## O que muda para quem usa
 
@@ -63,4 +63,5 @@ a altura que pedem).
   fixos, o Validar só na Avaliação, a janela de progresso e o rodapé comum das guias vetoriais.
 - Janelas abertas em QGIS 3.34 sem interface gráfica (não é o alvo): rodapés capturados nos 7 módulos e
   nas guias, e a janela de progresso.
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev2`).
+- Sequenciador: alturas medidas em QGIS 3.34 sem interface gráfica (guia Raster 334 → 122 px).
+- Teste do autor no QGIS 4: dev1 a dev3 **testadas e aprovadas** (19/11/2026). **1.4.1 homologada.**
