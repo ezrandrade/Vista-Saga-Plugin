@@ -17,6 +17,7 @@ from qgis.core import Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
 
 from .ui_shared import use_tab_background, temporary_destination, choose_project_layers
+from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .signature_engine import run_signature, validate_signature, _outpaths
 from .errors import log_exception
 
@@ -183,10 +184,10 @@ class SignatureDialog(QDialog):
         rlayout.addWidget(self.table, 1)
 
         controls = QHBoxLayout()
-        self.status = QLabel(tr('Selecione um mapa temático e uma camada de polígonos.'))
+        self.status = FooterStatus(tr('Selecione um mapa temático e uma camada de polígonos.'))
         self.status.setWordWrap(True)
-        controls.addWidget(self.status, 1)
-        self.run_button = QPushButton(tr('Calcular assinatura'))
+        controls.addStretch(1)
+        self.run_button = QPushButton(tr(RUN_TEXT))
         self.run_button.clicked.connect(self.run)
         controls.addWidget(self.run_button)
         close = QPushButton(tr('Fechar'))
@@ -398,7 +399,7 @@ class SignatureDialog(QDialog):
         self._busy = True
         self.run_button.setEnabled(False)
         popup = QProgressDialog(tr('Calculando as assinaturas…'), tr('Cancelar'), 0, 100, self)
-        popup.setWindowTitle(tr('Vista Saga - Assinatura'))
+        popup.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         popup.setWindowModality(Qt.WindowModality.WindowModal)
         popup.setMinimumDuration(0)
         popup.setValue(0)
@@ -428,7 +429,7 @@ class SignatureDialog(QDialog):
             self.tabs.setCurrentIndex(1)
             if result['note'].startswith('ATENÇÃO:'):
                 QMessageBox.warning(self, tr('Assinatura - Áreas conflitantes'), tr(result['note']))
-            self.status.setText(tr('Assinatura calculada. Relatórios disponíveis na pasta escolhida.'))
+            report_outcome(self.status, 'Assinatura', tr('Assinatura calculada. Relatórios disponíveis na pasta escolhida.'), 'success')
             if self.add_project.isChecked() or self.temporary_check.isChecked():
                 from qgis.core import QgsVectorLayer
                 new_layer = QgsVectorLayer(result['gpkg'] + '|layername=assinatura_areas',
@@ -439,7 +440,7 @@ class SignatureDialog(QDialog):
                     QMessageBox.warning(self, tr('Assinatura'),
                                         tr('Relatórios gravados, mas não foi possível carregar o GeoPackage.'))
         except InterruptedError:
-            self.status.setText(tr('Operação cancelada; arquivos anteriores preservados.'))
+            report_outcome(self.status, 'Assinatura', tr('Operação cancelada; arquivos anteriores preservados.'), 'warning')
         except Exception as exc:
             log_exception()
             self.status.setText(tr('A assinatura não foi concluída.'))

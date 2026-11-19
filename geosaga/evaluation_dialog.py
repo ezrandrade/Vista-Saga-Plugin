@@ -25,6 +25,7 @@ from .ui_shared import (use_tab_background, HeaderSort, OutputSection, RASTER_OU
                         score_spin, table_item, temporary_destination, weight_spin)
 from .evaluation_config import config_path_for, pending_classes
 from .ui_shared import PENDING_HEADER, class_count_text, mark_pending, pending_messages
+from .ui_shared import RUN_TEXT, FooterStatus, TaskProgressWindow, report_outcome
 
 PENDING_HINT = ('Classes em destaque ainda estão sem nota (“—”). A avaliação só é executada quando '
                 'todas as classes têm nota ou estão marcadas em “Não avaliar”; a coluna Classes, '
@@ -196,25 +197,38 @@ class EvaluationDialog(QDialog):
         self.csv_check = self.output.csv_check
         self.txt_check = self.output.txt_check
         outer.addWidget(self.output.group)
+        # Rodapé padrão (1.4.1): [Validar] [Executar] [Fechar]; progresso e Cancelar numa janela que
+        # aparece só durante a execução.
         footer = QHBoxLayout()
-        self.status = QLabel('')
-        self.status.setWordWrap(True)
-        footer.addWidget(self.status, 1)
+        self.status = FooterStatus('')
+        self._progress_window = None
+        footer.addStretch(1)
         self.validate_button = button('Validar', self.preview_validation)
         footer.addWidget(self.validate_button)
-        self.execute_button = button('Executar avaliação', self.execute)
+        self.execute_button = button(RUN_TEXT, self.execute)
         self.execute_button.setDefault(True)
         footer.addWidget(self.execute_button)
-        self.cancel_button = button('Cancelar execução', self.cancel_task)
-        self.cancel_button.setEnabled(False)
-        footer.addWidget(self.cancel_button)
         self.close_button = button('Fechar', self.close)
         footer.addWidget(self.close_button)
-        outer.addLayout(footer)
+        # Rodapé da janela, fora das guias (como nos demais módulos): nas guias vetoriais, os botões
+        # Validar e Executar do formulário da guia são trazidos para cá (_show_embedded_evaluation).
+        root.addLayout(footer)
+        self._footer = footer
 
     def _on_analysis_tab_changed(self, index):
         if index in (1, 2):
             self._show_embedded_evaluation(index)
+        self._update_footer(index)
+
+    def _update_footer(self, index):
+        """Mostra no rodapé comum só os botões da guia aberta."""
+        for button_ in (self.validate_button, self.execute_button):
+            button_.setVisible(index == 0)
+        for tab, attribute in ((1, '_vector_dialog'), (2, '_overlay_dialog')):
+            dialog = getattr(self, attribute, None)
+            if dialog is not None:
+                dialog.validate_button.setVisible(index == tab)
+                dialog.run_button.setVisible(index == tab)
 
     def _show_embedded_evaluation(self, index):
         """Embed a native QWidget instead of reparenting a running QDialog.
@@ -236,6 +250,11 @@ class EvaluationDialog(QDialog):
                     dialog_type = VectorOverlayEvaluationDialog
                 dialog = dialog_type(self.iface, parent=self, embedded=True)
                 dialog.setMinimumSize(0, 0)
+                # Validar e Executar do formulário vão para o rodapé comum; o Fechar é o da janela.
+                position = self._footer.indexOf(self.close_button)
+                self._footer.insertWidget(position, dialog.validate_button)
+                self._footer.insertWidget(position + 1, dialog.run_button)
+                dialog.close_button.hide()
                 scroll.setWidget(dialog)
                 use_tab_background(scroll)
                 setattr(self, attribute, dialog)
@@ -328,6 +347,7 @@ class EvaluationDialog(QDialog):
 
     def _scan_with_progress(self, path):
         dlg = QProgressDialog(tr('Identificando classes temáticas…'), tr('Cancelar'), 0, 100, self)
+        dlg.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         dlg.setWindowModality(Qt.WindowModality.WindowModal)
         dlg.setMinimumDuration(250)
         last_progress = [-1]
@@ -642,9 +662,9 @@ class EvaluationDialog(QDialog):
                                   title, '', self._task_finished, report_txt=report_txt)
             self._task = task
             self.execute_button.setEnabled(False)
-            self.cancel_button.setEnabled(True)
             self.close_button.setEnabled(False)
             self.status.setText(tr('Avaliação em execução no gerenciador de tarefas do QGIS…'))
+            self._progress_window = TaskProgressWindow(self, 'Avaliação em execução…', task)
             QgsApplication.taskManager().addTask(task)
         except (ValueError, OSError) as exc:
             QMessageBox.warning(self, tr('Vista Saga - Configuração incompleta'), tr(str(exc)))
@@ -656,8 +676,10 @@ class EvaluationDialog(QDialog):
 
     def _task_finished(self, success, task):
         self._task = None
+        if self._progress_window is not None:
+            self._progress_window.close()
+            self._progress_window = None
         self.execute_button.setEnabled(True)
-        self.cancel_button.setEnabled(False)
         self.close_button.setEnabled(True)
         if not success:
             text = tr(task.error or ('Operação cancelada.' if task.isCanceled() else 'Falha na avaliação.'))
@@ -710,7 +732,7 @@ class EvaluationDialog(QDialog):
             with open(filename, 'w', encoding='utf-8') as file:
                 json.dump(self._serialize(filename), file, ensure_ascii=False, indent=2)
             self.project_path = filename
-            self.status.setText(tr('Projeto salvo: ') + filename)
+            report_outcome(self.status, 'Avaliação', tr('Projeto salvo: ') + filename, 'success', self.iface)
         except (ValueError, OSError) as exc:
             QMessageBox.warning(self, tr('Vista Saga'), tr(f'Falha ao salvar projeto:\n{exc}'))
 
@@ -772,7 +794,8 @@ class EvaluationDialog(QDialog):
                     if not self._add_layer(layer, rec, select=False):
                         continue
             self._render_maps(select=0 if self.entries else None)
-            self.status.setText(tr('Projeto carregado: {count} mapa(s).').format(count=len(self.entries)))
+            report_outcome(self.status, 'Avaliação', tr('Projeto carregado: {count} mapa(s).').format(count=len(self.entries)),
+                           'success', self.iface)
             self.refresh_available()
         except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
             QMessageBox.warning(self, tr('Vista Saga - Projeto inválido'), tr(str(exc)))
@@ -780,6 +803,9 @@ class EvaluationDialog(QDialog):
     def shutdown(self):
         """Descarga do plugin: cancela a tarefa e impede callbacks em janela destruída."""
         task, self._task = self._task, None
+        if self._progress_window is not None:
+            self._progress_window.close()
+            self._progress_window = None
         if task is not None:
             task.callback = None
             try:

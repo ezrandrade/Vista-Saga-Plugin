@@ -13,7 +13,7 @@ from qgis.PyQt.QtGui import QColor, QFont, QImage, QMovie, QPainter
 from qgis.PyQt.QtWidgets import (
     QAbstractItemView, QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
     QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QListWidget,
-    QMessageBox, QProgressDialog, QPushButton, QScrollArea, QSpinBox,
+    QMessageBox, QProgressDialog, QPushButton, QScrollArea, QSizePolicy, QSpinBox,
     QTabWidget, QVBoxLayout, QWidget,
 )
 from qgis.core import (
@@ -26,7 +26,36 @@ from qgis.gui import QgsMapLayerComboBox
 from .gif_codec import encode_gif
 from .sequence_plan import extract_year, temporal_frames, safe_png_name
 from .ui_shared import use_tab_background, choose_project_layers
+from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .errors import log_exception
+
+
+class CurrentPageTabs(QTabWidget):
+    """Guias com a altura da guia aberta, não da maior (1.4.1).
+
+    O QTabWidget assume a altura da maior guia (no Sequenciador, a Mista): a guia Raster, curta, ficava
+    com um espaço vazio grande abaixo dos botões e alongava a barra de rolagem. Aqui a sugestão de
+    tamanho troca a altura da maior guia pela da guia aberta, e a política vertical "Maximum" impede
+    que a área cresça além disso.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+        self.currentChanged.connect(lambda *_: self.updateGeometry())
+
+    def _current_page(self, hint, page_hint):
+        current = self.currentWidget()
+        if current is None or not self.count():
+            return hint
+        tallest = max(page_hint(self.widget(i)).height() for i in range(self.count()))
+        return QSize(hint.width(), hint.height() - tallest + page_hint(current).height())
+
+    def sizeHint(self):
+        return self._current_page(super().sizeHint(), lambda page: page.sizeHint())
+
+    def minimumSizeHint(self):
+        return self._current_page(super().minimumSizeHint(), lambda page: page.minimumSizeHint())
 
 
 class ImageSequenceDialog(QDialog):
@@ -64,7 +93,7 @@ class ImageSequenceDialog(QDialog):
         intro.setWordWrap(True)
         root.addWidget(intro)
 
-        self.tabs = QTabWidget()
+        self.tabs = CurrentPageTabs()
         self.tabs.addTab(self._raster_tab(), tr('Raster'))
         self.tabs.addTab(self._vector_tab(), tr('Vetorial'))
         self.tabs.addTab(self._mixed_tab(), tr('Misto'))
@@ -149,10 +178,10 @@ class ImageSequenceDialog(QDialog):
         root.addWidget(output)
 
         bottom = QHBoxLayout()
-        self.status = QLabel(tr('Adicione pelo menos dois quadros.'))
+        self.status = FooterStatus(tr('Adicione pelo menos dois quadros.'))
         self.status.setWordWrap(True)
-        bottom.addWidget(self.status, 1)
-        self.run_button = QPushButton(tr('Gerar GIF'))
+        bottom.addStretch(1)
+        self.run_button = QPushButton(tr(RUN_TEXT))
         self.run_button.clicked.connect(self._run)
         bottom.addWidget(self.run_button)
         self.close_button = QPushButton(tr('Fechar'))
@@ -622,6 +651,7 @@ class ImageSequenceDialog(QDialog):
         self.run_button.setEnabled(False)
         self.close_button.setEnabled(False)
         progress = QProgressDialog(tr('Renderizando quadros…'), tr('Cancelar'), 0, len(self.entries), self)
+        progress.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.setMinimumDuration(0)
         frames = []
@@ -671,8 +701,9 @@ class ImageSequenceDialog(QDialog):
                             else 'Paleta GIF preservada.'))
             QMessageBox.information(self, tr('Sequenciador de Mapas'), '\n'.join(lines))
         except InterruptedError:
-            self.status.setText(tr('Exportação cancelada. {0} PNGs podem permanecer na pasta de '
-                                   'destino; dados do projeto preservados.').format(len(png_paths)))
+            report_outcome(self.status, 'Sequenciador de Mapas',
+                           tr('Exportação cancelada. {0} PNGs podem permanecer na pasta de '
+                              'destino; dados do projeto preservados.').format(len(png_paths)), 'warning')
         except Exception as exc:
             log_exception()
             self.status.setText(tr('Falha na exportação; dados do projeto preservados.'))

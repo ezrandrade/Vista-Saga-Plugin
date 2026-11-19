@@ -631,3 +631,94 @@ def enable_table_copy(table):
                         'planilhas. Também pelo botão direito do mouse.'))
     table._copy_to_clipboard = copy  # usado nos testes
     return copy
+
+
+# ---------------------------------------------------------------------------
+# Rodapé padrão (1.4.1, decisão do autor): [Executar] [Fechar] em todos os módulos ([Validar] só na
+# Avaliação), sem linha de status, barra de progresso ou Cancelar fixos. O progresso e o Cancelar
+# aparecem numa janela só durante a execução; o desfecho vai para a barra de mensagens do QGIS.
+
+RUN_TEXT = 'Executar'
+
+
+class FooterStatus:
+    """Substitui a antiga linha de status do rodapé: guarda o último texto, sem exibi-lo.
+
+    Mantém a interface usada pelos diálogos (``setText``, ``text``, ``setWordWrap``, ``setVisible``),
+    para que mensagens transitórias ("Selecione...") deixem de ocupar o rodapé sem mudar a lógica.
+    """
+
+    def __init__(self, text=''):
+        self._text = str(text)
+
+    def setText(self, text):
+        self._text = str(text)
+
+    def text(self):
+        return self._text
+
+    def setWordWrap(self, *_args):
+        pass
+
+    def setVisible(self, *_args):
+        pass
+
+
+def report_outcome(status, title, text, level='info', iface=None):
+    """Registra o desfecho de uma execução (concluída, cancelada, falha) na barra de mensagens do QGIS."""
+    if status is not None:
+        status.setText(text)
+    try:
+        from qgis.core import Qgis
+        if iface is None:
+            from qgis.utils import iface as qgis_iface
+            iface = qgis_iface
+        if iface is None:
+            return
+        levels = {'info': Qgis.MessageLevel.Info, 'success': Qgis.MessageLevel.Success,
+                  'warning': Qgis.MessageLevel.Warning, 'critical': Qgis.MessageLevel.Critical}
+        iface.messageBar().pushMessage(tr(title), str(text), level=levels.get(level, Qgis.MessageLevel.Info),
+                                       duration=8)
+    except Exception:  # sem QGIS (testes) ou barra indisponível: o texto fica só no status
+        pass
+
+
+class TaskProgressWindow:
+    """Janela de progresso com Cancelar, aberta só enquanto uma QgsTask executa."""
+
+    def __init__(self, parent, label, task):
+        from qgis.PyQt.QtCore import Qt
+        from qgis.PyQt.QtWidgets import QProgressDialog
+        self._task = task
+        dialog = QProgressDialog(tr(label), tr('Cancelar'), 0, 100, parent)
+        dialog.setWindowTitle(parent.window().windowTitle())  # título da janela do módulo
+        dialog.setWindowModality(Qt.WindowModality.NonModal)
+        dialog.setMinimumDuration(0)
+        dialog.setAutoClose(False)
+        dialog.setAutoReset(False)
+        dialog.setValue(0)
+        dialog.canceled.connect(task.cancel)
+        task.progressChanged.connect(self._progress)
+        self.dialog = dialog
+        dialog.show()
+
+    def _progress(self, percent):
+        import math
+        if self.dialog is None or not math.isfinite(float(percent)):
+            return
+        self.dialog.setValue(max(0, min(100, int(round(float(percent))))))
+
+    def close(self):
+        dialog, self.dialog = self.dialog, None
+        if dialog is None:
+            return
+        try:
+            dialog.canceled.disconnect(self._task.cancel)
+        except (TypeError, RuntimeError):
+            pass
+        try:
+            self._task.progressChanged.disconnect(self._progress)
+        except (TypeError, RuntimeError):
+            pass
+        dialog.close()
+        dialog.deleteLater()

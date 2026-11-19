@@ -7,14 +7,15 @@ from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QAbstractItemView, QDialog, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout,
-    QHeaderView, QLabel, QLineEdit, QMessageBox, QProgressBar, QComboBox,
+    QHeaderView, QLabel, QLineEdit, QMessageBox, QComboBox,
     QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout,
-    QTabWidget, QWidget, QToolButton, QScrollArea, QFrame, QSizePolicy,
+    QTabWidget, QWidget, QToolButton, QScrollArea, QFrame,
 )
 from qgis.core import (Qgis, QgsApplication, QgsPalettedRasterRenderer,
                        QgsProject, QgsRasterLayer, QgsMessageLog)
 from qgis.gui import QgsMapLayerComboBox
 from .ui_shared import use_tab_background, temporary_destination, enable_table_copy
+from .ui_shared import RUN_TEXT, FooterStatus, TaskProgressWindow, report_outcome
 
 
 RASTER_MONITORING_HINT = (
@@ -141,31 +142,21 @@ class MonitoringDialog(QDialog):
         results_layout = QVBoxLayout(self.raster_results_page)
         results_layout.addWidget(results_group, 1)
 
+        # Rodapé padrão (1.4.1): [Executar] [Fechar]. O "Executar" da guia Vetorial é o botão do
+        # formulário vetorial, trazido para cá quando a guia é aberta; o progresso e o Cancelar ficam
+        # numa janela que aparece só durante a execução.
         bottom = QHBoxLayout()
-        self.status = QLabel(tr('Pronto para executar.'))
-        self.status.setWordWrap(True)
-        bottom.addWidget(self.status, 1)
-        self.progress = QProgressBar()
-        self.progress.setRange(0, 100)
-        self.progress.setValue(0)
-        bottom.addWidget(self.progress)
-        self.run_button = QPushButton(tr('Executar monitoria'))
+        self.status = FooterStatus(tr('Pronto para executar.'))
+        self._progress_window = None
+        bottom.addStretch(1)
+        self.run_button = QPushButton(tr(RUN_TEXT))
         self.run_button.clicked.connect(self.run)
         bottom.addWidget(self.run_button)
-        self.cancel_button = QPushButton(tr('Cancelar'))
-        self.cancel_button.clicked.connect(self.cancel)
-        self.cancel_button.setEnabled(False)
-        bottom.addWidget(self.cancel_button)
-        # Na guia Vetorial, os controles raster somem; o espaçador mantém
-        # "Fechar" do tamanho normal, à direita, em vez de ocupar a linha toda.
-        self._bottom_spacer = QWidget()
-        self._bottom_spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self._bottom_spacer.setVisible(False)
-        bottom.addWidget(self._bottom_spacer, 1)
         self.close_button = QPushButton(tr('Fechar'))
         self.close_button.clicked.connect(self.close)
         bottom.addWidget(self.close_button)
         outer.addLayout(bottom)
+        self._footer = bottom
         self.tabs.currentChanged.connect(self._on_mode_changed)
 
     def _on_mode_changed(self, index):
@@ -174,9 +165,9 @@ class MonitoringDialog(QDialog):
         # A execução raster não deve ser oferecida enquanto uma configuração
         # vetorial estiver visível; cada modalidade mantém seu próprio comando.
         is_raster = index == 0
-        for control in (self.status, self.progress, self.run_button, self.cancel_button):
-            control.setVisible(is_raster)
-        self._bottom_spacer.setVisible(not is_raster)
+        self.run_button.setVisible(is_raster)
+        if self._vector_dialog is not None:
+            self._vector_dialog.run_button.setVisible(not is_raster)
 
     def _open_vector_monitoring(self):
         if self._vector_dialog is None:
@@ -191,6 +182,8 @@ class MonitoringDialog(QDialog):
                 self.results_tab.addTab(results_page, tr('Vetorial'))
                 dialog._embedded_results_host = (self.results_tab, self.tabs)
                 dialog.close_button.hide()
+                # O "Executar" vetorial vai para o rodapé comum, ao lado do "Fechar".
+                self._footer.insertWidget(self._footer.indexOf(self.close_button), dialog.run_button)
                 self.vector_tab.setWidget(dialog)
                 use_tab_background(self.vector_tab)
                 self._vector_dialog = dialog
@@ -292,18 +285,14 @@ class MonitoringDialog(QDialog):
                                         self.title_edit.text().strip(), self._finished,
                                         descriptive_legend=(self.legend_style.currentIndex() == 0),
                                         legend_lookup=self.legend_lookup.text().strip())
-            self._task.progressChanged.connect(self._progress_changed)
             self.run_button.setEnabled(False)
-            self.cancel_button.setEnabled(True)
             self.close_button.setEnabled(False)
-            self.progress.setValue(0)
             self.status.setText(tr('Monitoria em execução. Contando e classificando transições…'))
+            self._progress_window = TaskProgressWindow(
+                self, 'Monitoria em execução. Contando e classificando transições…', self._task)
             QgsApplication.taskManager().addTask(self._task)
         except (ValueError, OSError) as exc:
             QMessageBox.warning(self, tr('Vista Saga - Monitoria'), tr(str(exc)))
-
-    def _progress_changed(self, percent):
-        self.progress.setValue(int(percent))
 
     def cancel(self):
         if self._task is not None:
@@ -312,17 +301,21 @@ class MonitoringDialog(QDialog):
 
     def _finished(self, success, task):
         self._task = None
+        if self._progress_window is not None:
+            self._progress_window.close()
+            self._progress_window = None
         self.run_button.setEnabled(True)
-        self.cancel_button.setEnabled(False)
         self.close_button.setEnabled(True)
         if not success:
-            self.status.setText(tr('Monitoria cancelada.' if task.isCanceled() else 'Falha na monitoria.'))
+            text = tr('Monitoria cancelada.' if task.isCanceled() else 'Falha na monitoria.')
             if task.error:
+                self.status.setText(text)
                 QMessageBox.warning(self, tr('Monitoria não concluída'), tr(task.error))
+            else:
+                report_outcome(self.status, 'Monitoria', text, 'warning')
             return
         summary = task.result
-        self.progress.setValue(100)
-        self.status.setText(tr('Monitoria concluída. GeoTIFF, CSVs e TXT gravados.'))
+        report_outcome(self.status, 'Monitoria', tr('Monitoria concluída. GeoTIFF, CSVs e TXT gravados.'), 'success')
         self.results_tab.setCurrentIndex(0)
         self.tabs.setCurrentWidget(self.results_tab)
         self.summary.setText(
@@ -342,7 +335,8 @@ class MonitoringDialog(QDialog):
                 cell.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
                 self.table.setItem(line, column, cell)
         if len(summary['linhas']) > 500:
-            self.status.setText(tr('Concluído. Prévia limitada a 500 transições; CSV completo disponível.'))
+            report_outcome(self.status, 'Monitoria',
+                           tr('Concluído. Prévia limitada a 500 transições; CSV completo disponível.'), 'info')
         # O mapa de transições é sempre carregado no QGIS.
         layer = QgsRasterLayer(summary['mapa'], Path(summary['mapa']).stem)
         if layer.isValid():
@@ -369,6 +363,9 @@ class MonitoringDialog(QDialog):
     def shutdown(self):
         """Descarga do plugin: cancela a tarefa e impede callbacks em janela destruída."""
         task, self._task = self._task, None
+        if self._progress_window is not None:
+            self._progress_window.close()
+            self._progress_window = None
         if task is not None:
             task.callback = None
             try:

@@ -15,6 +15,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import Qgis, QgsProject, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
 from .ui_shared import enable_table_copy, materialize_in_memory, temporary_destination
+from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 
 
 VECTOR_MONITORING_HINT = (
@@ -98,10 +99,10 @@ class VectorMonitoringDialog(QWidget):
         result_layout.addWidget(self.table, 1)
 
         commands = QHBoxLayout()
-        self.status = QLabel(tr('Selecione os polígonos e campos de classificação.'))
+        self.status = FooterStatus(tr('Selecione os polígonos e campos de classificação.'))
         self.status.setWordWrap(True)
-        commands.addWidget(self.status, 1)
-        self.run_button = QPushButton(tr('Executar monitoria'))
+        commands.addStretch(1)
+        self.run_button = QPushButton(tr(RUN_TEXT))
         self.run_button.clicked.connect(self.run)
         commands.addWidget(self.run_button)
         self.close_button = QPushButton(tr('Fechar'))
@@ -231,7 +232,7 @@ class VectorMonitoringDialog(QWidget):
         self.run_button.setEnabled(False)
         self.status.setText(tr('Executando interseção e cálculo das áreas…'))
         dialog = QProgressDialog(tr('Monitoria vetorial em execução…'), tr('Cancelar'), 0, 100, self)
-        dialog.setWindowTitle(tr('Vista Saga - Monitoria vetorial'))
+        dialog.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         dialog.setWindowModality(Qt.WindowModality.WindowModal)
         dialog.setMinimumDuration(0)
         dialog.setValue(0)
@@ -247,7 +248,8 @@ class VectorMonitoringDialog(QWidget):
                 final=self.after_select[4].text().strip() or 'Final',
                 title=self.title.text().strip(), progress=update,
                 cancelled=dialog.wasCanceled)
-            self.status.setText(tr('Monitoria vetorial concluída. GeoPackage, CSVs e TXT disponíveis.'))
+            report_outcome(self.status, 'Monitoria vetorial',
+                           tr('Monitoria vetorial concluída. GeoPackage, CSVs e TXT disponíveis.'), 'success')
             self._show_result(result)
             # O resultado é sempre carregado no QGIS: em memória, se não houver arquivo.
             uri = path + '|layername=monitoria_vetorial'

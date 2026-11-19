@@ -35,7 +35,7 @@ class RS2ConverterDialog(QDialog):
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
-        self.setWindowTitle(tr('Vista Saga Plugin - Conversor de formatos'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Conversor de Formatos'))
         self.setMinimumWidth(690)
         self.resize(750, 480)  # altura final ajustada ao conteúdo em _fit_height()
         self.setModal(False)
@@ -89,9 +89,13 @@ class RS2ConverterDialog(QDialog):
         self.source_button = QPushButton(tr('…'))
         self.source_button.setToolTip(tr('Selecionar arquivo no computador'))
         self.source_button.clicked.connect(self._browse_source)
+        # "Propriedades RS2…" inspeciona o arquivo de entrada: fica ao lado dele, não no rodapé (1.4.1).
+        self.inspect_button = QPushButton(tr('Propriedades RS2…'))
+        self.inspect_button.clicked.connect(self._inspect)
         source_row = QHBoxLayout()
         source_row.addWidget(self.source, 1)
         source_row.addWidget(self.source_button)
+        source_row.addWidget(self.inspect_button)
         self.source_label = QLabel(tr('Arquivo de entrada:'))
         single_form.addRow(self.source_label, source_row)
 
@@ -277,9 +281,6 @@ class RS2ConverterDialog(QDialog):
         self._outer, self._scroll, self._holder = outer, scroll, holder
 
         actions = QHBoxLayout()
-        self.inspect_button = QPushButton(tr('Propriedades RS2…'))
-        self.inspect_button.clicked.connect(self._inspect)
-        actions.addWidget(self.inspect_button)
         actions.addStretch(1)
         self.convert_button = QPushButton(tr('Executar'))
         self.convert_button.setDefault(True)
@@ -947,7 +948,7 @@ class RS2ConverterDialog(QDialog):
                 QMessageBox.warning(self, tr('Entrada TIFF'), tr(str(exc)))
                 return
         progress = QProgressDialog(tr('Convertendo mapas…'), tr('Cancelar'), 0, 100, self)
-        progress.setWindowTitle(tr('Vista Saga Plugin - conversor'))
+        progress.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         progress.setMinimumDuration(0)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.show()

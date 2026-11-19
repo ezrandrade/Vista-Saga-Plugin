@@ -31,7 +31,6 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
     START_STATUS = 'Adicione duas ou mais camadas com SRC igual e área comum.'
     RESULT_PREFIX = 'avaliacao_sobreposicao'
     RESULT_NAME = 'Vista Saga - Avaliação por sobreposição'
-    RUN_TEXT = 'Executar sobreposição e avaliação'
 
     def _build(self):
         super()._build()

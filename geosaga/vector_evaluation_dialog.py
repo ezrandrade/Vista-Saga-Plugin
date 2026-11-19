@@ -23,6 +23,7 @@ from .ui_shared import (
     open_polygon_files, load_vector_source, score_spin, table_item, temporary_destination,
     vector_start_directory, weight_spin,
 )
+from .ui_shared import RUN_TEXT as STANDARD_RUN_TEXT, FooterStatus, report_outcome
 
 from .evaluation_config import (
     SUFFIX, apply_saved, pending_classes, build_config, config_path_for, read_config, write_config,
@@ -84,7 +85,7 @@ class VectorEvaluationDialog(QWidget):
     START_STATUS = 'Selecione um campo temático para iniciar.'
     RESULT_PREFIX = 'avaliacao_atributos'
     RESULT_NAME = 'Vista Saga - Avaliação vetorial'
-    RUN_TEXT = 'Executar avaliação'
+    RUN_TEXT = STANDARD_RUN_TEXT  # rodapé padrão (1.4.1)
 
     def __init__(self, iface, parent=None, embedded=False):
         super().__init__(parent)
@@ -203,10 +204,11 @@ class VectorEvaluationDialog(QWidget):
         root.addWidget(self.output.group)
 
         foot = QHBoxLayout()
-        self.status = QLabel(tr(self.START_STATUS))
+        self.status = FooterStatus(tr(self.START_STATUS))
         self.status.setWordWrap(True)
-        foot.addWidget(self.status, stretch=1)
-        foot.addWidget(button('Validar', self.validate_configuration))
+        foot.addStretch(1)
+        self.validate_button = button('Validar', self.validate_configuration)
+        foot.addWidget(self.validate_button)
         self.run_button = button(self.RUN_TEXT, self.execute)
         foot.addWidget(self.run_button)
         self.close_button = button('Fechar', self._close_form)
@@ -605,7 +607,7 @@ class VectorEvaluationDialog(QWidget):
             filename += SUFFIX
         try:
             self.project_path = self._write_config(filename)
-            self.status.setText(tr('Projeto salvo: ') + filename)
+            report_outcome(self.status, 'Avaliação', tr('Projeto salvo: ') + filename, 'success', self.iface)
         except (ValueError, OSError) as exc:
             QMessageBox.warning(self, tr('Vista Saga'), tr(f'Falha ao salvar projeto:\n{exc}'))
 
@@ -650,7 +652,8 @@ class VectorEvaluationDialog(QWidget):
         problems = self._restore(saved['criterios'])
         self.project_path = path
         restored = len(self.criteria)
-        self.status.setText(tr('Projeto carregado: {count} critério(s).').format(count=restored))
+        report_outcome(self.status, 'Avaliação', tr('Projeto carregado: {count} critério(s).').format(count=restored),
+                       'success', self.iface)
         if problems:
             QMessageBox.warning(self, tr('Projeto carregado com pendências'), '\n'.join(problems))
 
@@ -759,6 +762,7 @@ class VectorEvaluationDialog(QWidget):
             self.run_button.setEnabled(False)
             self.close_button.setEnabled(False)
             progress = QProgressDialog(tr('Calculando notas das feições…'), tr('Cancelar'), 0, 100, self)
+            progress.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
             progress.setMinimumDuration(0)
             progress.setWindowModality(Qt.WindowModality.WindowModal)
 

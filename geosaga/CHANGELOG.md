@@ -1,3 +1,28 @@
+## 1.4.1 — Rodapé padrão em todos os módulos (2026-11-19)
+
+- **Botão de ação "Executar" em todos os módulos** (antes: "Calcular assinatura", "Executar monitoria",
+  "Executar avaliação", "Executar sobreposição e avaliação", "Gerar Voronoi", "Combinar mapas", "Gerar GIF";
+  o Conversor de Formatos já usava "Executar"). Pedido do autor.
+- **Rodapé padrão: [Executar] [Fechar]**, com **[Validar] só na Avaliação** (única exceção, decisão do
+  autor), sempre fora das guias. Na Monitoria (guia Vetorial) e na Avaliação (guias vetoriais), os botões do
+  formulário da guia passaram para o rodapé da janela; antes ficavam numa linha própria ou no fim da área
+  com rolagem.
+- **Sem linha de status, barra de progresso ou Cancelar fixos no rodapé** (Monitoria raster e Avaliação
+  raster tinham barra e/ou Cancelar permanentes). O progresso e o Cancelar aparecem numa janela só durante
+  a execução, como já era em Voronoi, Combinação, Assinatura, Conversor e Sequenciador. O desfecho
+  (concluída, cancelada, prévia limitada) vai para a barra de mensagens do QGIS; falhas continuam em
+  caixas de mensagem.
+- **Conversor de Formatos:** "Propriedades RS2…" saiu do rodapé para junto do campo "Arquivo de entrada",
+  que é o arquivo que ele inspeciona.
+- **Títulos das janelas (dev2):** "Vista Saga Plugin - Conversor de Formatos", como no menu (antes,
+  "formatos" em minúscula); as janelas de progresso de todos os módulos usam o título da janela do módulo
+  (antes, "Vista Saga - Assinatura", "Vista Saga Plugin - conversor", "Vista Saga - Monitoria vetorial" ou
+  nenhum título próprio).
+- **Sequenciador de Mapas (dev3):** a área das guias passa a ter a altura da guia aberta. Antes, tinha a
+  altura da maior guia (Mista), e a guia Raster ficava com um espaço vazio grande abaixo dos botões de
+  adicionar, alongando a barra de rolagem (área das guias: 334 → 122 px na guia Raster).
+- Nenhum cálculo alterado. Testes: `test_160_rodape_padrao.py`, `test_161_sequenciador_guias.py`.
+
 ## 1.4.0 — Voronoi fiel ao Vista SAGA e atrito vetorial (2026-11-19)
 
 - **Mudança de método, validada contra o Vista SAGA original** (caso sintético de 80 × 60

@@ -22,6 +22,7 @@ from qgis.core import (
 from qgis.gui import QgsMapLayerComboBox
 
 from .ui_shared import use_tab_background, temporary_destination, materialize_in_memory
+from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .voronoi_core import Generator
 from .voronoi_engine import grid_from_extent, run_voronoi
 from .voronoi_vector import save_vector_voronoi
@@ -391,10 +392,10 @@ class VoronoiDialog(QDialog):
             self.output_edits.append(edit)
         self.tabs.currentChanged.connect(self._tab_changed)
         control = QHBoxLayout()
-        self.status = QLabel(tr('Selecione a camada de pontos geradores.'))
+        self.status = FooterStatus(tr('Selecione a camada de pontos geradores.'))
         self.status.setWordWrap(True)
-        control.addWidget(self.status, 1)
-        self.run_button = QPushButton(tr('Gerar Voronoi'))
+        control.addStretch(1)
+        self.run_button = QPushButton(tr(RUN_TEXT))
         self.run_button.clicked.connect(self._run)
         control.addWidget(self.run_button)
         self.close_button = QPushButton(tr('Fechar'))
@@ -912,6 +913,7 @@ class VoronoiDialog(QDialog):
         self.run_button.setEnabled(False)
         self.close_button.setEnabled(False)
         dialog=QProgressDialog(tr('Calculando áreas de influência…'),tr('Cancelar'),0,100,self)
+        dialog.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         dialog.setWindowModality(Qt.WindowModality.NonModal)
         dialog.setMinimumDuration(0)
         dialog.setAutoClose(False)
@@ -1092,7 +1094,7 @@ class VoronoiDialog(QDialog):
                                     f'{result["pixels_valid"]:,} pixels classificados.'))
             QMessageBox.information(self,tr('Voronoi concluído'),self._result_message(result))
         except InterruptedError:
-            self.status.setText(tr('Processamento cancelado; os dados de entrada foram preservados.'))
+            report_outcome(self.status, 'Análises Voronoi', tr('Processamento cancelado; os dados de entrada foram preservados.'), 'warning')
         except Exception as exc:
             log_exception()
             self.status.setText(tr('Falha na execução; revise os parâmetros.'))
@@ -1150,7 +1152,7 @@ class VoronoiDialog(QDialog):
             self.status.setText(tr('Falha na execução; revise os parâmetros.'))
             QMessageBox.critical(self, tr('Voronoi não concluído'), tr(task.error))
         else:
-            self.status.setText(tr('Processamento cancelado; dados de entrada preservados.'))
+            report_outcome(self.status, 'Análises Voronoi', tr('Processamento cancelado; dados de entrada preservados.'), 'warning')
 
     def shutdown(self):
         """Impede callback em janelas descartadas ao descarregar o plugin."""
