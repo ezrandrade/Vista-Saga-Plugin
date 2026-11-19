@@ -1,4 +1,4 @@
-## 1.4.2 — Sequenciador: guias com a mesma altura (em teste)
+## 1.4.2 — Sequenciador: guias com a mesma altura (2026-11-19)
 
 - **Sequenciador de Mapas: as guias Raster, Vetorial e Mista têm a mesma altura, compacta** (264 px no
   teste), decisão do autor. Na 1.4.1, a área das guias acompanhava a guia aberta: a lista "1. Sequência

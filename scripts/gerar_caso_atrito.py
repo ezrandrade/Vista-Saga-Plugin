@@ -3,7 +3,7 @@
 Uso: python scripts/gerar_caso_atrito.py PASTA_DE_SAIDA
 
 Cria teste_atrito.rs2, pontos_pixel.txt, pontos_utm.txt e mapa_previa.png (requer Pillow).
-O LEIA-ME com o roteiro está em docs/CONTEXTO_SESSOES.md. Os dados não representam lugar real.
+O LEIA-ME com o roteiro está em docs/CONTEXTO_SESSOES_HISTORICO_ate_1.4.2.md. Os dados não representam lugar real.
 """
 import sys, os
 import numpy as np

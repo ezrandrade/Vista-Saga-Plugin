@@ -1,6 +1,6 @@
-# Vista Saga Plugin 1.4.2 — notas da versão (em teste)
+# Vista Saga Plugin 1.4.2 — notas da versão
 
-> Versão em teste (19/11/2026). Inclui tudo da 1.4.1. **Só interface (Sequenciador de Mapas): nenhum
+> Versão estável (19/11/2026). Inclui tudo da 1.4.1. **Só interface (Sequenciador de Mapas): nenhum
 > código de cálculo foi alterado.**
 
 ## O que muda para quem usa
@@ -30,4 +30,6 @@ que movia a lista, ou da altura antiga com os textos, que deixava espaço vazio 
 - Suítes verdes; `test_161_sequenciador_guias.py` reescrito.
 - Janela aberta em QGIS 3.34 sem interface gráfica (não é o alvo): as três guias com 264 px e a barra de
   abas na mesma posição.
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev1`).
+- Teste do autor no QGIS 4: **versão homologada** (19/11/2026). Observação do autor: o espaçamento da guia
+  Raster pareceu igual ao de antes; a medição em QGIS 3.34 indica cerca de 140 px livres, contra cerca de
+  210 px na 1.4.0. Questão deixada pelo autor para outro momento.

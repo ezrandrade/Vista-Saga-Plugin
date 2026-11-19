@@ -127,7 +127,8 @@ essas bibliotecas faltam.
 
 ## Pendências registradas
 
-- **Contexto entre sessões:** leia `docs/CONTEXTO_SESSOES.md` no início de cada sessão e
+- **Contexto entre sessões:** leia `docs/CONTEXTO_SESSOES.md` no início de cada sessão (o histórico até a
+  1.4.2 está em `docs/CONTEXTO_SESSOES_HISTORICO_ate_1.4.2.md`) e
   atualize-o **a cada ação finalizada** (decisões, achados, pendências), com commit + push imediato
   e envio do arquivo ao autor (pedido do autor em 18/11/2026, após sessões bloqueadas sem registro).
   Mantenha a seção "Retomada rápida" sempre em dia. A versão válida é a do repositório.
