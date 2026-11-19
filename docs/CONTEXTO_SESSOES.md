@@ -74,7 +74,10 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   Vetorial) e Avaliação (guias vetoriais) trazem os botões do formulário embutido para o rodapé da janela
   (visibilidade por guia); Conversor: "Propriedades RS2…" ao lado do arquivo de entrada. Nenhum cálculo
   alterado. Suítes 472 (3 pulados) + 42; janelas capturadas em QGIS 3.34 offscreen. ZIP
-  `Vista_Saga_Plugin_QGIS4_v1.4.1-dev1.zip`. Pendente: teste do autor no QGIS 4.
+  `Vista_Saga_Plugin_QGIS4_v1.4.1-dev1.zip`. **PR:**
+  [ezrandrade/Vista-Saga-Plugin#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14), base
+  `feat/voronoi-atrito-fiel` (depende do #13; depois do merge do #13, mudar a base para `main`).
+  Pendente: teste do autor no QGIS 4.
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
