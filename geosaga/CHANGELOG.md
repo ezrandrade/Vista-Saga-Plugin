@@ -61,6 +61,8 @@
 - Scripts de validação: `scripts/gerar_caso_atrito.py`, `scripts/comparar_caso_atrito.py`,
   `scripts/comparar_vetor_plugin.py`, `scripts/comparar_caso_bacia.py` (critérios de comparabilidade).
 - Guia Vetorial: vetor direto nas quatro modalidades (antes, com atrito, poligonização da grade).
+- Interface do Voronoi sem menções ao Vista SAGA (introdução e notas de método, em português, inglês e
+  espanhol), a pedido do autor; relatórios, notas da versão e documentação mantêm a descrição da validação.
 
 ## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (2026-11-17)
 

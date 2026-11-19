@@ -92,6 +92,9 @@ o que a conferência automática denunciou com 25% de divergência), conferênci
 regiões e execução em segundo plano, com porcentagem e botão Cancelar. O caso real leva cerca de
 2 minutos, com conferência sem divergências; as áreas coincidem com o modelo calculado ponto a ponto.
 
+**Interface:** a introdução e as notas de método da janela do Voronoi não mencionam o Vista SAGA (pedido
+do autor, 19/11/2026); a validação continua descrita nestas notas e nos relatórios `_resumo.txt`.
+
 **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução escolhidas),
 pela regra do centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA.
 

@@ -173,7 +173,7 @@ class VoronoiVectorTask(QgsTask):
 
 
 class VoronoiDialog(QDialog):
-    """Quatro modalidades no modelo do Vista SAGA; atrito raster ou vetorial (1.4.0)."""
+    """Quatro modalidades (massa como M/d²); atrito raster ou vetorial (1.4.0)."""
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
@@ -209,8 +209,8 @@ class VoronoiDialog(QDialog):
             self.tabs.addTab(scroll, tr(title))
             self._pages.append(body)
         content_layout = self._pages[0]
-        self.intro = _WrapLabel(tr('Delimite áreas de influência: Simples, com Massa, com Atrito e com Massa e Atrito, '
-                            'nos modelos do Vista SAGA original (massa como M/d²).'))
+        self.intro = _WrapLabel(tr('Delimite áreas de influência: Simples, com Massa, com Atrito e com Massa e Atrito '
+                            '(massa como M/d²).'))
         self.intro.setWordWrap(True)
         content_layout.addWidget(self.intro)
 
@@ -662,16 +662,16 @@ class VoronoiDialog(QDialog):
         self._update_extent()
         if friction:
             if weighted:
-                self.method_note.setText(tr('Com Massa e Atrito (modelo do Vista SAGA): menor custo acumulado '
+                self.method_note.setText(tr('Com Massa e Atrito: menor custo acumulado '
                                             '(distância ao polo × nota × passo, na reta polo-célula) dividido '
                                             'pela massa, o que equivale a M/d²; células sem nota ficam sem '
                                             'resultado e são atravessadas com nota 1.'))
             else:
-                self.method_note.setText(tr('Com Atrito (modelo do Vista SAGA): menor custo acumulado '
+                self.method_note.setText(tr('Com Atrito: menor custo acumulado '
                                             '(distância ao polo × nota × passo, na reta polo-célula); '
                                             'células sem nota ficam sem resultado e são atravessadas com nota 1.'))
         elif weighted:
-            self.method_note.setText(tr('Com Massa: maximiza M/d², como no Vista SAGA; selecione campo numérico positivo.'))
+            self.method_note.setText(tr('Com Massa: maximiza M/d²; selecione campo numérico positivo.'))
         else:
             self.method_note.setText(tr('Simples: menor distância euclidiana; sem massa nem atrito.'))
         self._update_output()

@@ -54,8 +54,13 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   PR #13 e tag `v1.4.0` (o proxy das sessões recusa tags).
 - **Tempos medidos pelo autor no QGIS 4 (dev6, dados reais, 19/11):** vetor direto Com Atrito 1 min 50 s,
   Com Massa e Atrito 1 min 40 s; raster Com Atrito 3 min 40 s, Com Massa e Atrito 5 min 25 s.
-- **Pedido do autor (19/11):** remover das descrições tudo que remete ao modelo do Vista SAGA (escopo em
-  definição com o autor; reabre o fechamento da 1.4.0).
+- **Pedido do autor (19/11), escopo escolhido por ele:** só a **interface** do plugin, retirando todas as
+  menções ao Vista SAGA (inclusive as de validação). Feito na janela do Voronoi: introdução e as três
+  notas de método (pt, en, es). Ficam como estão (fora do escopo pedido): relatórios `_resumo.txt`,
+  `metadata.txt`, CHANGELOG, notas da versão, comentários do código e metadados do GeoTIFF; os outros
+  módulos usam "Vista SAGA" como nome de formato (RS2, relatório TXT), não de modelo. A chave antiga
+  "Os modelos que utilizam atrito ainda exigem validação com o Vista SAGA original" continua nos catálogos,
+  sem uso no código. ZIP final 1.4.0 refeito.
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
