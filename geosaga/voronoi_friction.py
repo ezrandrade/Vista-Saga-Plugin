@@ -20,7 +20,7 @@ Validação caixa-preta contra o Vista SAGA original (caso sintético de 80 × 6
 99,67% das células sem massa e 99,69% com massa; as diferenças ficam todas na fronteira entre
 regiões (detalhe do traçado). Segundo caso, independente (bacia real, 495 × 1.107 células de 10 m, 10
 polos, 19/11/2026): 99,59% sem massa e 99,61% com massa (99,46% / 99,42% dentro da bacia), 95-98% das
-diferenças na fronteira. Ver docs/CONTEXTO_SESSOES.md, scripts/comparar_caso_atrito.py e
+diferenças na fronteira. Ver docs/CONTEXTO_SESSOES_HISTORICO_ate_1.4.2.md, scripts/comparar_caso_atrito.py e
 scripts/comparar_caso_bacia.py.
 """
 import math

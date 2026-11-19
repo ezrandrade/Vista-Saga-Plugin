@@ -1,3 +1,14 @@
+## 1.4.2 — Sequenciador: guias com a mesma altura (2026-11-19)
+
+- **Sequenciador de Mapas: as guias Raster, Vetorial e Mista têm a mesma altura, compacta** (264 px no
+  teste), decisão do autor. Na 1.4.1, a área das guias acompanhava a guia aberta: a lista "1. Sequência
+  de quadros" subia e descia ao trocar de guia, e nas guias Vetorial e Mista a barra de abas descia
+  18 px (o Qt calculava a altura do texto quebrado pela maior guia).
+- Os **textos explicativos das guias Vetorial e Mista viraram dicas** (passar o mouse sobre a aba ou o
+  botão de gerar quadros); sem eles, a maior guia baixou de 334 para 264 px, e a guia Raster fica com
+  menos espaço livre que na 1.4.0 (cerca de 140 px, antes cerca de 210).
+- Nenhum cálculo alterado. Teste: `test_161_sequenciador_guias.py` (reescrito).
+
 ## 1.4.1 — Rodapé padrão em todos os módulos (2026-11-19)
 
 - **Botão de ação "Executar" em todos os módulos** (antes: "Calcular assinatura", "Executar monitoria",
