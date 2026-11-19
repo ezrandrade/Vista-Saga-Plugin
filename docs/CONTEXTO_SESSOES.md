@@ -30,6 +30,10 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
 
 ### Estado em 19/11 (sessão 4) — o que retomar primeiro
 
+- **dev6 testada e APROVADA pelo autor no QGIS 4 (19/11).**
+- **Decisão do autor (19/11):** o Voronoi com atrito precisa ser comparável ao Vista SAGA, mas não
+  precisa coincidir 100%. Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
+  na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
   erro de abertura do arquivo de pontos. Notas 1, 1, 3, 5 (FUNDO, Classe 1, Classe 3, Classe 5).
 - **Bacia em 5 m (990 × 2.214), Simples e Com Massa: 100% de coincidência com o plugin** (2.191.850 células,
@@ -114,7 +118,7 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
 
 M/d²; atrito vetorial só pela coluna; guia Vetorial com modelo contínuo; verificação automática com
 correção (opção 1); campo de espaçamento removido; tolerância 0,5 m (mapas 1:10.000, EP 3 m no PEC
-Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável com nota 1; (dev6) Raster
+Classe A); nota 0 bloqueada; sem legado 1.3; área sem polígono atravessável com nota 1; (dev6, aprovada em 19/11) Raster
 recorta pela bacia, partes < 25 m² só informadas, NoData do atrito atravessável com nota 1.
 
 ### Próximos passos
