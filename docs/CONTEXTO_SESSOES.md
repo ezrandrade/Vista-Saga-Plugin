@@ -52,6 +52,10 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   bacia; `scripts/comparar_caso_bacia.py` + teste; `CLAUDE.md` com o critério. Suítes 465 (3 pulados) +
   42. ZIP final `dist/Vista_Saga_Plugin_QGIS4_v1.4.0.zip` enviado ao autor. **Falta (autor):** merge do
   PR #13 e tag `v1.4.0` (o proxy das sessões recusa tags).
+- **Tempos medidos pelo autor no QGIS 4 (dev6, dados reais, 19/11):** vetor direto Com Atrito 1 min 50 s,
+  Com Massa e Atrito 1 min 40 s; raster Com Atrito 3 min 40 s, Com Massa e Atrito 5 min 25 s.
+- **Pedido do autor (19/11):** remover das descrições tudo que remete ao modelo do Vista SAGA (escopo em
+  definição com o autor; reabre o fechamento da 1.4.0).
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
