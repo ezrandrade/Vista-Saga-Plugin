@@ -57,7 +57,19 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   99,463% (bacia); Com Massa e Atrito 99,606% / 99,419%; 20 m: 99,27% / 99,31% (retângulo). 95-98% das
   divergências na fronteira entre regiões do Vista SAGA; manchas de até 25 células (10 m); diferenças de
   área na bacia ≤ 1,4 ha (10 m). Coerente com o caso sintético (99,67% / 99,69%). Tempo do plugin:
-  56 s / 78 s (10 m). Guia Vetorial sobre o RS2 poligonizado: em cálculo.
+  56 s / 78 s (10 m).
+- **Guia Vetorial (modelo contínuo) × Vista SAGA, caso de 10 m poligonizado** (608 polígonos em degrau,
+  FUNDO com nota 1; 249 s / 202 s; conferência 0 divergências): Com Atrito 98,80% (retângulo) / 99,29%
+  (bacia); Com Massa e Atrito 98,65% / 99,06%. Soma |dif.| de área na bacia: vetor 7,5 / 12,1 ha
+  (máx 1,7 / 3,7 ha), raster 4,1 / 6,1 ha (máx 1,4 / 1,3 ha). Manchas grandes (até 2.193 células) fora
+  da bacia, a 1-2,4 km, piorando com a distância (vetor 97,2-97,4% a > 1 km; raster 99,7-99,9%):
+  interpretação (não demonstrada) = termo de discretização da soma célula a célula do Vista SAGA
+  (≈ D·passo/2, depende da direção), que o modelo contínuo não tem, amplificado longe dos polos.
+  Dentro da bacia, com massa, as maiores manchas são Jacintinho (VS e raster) × Poço (vetor) no sul:
+  mesmo padrão da divergência de 15-20 ha da dev5 → **nessa divergência, o Vista SAGA fica com a guia
+  Raster.** Conclusão: guia Raster = reprodução fiel do Vista SAGA; guia Vetorial = mesmo modelo no
+  limite contínuo (independente da grade), a declarar como tal. Decisão do autor pendente: qual guia usar
+  na tese e como justificar (fidelidade ao Vista SAGA × independência da resolução).
 
 ### Estado na pausa (sessão 3) — o que retomar
 
