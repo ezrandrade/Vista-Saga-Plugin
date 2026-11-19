@@ -26,6 +26,7 @@ from qgis.gui import QgsMapLayerComboBox
 from .gif_codec import encode_gif
 from .sequence_plan import extract_year, temporal_frames, safe_png_name
 from .ui_shared import use_tab_background, choose_project_layers
+from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .errors import log_exception
 
 
@@ -149,10 +150,10 @@ class ImageSequenceDialog(QDialog):
         root.addWidget(output)
 
         bottom = QHBoxLayout()
-        self.status = QLabel(tr('Adicione pelo menos dois quadros.'))
+        self.status = FooterStatus(tr('Adicione pelo menos dois quadros.'))
         self.status.setWordWrap(True)
-        bottom.addWidget(self.status, 1)
-        self.run_button = QPushButton(tr('Gerar GIF'))
+        bottom.addStretch(1)
+        self.run_button = QPushButton(tr(RUN_TEXT))
         self.run_button.clicked.connect(self._run)
         bottom.addWidget(self.run_button)
         self.close_button = QPushButton(tr('Fechar'))
@@ -671,8 +672,9 @@ class ImageSequenceDialog(QDialog):
                             else 'Paleta GIF preservada.'))
             QMessageBox.information(self, tr('Sequenciador de Mapas'), '\n'.join(lines))
         except InterruptedError:
-            self.status.setText(tr('Exportação cancelada. {0} PNGs podem permanecer na pasta de '
-                                   'destino; dados do projeto preservados.').format(len(png_paths)))
+            report_outcome(self.status, 'Sequenciador de Mapas',
+                           tr('Exportação cancelada. {0} PNGs podem permanecer na pasta de '
+                              'destino; dados do projeto preservados.').format(len(png_paths)), 'warning')
         except Exception as exc:
             log_exception()
             self.status.setText(tr('Falha na exportação; dados do projeto preservados.'))

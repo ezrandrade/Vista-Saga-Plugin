@@ -19,6 +19,7 @@ from qgis.core import (Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer,
 from qgis.gui import QgsMapLayerComboBox
 
 from .ui_shared import choose_project_layers, materialize_in_memory, temporary_destination
+from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .errors import log_exception
 
 
@@ -150,10 +151,10 @@ class CombinationDialog(QDialog):
             body.addWidget(output_group)
             body.addStretch(1)
         control = QHBoxLayout()
-        self.status = QLabel(tr('Adicione pelo menos dois mapas para combinar.'))
+        self.status = FooterStatus(tr('Adicione pelo menos dois mapas para combinar.'))
         self.status.setWordWrap(True)
-        control.addWidget(self.status,1)
-        self.start = QPushButton(tr('Combinar mapas'))
+        control.addStretch(1)
+        self.start = QPushButton(tr(RUN_TEXT))
         self.start.clicked.connect(self.run)
         control.addWidget(self.start)
         self.close_button = QPushButton(tr('Fechar'))
@@ -479,8 +480,8 @@ class CombinationDialog(QDialog):
                      tr('arquivo temporário') if temporary else dest)
             self.status.setText(tr('Concluído: {count} combinações. Resultado: {where}.').format(
                 count=result['combinations'], where=where))
-            message = tr(f"Combinações observadas: {result['combinations']}\n"
-                         f"Relatórios: {result['csv']} e {result['txt']}")
+            message = self.status.text() + '\n\n' + tr(f"Combinações observadas: {result['combinations']}\n"
+                                                        f"Relatórios: {result['csv']} e {result['txt']}")
             slivers = [s for s in result.get('slivers', ()) if s['count']]
             if slivers:
                 message += '\n\n' + tr('Lascas toleradas (largura média abaixo de 1 cm), registradas no resumo:')
@@ -496,7 +497,7 @@ class CombinationDialog(QDialog):
                         residues['removed'], f"{residues['removed_m2']:.4f}")
             QMessageBox.information(self,tr('Combinação concluída'), message)
         except InterruptedError:
-            self.status.setText(tr('Processamento cancelado, sem alterar as entradas.'))
+            report_outcome(self.status, 'Combinação de Mapas', tr('Processamento cancelado, sem alterar as entradas.'), 'warning')
         except Exception as exc:
             log_exception()
             QMessageBox.critical(self,tr('Falha na combinação'),tr(str(exc)))

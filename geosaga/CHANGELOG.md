@@ -1,3 +1,21 @@
+## 1.4.1 — Rodapé padrão em todos os módulos (em teste)
+
+- **Botão de ação "Executar" em todos os módulos** (antes: "Calcular assinatura", "Executar monitoria",
+  "Executar avaliação", "Executar sobreposição e avaliação", "Gerar Voronoi", "Combinar mapas", "Gerar GIF";
+  o Conversor de Formatos já usava "Executar"). Pedido do autor.
+- **Rodapé padrão: [Executar] [Fechar]**, com **[Validar] só na Avaliação** (única exceção, decisão do
+  autor), sempre fora das guias. Na Monitoria (guia Vetorial) e na Avaliação (guias vetoriais), os botões do
+  formulário da guia passaram para o rodapé da janela; antes ficavam numa linha própria ou no fim da área
+  com rolagem.
+- **Sem linha de status, barra de progresso ou Cancelar fixos no rodapé** (Monitoria raster e Avaliação
+  raster tinham barra e/ou Cancelar permanentes). O progresso e o Cancelar aparecem numa janela só durante
+  a execução, como já era em Voronoi, Combinação, Assinatura, Conversor e Sequenciador. O desfecho
+  (concluída, cancelada, prévia limitada) vai para a barra de mensagens do QGIS; falhas continuam em
+  caixas de mensagem.
+- **Conversor de Formatos:** "Propriedades RS2…" saiu do rodapé para junto do campo "Arquivo de entrada",
+  que é o arquivo que ele inspeciona.
+- Nenhum cálculo alterado. Teste: `test_160_rodape_padrao.py`.
+
 ## 1.4.0 — Voronoi fiel ao Vista SAGA e atrito vetorial (2026-11-19)
 
 - **Mudança de método, validada contra o Vista SAGA original** (caso sintético de 80 × 60

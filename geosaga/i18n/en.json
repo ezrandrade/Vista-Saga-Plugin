@@ -1571,5 +1571,6 @@
   "Atrito vetorial: os polígonos são convertidos em notas na grade da análise (extensão e resolução escolhidas), pelo centro de cada célula; área sem polígono e coluna vazia: sem resultado, atravessadas com nota 1. O resultado segue essa grade.": "Vector friction: the polygons are converted into ratings on the analysis grid (chosen extent and cell size), by the centre of each cell; area without polygon and empty column: no result, crossed with rating 1. The result follows that grid.",
   "GDAL sem driver vetorial em memória para o recorte pela área de estudo.": "GDAL has no in-memory vector driver for clipping to the study area.",
   "Nenhuma célula da grade tem o centro dentro da área de estudo; use células menores.": "No grid cell has its centre inside the study area; use smaller cells.",
-  "Área de estudo vazia ou inválida.": "Empty or invalid study area."
+  "Área de estudo vazia ou inválida.": "Empty or invalid study area.",
+  "Avaliação em execução…": "Evaluation running…"
 }

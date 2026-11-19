@@ -89,9 +89,13 @@ class RS2ConverterDialog(QDialog):
         self.source_button = QPushButton(tr('…'))
         self.source_button.setToolTip(tr('Selecionar arquivo no computador'))
         self.source_button.clicked.connect(self._browse_source)
+        # "Propriedades RS2…" inspeciona o arquivo de entrada: fica ao lado dele, não no rodapé (1.4.1).
+        self.inspect_button = QPushButton(tr('Propriedades RS2…'))
+        self.inspect_button.clicked.connect(self._inspect)
         source_row = QHBoxLayout()
         source_row.addWidget(self.source, 1)
         source_row.addWidget(self.source_button)
+        source_row.addWidget(self.inspect_button)
         self.source_label = QLabel(tr('Arquivo de entrada:'))
         single_form.addRow(self.source_label, source_row)
 
@@ -277,9 +281,6 @@ class RS2ConverterDialog(QDialog):
         self._outer, self._scroll, self._holder = outer, scroll, holder
 
         actions = QHBoxLayout()
-        self.inspect_button = QPushButton(tr('Propriedades RS2…'))
-        self.inspect_button.clicked.connect(self._inspect)
-        actions.addWidget(self.inspect_button)
         actions.addStretch(1)
         self.convert_button = QPushButton(tr('Executar'))
         self.convert_button.setDefault(True)

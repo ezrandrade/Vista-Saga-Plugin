@@ -6,7 +6,7 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4: 1.4.0 fechada; 1.4.1-dev1 em teste) <<<
 
 Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
 **A versão válida deste arquivo é a do repositório** (branch `feat/voronoi-atrito-fiel`); cópias guardadas
@@ -67,6 +67,14 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   exceção); progresso e Cancelar numa janela que aparece só durante a execução (como Voronoi e
   Combinação), saindo a barra e o Cancelar fixos do rodapé (Monitoria raster, Avaliação raster); a linha de
   status à esquerda do rodapé sai.
+- **1.4.1-dev1 implementada (19/11, branch `feat/interface-padrao`, a partir da `feat/voronoi-atrito-fiel`):**
+  `ui_shared`: `RUN_TEXT = 'Executar'`, `FooterStatus` (substitui a linha de status, guarda o texto sem
+  exibir), `report_outcome` (desfecho na barra de mensagens do QGIS), `TaskProgressWindow` (janela de
+  progresso com Cancelar ligada à QgsTask). Rodapé fora das guias em todos os módulos; Monitoria (guia
+  Vetorial) e Avaliação (guias vetoriais) trazem os botões do formulário embutido para o rodapé da janela
+  (visibilidade por guia); Conversor: "Propriedades RS2…" ao lado do arquivo de entrada. Nenhum cálculo
+  alterado. Suítes 472 (3 pulados) + 42; janelas capturadas em QGIS 3.34 offscreen. ZIP
+  `Vista_Saga_Plugin_QGIS4_v1.4.1-dev1.zip`. Pendente: teste do autor no QGIS 4.
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
