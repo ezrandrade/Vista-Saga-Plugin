@@ -6,7 +6,7 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 18/11/2026, PAUSA da sessão 3) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4) <<<
 
 Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
 **A versão válida deste arquivo é a do repositório** (branch `feat/voronoi-atrito-fiel`); cópias guardadas
@@ -27,6 +27,24 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
 - A **tese está fora destas sessões** (decisão do autor): não perguntar sobre mapas da tese.
 - **Protocolo (pedido do autor):** atualizar este arquivo a cada ação finalizada, commit + push imediato
   e envio do arquivo ao autor. No contêiner: `apt-get update` antes do `apt-get install`.
+
+### Estado em 19/11 (sessão 4) — o que retomar primeiro
+
+- **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
+  erro de abertura do arquivo de pontos. Notas 1, 1, 3, 5 (FUNDO, Classe 1, Classe 3, Classe 5).
+- **Bacia em 5 m (990 × 2.214), Simples e Com Massa: 100% de coincidência com o plugin** (2.191.850 células,
+  0 divergências, polos nas células do arquivo). Segundo caso independente que confirma M/d² e coluna:linha
+  a partir de 1.
+- **Com Atrito e Com Massa e Atrito em 5 m: saídas vazias.** Os dois RS2 são idênticos byte a byte;
+  495 × 1.107 células de 10 m (metade da grade), todas com o código 11 (fora da legenda), sem células
+  "Ponto". Tempo relatado ~5 s. Causa desconhecida (hipóteses: limite de tamanho da grade no atrito do
+  Vista SAGA de 32 bits, que reduz a grade sem converter os pontos; ou rodada abortada).
+- **Enviado ao autor:** `validacao_atrito.zip` com o caso em 10 m (495 × 1.107) e 20 m (247 × 553), gerado do
+  `Uso_Atrito_Reginaldo.rs2` (moda por bloco, empate → nota maior; pontos convertidos). Aguardando as saídas
+  (salvar Com Atrito e Com Massa e Atrito com nomes diferentes; anotar tempo, mensagens e tamanho).
+  Ao receber: rodar o plugin raster sobre o MESMO RS2 (grade idêntica) e o vetor direto sobre o RS2
+  poligonizado; comparar célula a célula. Leitor tolerante ao código 11: decodificar o RLE sem validar a
+  legenda (o `RS2Reader` recusa).
 
 ### Estado na pausa (sessão 3) — o que retomar
 
