@@ -47,6 +47,18 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   poligonizado; comparar célula a célula. Leitor tolerante ao código 11: decodificar o RLE sem validar a
   legenda (o `RS2Reader` recusa).
 
+- **Casos de 10 m e 20 m rodados no Vista SAGA (19/11):** 10 m = saída completa na mesma grade
+  (495 × 1.107), polos nas células do arquivo. 20 m = saída numa grade DOBRADA (494 × 1.106, rotulada
+  10 m): o cálculo (247 × 553) ocupa só o canto superior esquerdo, resto código 11. Com a falha em 5 m
+  (saída reduzida à metade, vazia), indica que o atrito do Vista SAGA grava numa grade de tamanho
+  próprio (~495 × 1.107 aqui) e só funciona quando a entrada tem esse tamanho. Achado empírico, causa
+  não confirmada; registrar como limitação do Vista SAGA original.
+- **Guia Raster do plugin × Vista SAGA (mesmo RS2, mesma grade):** 10 m Com Atrito 99,586% (retângulo),
+  99,463% (bacia); Com Massa e Atrito 99,606% / 99,419%; 20 m: 99,27% / 99,31% (retângulo). 95-98% das
+  divergências na fronteira entre regiões do Vista SAGA; manchas de até 25 células (10 m); diferenças de
+  área na bacia ≤ 1,4 ha (10 m). Coerente com o caso sintético (99,67% / 99,69%). Tempo do plugin:
+  56 s / 78 s (10 m). Guia Vetorial sobre o RS2 poligonizado: em cálculo.
+
 ### Estado na pausa (sessão 3) — o que retomar
 
 1. **Validação da bacia no Vista SAGA (prioridade; decide a divergência vetor × raster com atrito de
