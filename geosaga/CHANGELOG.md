@@ -18,7 +18,10 @@
   "formatos" em minúscula); as janelas de progresso de todos os módulos usam o título da janela do módulo
   (antes, "Vista Saga - Assinatura", "Vista Saga Plugin - conversor", "Vista Saga - Monitoria vetorial" ou
   nenhum título próprio).
-- Nenhum cálculo alterado. Teste: `test_160_rodape_padrao.py`.
+- **Sequenciador de Mapas (dev3):** a área das guias passa a ter a altura da guia aberta. Antes, tinha a
+  altura da maior guia (Mista), e a guia Raster ficava com um espaço vazio grande abaixo dos botões de
+  adicionar, alongando a barra de rolagem (área das guias: 334 → 122 px na guia Raster).
+- Nenhum cálculo alterado. Testes: `test_160_rodape_padrao.py`, `test_161_sequenciador_guias.py`.
 
 ## 1.4.0 — Voronoi fiel ao Vista SAGA e atrito vetorial (2026-11-19)
 

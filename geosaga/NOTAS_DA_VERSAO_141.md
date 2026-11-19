@@ -43,6 +43,13 @@ em caixas de mensagem.
   janela de progresso não bloqueia a janela do módulo; nos demais, bloqueia enquanto roda (diferença de
   arquitetura, mantida por decisão do autor).
 
+### Sequenciador de Mapas: guias sem espaço vazio (dev3)
+
+A área das guias tinha sempre a altura da maior guia (a Mista). Na guia Raster, que tem só a camada e
+os botões de adicionar, sobrava um espaço vazio grande abaixo dos botões, e a barra de rolagem ficava
+comprida. Agora cada guia ocupa só a altura do próprio conteúdo (Raster: 334 → 122 px; Vetorial e Mista,
+a altura que pedem).
+
 ## Decisões do autor (19/11/2026)
 
 - Botão de ação "Executar" em todos os módulos; "Validar" só na Avaliação (única exceção).
