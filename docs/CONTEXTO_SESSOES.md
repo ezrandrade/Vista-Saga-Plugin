@@ -83,6 +83,15 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   (não bloqueia nos módulos em segundo plano; bloqueia nos demais). Não auditado ainda: o miolo de cada
   módulo (grupos, rótulos, alinhamentos, textos de ajuda). Suítes 475 (3 pulados) + 42. ZIP
   `Vista_Saga_Plugin_QGIS4_v1.4.1-dev2.zip`. Pendente: teste do autor no QGIS 4.
+- **Pedidos do autor para a dev3 (19/11), Sequenciador de Mapas:** (a) espaço vazio abaixo dos botões da
+  guia Raster: FEITO (`CurrentPageTabs`: sizeHint e minimumSizeHint pela guia aberta, política vertical
+  Maximum; Raster 334 → 122 px; commit e183b86); (b) salvar a animação em **.jxl**: EM DECISÃO. Não há
+  codificador de JPEG XL animado no QGIS (GDAL JPEGXL só grava imagem única; Pillow não tem JXL nativo; Qt
+  sem plugin JXL). Opções apresentadas ao autor: codificador próprio em Python puro (sem perdas, modular),
+  programa externo (cjxl/ffmpeg) se instalado, ou quadros .jxl avulsos pelo GDAL. Suporte de navegadores
+  a JXL animado não confirmado.
+- **Compatibilidade com QGIS 3.44 LTR:** discutida e adiada pelo autor para a 2.0 (não registrar como
+  pendência ativa antes disso).
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
