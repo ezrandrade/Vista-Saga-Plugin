@@ -13,7 +13,7 @@ from qgis.PyQt.QtGui import QColor, QFont, QImage, QMovie, QPainter
 from qgis.PyQt.QtWidgets import (
     QAbstractItemView, QCheckBox, QComboBox, QDialog, QFileDialog, QFormLayout,
     QGroupBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QListWidget,
-    QMessageBox, QProgressDialog, QPushButton, QScrollArea, QSizePolicy, QSpinBox,
+    QMessageBox, QProgressDialog, QPushButton, QScrollArea, QSpinBox,
     QTabWidget, QVBoxLayout, QWidget,
 )
 from qgis.core import (
@@ -28,61 +28,6 @@ from .sequence_plan import extract_year, temporal_frames, safe_png_name
 from .ui_shared import use_tab_background, choose_project_layers
 from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .errors import log_exception
-
-
-class CurrentPageTabs(QTabWidget):
-    """Guias com a altura da guia aberta, não da maior (1.4.1).
-
-    O QTabWidget assume a altura da maior guia (no Sequenciador, a Mista): a guia Raster, curta, ficava
-    com um espaço vazio grande abaixo dos botões e alongava a barra de rolagem. Aqui a sugestão de
-    tamanho troca a altura da maior guia pela da guia aberta, e a política vertical "Maximum" impede
-    que a área cresça além disso.
-
-    Guias com texto quebrado em linhas (Vetorial, Mista) fazem o Qt usar heightForWidth, que também
-    toma a maior guia: a área recebia uma faixa mais alta e ficava centralizada nela, com a barra de abas
-    descendo. Por isso a altura que depende da largura entra na própria sugestão de tamanho (pela guia
-    aberta, na largura atual) e hasHeightForWidth fica desligado.
-    """
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
-        self.currentChanged.connect(lambda *_: self.updateGeometry())
-
-    def _page_height(self, page):
-        """Altura que a guia pede; com texto quebrado, na largura em que ela é (ou será) exibida."""
-        if page.hasHeightForWidth():
-            width = page.width() if page.isVisible() and page.width() > 0 else self.width() - 4
-            if width > 0:
-                return max(page.heightForWidth(width), page.minimumSizeHint().height())
-        return page.sizeHint().height()
-
-    def _current_page(self, hint, page_height):
-        current = self.currentWidget()
-        if current is None or not self.count():
-            return hint
-        tallest = max(page_height(self.widget(i)) for i in range(self.count()))
-        return QSize(hint.width(), hint.height() - tallest + page_height(current))
-
-    def sizeHint(self):
-        overhead = super().sizeHint().height() - max(self.widget(i).sizeHint().height() for i in range(self.count())) \
-            if self.count() else 0
-        hint = super().sizeHint()
-        current = self.currentWidget()
-        if current is None:
-            return hint
-        return QSize(hint.width(), overhead + self._page_height(current))
-
-    def minimumSizeHint(self):
-        return self._current_page(super().minimumSizeHint(), lambda page: page.minimumSizeHint().height())
-
-    def hasHeightForWidth(self):
-        return False
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        if event.size().width() != event.oldSize().width():
-            self.updateGeometry()   # o texto quebrado muda de altura com a largura
 
 
 class ImageSequenceDialog(QDialog):
@@ -120,10 +65,15 @@ class ImageSequenceDialog(QDialog):
         intro.setWordWrap(True)
         root.addWidget(intro)
 
-        self.tabs = CurrentPageTabs()
+        # Mesma altura nas três guias (1.4.2, decisão do autor): a do QTabWidget, que é a da maior guia;
+        # sem textos explicativos dentro das guias (viraram dicas), a maior guia ficou compacta e a
+        # lista de quadros abaixo fica sempre no mesmo lugar.
+        self.tabs = QTabWidget()
         self.tabs.addTab(self._raster_tab(), tr('Raster'))
         self.tabs.addTab(self._vector_tab(), tr('Vetorial'))
         self.tabs.addTab(self._mixed_tab(), tr('Misto'))
+        self.tabs.setTabToolTip(1, self.vector_hint)
+        self.tabs.setTabToolTip(2, self.mixed_hint)
         self.tabs.currentChanged.connect(self._switch_mode)
         root.addWidget(self.tabs)
 
@@ -264,11 +214,11 @@ class ImageSequenceDialog(QDialog):
         layout.addRow('', self.vector_cumulative)
         temporal_button = QPushButton(tr('Gerar quadros por valores do campo temporal'))
         temporal_button.clicked.connect(self._add_vector_temporal)
+        # Explicação como dica (1.4.2): as três guias ficam com a mesma altura, compacta.
+        self.vector_hint = tr('A opção temporal cria quadros a partir de uma única camada vetorial, '
+                              'sem alterar a camada original ou seus filtros no projeto.')
+        temporal_button.setToolTip(self.vector_hint)
         layout.addRow('', temporal_button)
-        explanation = QLabel(tr('A opção temporal cria quadros a partir de uma única camada vetorial, '
-                             'sem alterar a camada original ou seus filtros no projeto.'))
-        explanation.setWordWrap(True)
-        layout.addRow('', explanation)
         return page
 
     def _mixed_tab(self):
@@ -290,12 +240,12 @@ class ImageSequenceDialog(QDialog):
         layout.addRow('', self.mixed_cumulative)
         temporal_button = QPushButton(tr('Gerar quadros pelo campo temporal + fundo raster fixo'))
         temporal_button.clicked.connect(self._add_mixed_temporal)
-        layout.addRow('', temporal_button)
-        explanation = QLabel(tr('Quadros mistos sobrepõem o vetor ao raster. É possível construir '
+        self.mixed_hint = tr('Quadros mistos sobrepõem o vetor ao raster. É possível construir '
                              'uma série manual com diferentes pares ou usar um raster constante '
-                             'e um vetor filtrado por data.'))
-        explanation.setWordWrap(True)
-        layout.addRow('', explanation)
+                             'e um vetor filtrado por data.')
+        temporal_button.setToolTip(self.mixed_hint)
+        add_frame.setToolTip(self.mixed_hint)
+        layout.addRow('', temporal_button)
         return page
 
     def _mode(self):

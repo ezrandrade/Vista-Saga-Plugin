@@ -6,7 +6,7 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4: 1.4.0 e 1.4.1 fechadas; merges e tags com o autor) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4: 1.4.0 e 1.4.1 mescladas; 1.4.2-dev1 em teste) <<<
 
 Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
 **A versão válida deste arquivo é a do repositório** (branch `feat/voronoi-atrito-fiel`); cópias guardadas
@@ -22,7 +22,15 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
 - **Ordem com o autor:** merge do #13 → tag `v1.4.0` → base do #14 para `main` → merge do #14 → tag
   `v1.4.1` (o proxy das sessões recusa criar tags). `dist/` não é versionado: refazer o ZIP com
   `python3.12 scripts/build_release.py` (versões `-devN` só dentro do ZIP).
-- **Próxima versão planejada pelo autor: 2.0** (temas adiados para ela; não abrir antes do pedido).
+- **Merges feitos (19/11, pedido do autor):** PR #13 → `main` em `49056f9`; PR #14 → `main` em `5c6c876`.
+  **Tags a criar pelo autor:** `v1.4.0` = `49056f9`, `v1.4.1` = `5c6c876` (e `v1.3.0` = `87406de`).
+- **1.4.2-dev1 (19/11), branch `fix/sequenciador-guias` a partir da `main`:** Sequenciador com as três
+  guias da mesma altura, compacta (264 px; decisão do autor): textos explicativos de Vetorial e Misto
+  viraram dicas; QTabWidget padrão (saiu o `CurrentPageTabs` da 1.4.1, que movia a lista de quadros e,
+  com texto quebrado, deslocava a barra de abas 18 px). ZIP `Vista_Saga_Plugin_QGIS4_v1.4.2-dev1.zip`.
+  Pendente: teste do autor no QGIS 4.
+- **Próxima versão planejada pelo autor depois da 1.4.2: 2.0** (temas adiados para ela; não abrir antes do
+  pedido).
 - **Dados do autor** (uso do solo, bacia, centroides, RS2, saídas): só na sessão; nunca no repositório.
   Nesta sessão o autor enviou só o arquivo de pontos `pontos_reginaldo_vistasaga.txt` (10 polos, massas
   = população, inteiras); se precisar dele de novo, pedir.
