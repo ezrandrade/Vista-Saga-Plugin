@@ -28,6 +28,7 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   guias da mesma altura, compacta (264 px; decisão do autor): textos explicativos de Vetorial e Misto
   viraram dicas; QTabWidget padrão (saiu o `CurrentPageTabs` da 1.4.1, que movia a lista de quadros e,
   com texto quebrado, deslocava a barra de abas 18 px). ZIP `Vista_Saga_Plugin_QGIS4_v1.4.2-dev1.zip`.
+  PR [ezrandrade/Vista-Saga-Plugin#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) (base `main`).
   Pendente: teste do autor no QGIS 4.
 - **Próxima versão planejada pelo autor depois da 1.4.2: 2.0** (temas adiados para ela; não abrir antes do
   pedido).
