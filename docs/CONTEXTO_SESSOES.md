@@ -35,7 +35,16 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   precisa coincidir 100%. **Critério de comparabilidade aceito pelo autor (19/11):** (1) ≥ 99% das células
   da área de estudo iguais às do Vista SAGA na mesma grade; (2) ≥ 90% das divergências na fronteira entre
   regiões; (3) nenhuma região com diferença de área > 1% da própria área. Raster passa nos 3 (bacia 10 m);
-  Vetorial passa em 1 e 3, não em 2 (54-58%): versão contínua do método, usar declarando-a. Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
+  Vetorial passa em 1 e 3, não em 2 (54-58%): versão contínua do método, usar declarando-a.
+  **CORREÇÃO (19/11, `scripts/comparar_caso_bacia.py`, critérios calculados na área de estudo e região a
+  região):** a avaliação acima estava errada (o critério 2 tinha sido medido no retângulo e o 3 só pela
+  maior diferença absoluta). Resultado correto, bacia em 10 m:
+  Raster Com Atrito 99,463% / 97,2% / **1,33% (Mangabeiras, -1,15 ha de 86 ha): NÃO atende o 3**;
+  Raster Com Massa e Atrito 99,419% / 97,9% / 0,82%: atende; Vetorial Com Atrito 99,289% / 93,4% /
+  1,91% (Mangabeiras): não atende o 3; Vetorial Com Massa e Atrito 99,063% / 88,9% / 1,99% (Mangabeiras):
+  não atende o 2 nem o 3. Fechamento suspenso até decisão do autor (manter o critério e declarar a
+  falha, investigar a causa, ou rever o critério 3, com o risco de ajuste depois de ver os dados).
+  Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o
   erro de abertura do arquivo de pontos. Notas 1, 1, 3, 5 (FUNDO, Classe 1, Classe 3, Classe 5).
