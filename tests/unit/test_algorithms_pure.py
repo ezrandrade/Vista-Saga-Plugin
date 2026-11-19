@@ -54,7 +54,7 @@ def brute_force(generators, mode):
         best = None
         for g in generators:
             d2 = (x - g.x) ** 2 + (y - g.y) ** 2
-            score = d2 / g.mass ** 2 if mode == 'mass' else d2
+            score = d2 / g.mass if mode == 'mass' else d2  # M/d² (1.4.0)
             if best is None or score < best[0]:
                 best = (score, g.identifier)
         out[row, col] = best[1]

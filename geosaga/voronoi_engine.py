@@ -13,7 +13,7 @@ from collections import Counter
 
 import numpy as np
 from .voronoi_friction import (validate_friction, assign_friction_window,
-                               MAX_FRICTION_CELLS)
+                               MAX_FRICTION_CELLS, FRICTION_MODEL, MASS_FRICTION_MODEL)
 from .voronoi_output import (DEFAULT_EXTENSION, LAYER_NAME, VECTOR_FORMATS, export_vector,
                              publish_outputs, vector_extension)
 from .voronoi_core import (assign_window, assign_window_nearest,
@@ -48,7 +48,7 @@ def grid_from_extent(bounds, resolution, *, margin_pixels=8):
     return (minx, resolution, 0., maxy, 0., -resolution), width, height
 
 
-def _write_reports(csv_path, txt_path, mode, rows, excluded, pixel_area):
+def _write_reports(csv_path, txt_path, mode, rows, excluded, pixel_area, passage_note=None, study_cells=None):
     with open(csv_path, 'w', encoding='utf-8-sig', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=['ID','CENTRO','MASSA','PIXELS','AREA_M2','AREA_HA','PCT_AREA'], delimiter=';')
         writer.writeheader()
@@ -57,24 +57,35 @@ def _write_reports(csv_path, txt_path, mode, rows, excluded, pixel_area):
         f.write('Vista Saga Plugin - Análises Voronoi\n')
         f.write(f'Modalidade: {"Com Massa e Atrito" if mode == "mass_friction" else ("Com Atrito" if mode == "friction" else ("Com Massa" if mode == "mass" else "Simples"))}\n')
         if mode in ('friction','mass_friction'):
-            f.write('Critério experimental: minimizar distância euclidiana × soma (1 + atrito)\n'
-                    'ao longo das células atravessadas pelo segmento reto centro→pixel.\n'
-                    'Atrito zero = custo basal 1; NoData no caminho = barreira.\n'
-                    'Não é percurso de custo mínimo. Não validado numericamente no Vista SAGA original.\n')
+            f.write('Critério (modelo do Vista SAGA): menor custo acumulado A = soma de\n'
+                    'distância ao polo × nota × passo (diagonal = √2) nas células da reta polo-célula.\n'
+                    'A nota entra direto como custo (nota 1 = custo basal).\n'
+                    'Não é percurso de custo mínimo. Validado contra o Vista SAGA original, célula a célula:\n'
+                    '99,7% das células no caso sintético e 99,4% a 99,6% numa bacia real (grade de 10 m);\n'
+                    'as diferenças ficam na fronteira entre regiões.\n')
+            if passage_note:
+                f.write(passage_note + '\n')
             if mode == 'mass_friction':
-                f.write('Com massa: cada índice D × soma(1 + atrito) é dividido pela massa positiva do gerador.\n')
+                f.write('Com massa: o custo A é dividido pela massa do polo (equivale a M / d²).\n')
+        elif mode == 'mass':
+            f.write('Critério (modelo do Vista SAGA): maior M / d², isto é, menor distância euclidiana\n'
+                    'dividida pela raiz quadrada da massa do polo.\n')
         else:
-            f.write('Critério: menor distância euclidiana' +
-                    (' dividida pela massa positiva do ponto' if mode == 'mass' else '') + '\n')
+            f.write('Critério: menor distância euclidiana\n')
         f.write('Critério de empate: primeiro ponto da lista.\n')
         f.write(f'Área de pixel: {pixel_area:.9f} m²\n')
-        f.write(f'Pixels excluídos por máscara: {excluded}\n\n')
+        if study_cells is not None:
+            f.write(f'Recorte pela área de estudo (camada poligonal, regra do centro da célula): '
+                    f'{study_cells} pixels dentro; os de fora ficam sem resultado'
+                    + (' (no atrito, continuam atravessáveis com a própria nota)' if mode in ('friction', 'mass_friction') else '')
+                    + '.\n')
+        f.write(f'Pixels sem resultado (fora da área de estudo, sem nota de atrito ou sem polo): {excluded}\n\n')
         f.write('ID | Centro | Massa | Pixels | Área (ha) | % área avaliada\n')
         for item in rows:
             f.write(f"{item['ID']} | {item['CENTRO']} | {item['MASSA']:.6g} | "
                     f"{item['PIXELS']} | {item['AREA_HA']:.6f} | {item['PCT_AREA']:.4f}\n")
-        f.write('\nNota: os limites são discretizados na grade raster; ' 
-                'a equivalência com o Vista SAGA original ainda depende de validação comparativa.\n')
+        f.write('\nNota: os limites são discretizados na grade raster. Simples e Com Massa reproduziram\n'
+                '100% das células do Vista SAGA original (caso sintético e bacia real), exceto empates.\n')
 
 
 def _polygonize(raster_path, vector_path, generator_rows, units_to_meters, cancelled=None):
@@ -132,7 +143,8 @@ def _polygonize(raster_path, vector_path, generator_rows, units_to_meters, cance
 def run_voronoi(points, destination, projection_wkt, geotransform, width, height, *,
                 mode='simple', units_to_meters=1., mask=None, vectorize=False,
                 progress=None, cancelled=None, friction_path=None, friction_components=None,
-                vector_format=DEFAULT_EXTENSION, keep_raster=True):
+                vector_format=DEFAULT_EXTENSION, keep_raster=True, friction_vector=None,
+                study_wkb=None):
     """Executa Voronoi em janelas e retorna caminhos/estatísticas.
 
     vectorize: poligoniza o resultado no formato ``vector_format`` (.gpkg,
@@ -141,14 +153,21 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
     vetorial); o cálculo continua o mesmo, feito na grade raster.
 
     points: lista de Generator com coordenadas no SRC da grade.
-    mask: máscara numpy opcional (TRUE para células válidas); não usada no GUI 0.7.0.
+    mask: máscara numpy opcional (TRUE para células válidas).
+    study_wkb: área de estudo (WKB, no SRC da grade), usada quando a extensão vem de camada
+    poligonal (1.4.0-dev6, decisão do autor): só as células com o centro dentro dela recebem
+    resultado, como o recorte da guia Vetorial; no atrito, as de fora continuam atravessáveis.
+    friction_vector: superfície de atrito vetorial (1.4.0), dicionário com 'features'
+    [(wkb, nota | 'barreira')], 'outside' (nota de passagem da área sem polígono, sem resultado) e os
+    campos descritivos de voronoi_friction_vector.describe;
+    os polígonos são rasterizados nesta grade.
     """
     from osgeo import gdal, osr
     weighted = mode in ('mass','mass_friction')
     if mode not in ('simple','mass','friction','mass_friction'):
         raise ValueError('Modalidade de Voronoi desconhecida.')
-    if mode in ('friction','mass_friction') and not (friction_path or friction_components):
-        raise ValueError('A modalidade com Atrito exige selecionar um GeoTIFF de resistência territorial.')
+    if mode in ('friction','mass_friction') and not (friction_path or friction_components or friction_vector):
+        raise ValueError('A modalidade com Atrito exige uma superfície de atrito (raster ou vetorial).')
     validate_generators(points, weighted=weighted)
     if len(points) > MAX_GENERATORS:
         raise ValueError('Limite de 1.000 pontos na versão 0.7.0; divida a análise em áreas.')
@@ -187,7 +206,30 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
     # A superfície de atrito é aberta e descarregada na thread da tarefa,
     # sem compartilhar objetos GDAL ou objetos Qt entre threads.
     friction = None
-    if mode in ('friction','mass_friction') and friction_components:
+    vector_stats = None
+    no_result = None
+    nodata_cells = 0
+    study_cells = None
+    if study_wkb is not None:
+        study_mask = _study_mask(study_wkb, geotransform, width, height, projection_wkt)
+        study_cells = int(study_mask.sum())
+        if not study_cells:
+            raise ValueError('Nenhuma célula da grade tem o centro dentro da área de estudo; use células menores.')
+        mask = study_mask if mask is None else (np.asarray(mask, dtype=bool) & study_mask)
+    if mode in ('friction','mass_friction') and friction_vector:
+        from .voronoi_friction_vector import rasterize_friction
+        if width*height > MAX_FRICTION_CELLS:
+            raise ValueError('O atrito excede 8 milhões de células; recorte ou aumente a resolução.')
+        friction, vector_stats, no_result = rasterize_friction(
+            friction_vector['features'], friction_vector.get('outside'), geotransform, width, height, projection_wkt)
+        validate_friction(friction, geotransform, points)
+        if no_result is not None:
+            for point in points:
+                col = int((point.x - geotransform[0]) / geotransform[1])
+                row = int((point.y - geotransform[3]) / geotransform[5])
+                if no_result[row, col]:
+                    raise ValueError(f'Centro {point.identifier} fora dos polígonos de atrito (ou sobre barreira).')
+    elif mode in ('friction','mass_friction') and friction_components:
         from .voronoi_friction_stack import read_friction_stack
         paths = [os.path.abspath(str(spec['path'])) for spec in friction_components]
         if destination in paths or any(os.path.normcase(os.path.realpath(path)) ==
@@ -198,6 +240,7 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
         friction = read_friction_stack(friction_components, gdal, projection_wkt,
                                       geotransform, width, height, osr)
         validate_friction(friction, geotransform, points)
+        no_result, nodata_cells = _nodata_as_passage(friction)
     elif mode in ('friction','mass_friction'):
         friction_path = os.path.abspath(str(friction_path))
         if not os.path.isfile(friction_path):
@@ -230,6 +273,7 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
         friction[~valid_mask] = np.nan
         source = None
         validate_friction(friction, geotransform, points)
+        no_result, nodata_cells = _nodata_as_passage(friction)
         # O antigo limite fixo de 700 milhões de travessias supunha avaliar
         # todos os centros para cada pixel. O avaliador com limites inferiores
         # descarta centros que matematicamente não podem vencer o resultado.
@@ -267,6 +311,8 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
                 values = assign_friction_window(points,friction,geotransform,y,h,
                                                 cancelled=cancelled, mass_weighted=(mode == 'mass_friction'),
                                                 stats=friction_stats)
+                if no_result is not None:
+                    values[no_result[y:y+h]] = 0  # atravessadas, sem resultado
                 if segment is not None: values[~segment.astype(bool)] = 0
             elif mode == 'simple':
                 values = assign_window_nearest(points,geotransform,width,y,h,
@@ -283,18 +329,19 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
         analysis_seconds = time.perf_counter() - processing_started
         raster.SetMetadataItem('VISTASAGA_MODE',mode)
         if mode in ('friction','mass_friction'):
-            raster.SetMetadataItem('VISTASAGA_FRICTION_MODEL','D * SUM(1 + C_k), straight-line DDA' if mode == 'friction' else 'D * SUM(1 + C_k) / M, straight-line DDA')
-            raster.SetMetadataItem('VISTASAGA_FRICTION_BASE','1')
+            raster.SetMetadataItem('VISTASAGA_FRICTION_MODEL',FRICTION_MODEL if mode == 'friction' else MASS_FRICTION_MODEL)
+            raster.SetMetadataItem('VISTASAGA_FRICTION_COST','nota direta (nota 1 = custo basal)')
             if friction_components:
                 raster.SetMetadataItem('VISTASAGA_FRICTION_STACK','weighted_mean; common_valid_area')
                 raster.SetMetadataItem('VISTASAGA_FRICTION_STACK_WEIGHTS',
                                        ','.join(str(spec['weight']) for spec in friction_components))
                 raster.SetMetadataItem('VISTASAGA_FRICTION_STACK_LAYERS',
                                        str(len(friction_components)))
+            raster.SetMetadataItem('VISTASAGA_FRICTION_SOURCE','vector' if vector_stats is not None else 'raster')
             raster.SetMetadataItem('VISTASAGA_FRICTION_SEARCH','Exact lower-bound pruning; no approximation')
             if mode == 'mass_friction':
-                raster.SetMetadataItem('VISTASAGA_MASS_MODEL','D * SUM(1 + C_k) / M')
-            raster.SetMetadataItem('VISTASAGA_FRICTION_VALIDATION','experimental; not yet compared to Vista SAGA')
+                raster.SetMetadataItem('VISTASAGA_MASS_MODEL','A / M (equivale a M / d2)')
+            raster.SetMetadataItem('VISTASAGA_FRICTION_VALIDATION','Vista SAGA original: caso sintetico 80x60, 99,7% das celulas; bacia real 495x1107 (10 m), 99,4 a 99,6%')
             raster.SetMetadataItem('VISTASAGA_TESTED_CANDIDATES',str(friction_stats['candidate_pairs']))
             raster.SetMetadataItem('VISTASAGA_TRACED_PATHS',str(friction_stats['traced_paths']))
             raster.SetMetadataItem('VISTASAGA_VISITED_CELLS',str(friction_stats['visited_cells']))
@@ -310,7 +357,13 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
         rows = counts_as_rows(points,count,geotransform,units_to_meters)
         local_csv = os.path.join(stage,os.path.basename(files[1]))
         local_txt = os.path.join(stage,os.path.basename(files[2]))
-        _write_reports(local_csv,local_txt,mode,rows,excluded,pixel_area_m2(geotransform,units_to_meters))
+        # Regra de passagem conforme a fonte do atrito; a vetorial já sai em describe(), mais abaixo.
+        passage_note = None
+        if mode in ('friction','mass_friction') and vector_stats is None:
+            passage_note = (f'NoData da superfície de atrito ({nodata_cells} células): sem resultado, '
+                            'atravessável com nota 1 (custo basal do Vista SAGA, padrão da classe FUNDO).')
+        _write_reports(local_csv,local_txt,mode,rows,excluded,pixel_area_m2(geotransform,units_to_meters),
+                       passage_note=passage_note, study_cells=study_cells)
         if mode in ('friction','mass_friction'):
             with open(local_txt,'a',encoding='utf-8') as report:
                 report.write('\nDiagnóstico computacional da poda de centros\n')
@@ -322,13 +375,18 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
                 report.write(f"Tempo do cálculo matricial (s): {analysis_seconds:.3f}\n")
                 if friction_stats['traced_paths']:
                     report.write(f"Média de células por trajetória: {friction_stats['visited_cells'] / friction_stats['traced_paths']:.2f}\n")
+        if vector_stats is not None:
+            from .voronoi_friction_vector import describe
+            with open(local_txt,'a',encoding='utf-8') as report:
+                report.write(describe(friction_vector, vector_stats, abs(geotransform[1])))
         if friction_components:
             with open(local_txt,'a',encoding='utf-8') as report:
                 report.write('\nSuperfícies de atrito integradas (média ponderada)\n')
                 for n, spec in enumerate(friction_components, 1):
                     report.write(f"{n}. {os.path.basename(spec['path'])}; peso={spec['weight']}; "
                                  f"notas={spec.get('notes','') or 'valores originais'}\n")
-                report.write('NoData em qualquer superfície: barreira; custo por célula = 1 + atrito integrado.\n')
+                report.write('NoData em qualquer superfície: célula sem resultado, atravessável com nota 1; '
+                             'custo por célula = nota integrada.\n')
         if vectorize:
             with open(local_txt,'a',encoding='utf-8') as report:
                 report.write('\nSaída vetorial\n')
@@ -353,10 +411,64 @@ def run_voronoi(points, destination, projection_wkt, geotransform, width, height
                 'rows':rows,
                 'pixels_valid':sum(count.values()),'pixels_excluded':excluded,
                 'raster_calc_seconds':analysis_seconds,
+                'study_cells':study_cells,'friction_nodata_cells':nodata_cells,
                 'friction_diagnostics':dict(friction_stats) if mode in ('friction','mass_friction') else None}
     finally:
         raster = None
         shutil.rmtree(stage,ignore_errors=True)
+
+
+def _nodata_as_passage(friction):
+    """NoData do raster de atrito: sem resultado, atravessável com nota 1 (1.4.0-dev6).
+
+    Decisão do autor, pela coerência com a área sem polígono do atrito vetorial (dev5): uma célula
+    sem nota não recebe resultado, mas as retas polo-célula passam por ela com o custo basal do
+    Vista SAGA (nota 1, padrão da classe FUNDO). Antes era barreira. Os centros sobre NoData
+    continuam recusados (``validate_friction``). Altera ``friction`` no lugar; devolve
+    (máscara das células sem resultado ou None, quantidade).
+    """
+    from .voronoi_friction_vector import OUTSIDE_RATING
+    missing = ~np.isfinite(friction)
+    count = int(missing.sum())
+    if not count:
+        return None, 0
+    friction[missing] = OUTSIDE_RATING
+    return missing, count
+
+
+def _study_mask(study_wkb, geotransform, width, height, projection_wkt):
+    """Máscara booleana das células com o centro dentro da área de estudo (WKB no SRC da grade)."""
+    from osgeo import gdal, ogr, osr
+    from .gdal_scope import with_gdal_exceptions
+
+    @with_gdal_exceptions
+    def burn():
+        geometry = ogr.CreateGeometryFromWkb(bytes(study_wkb))
+        if geometry is None or geometry.IsEmpty():
+            raise ValueError('Área de estudo vazia ou inválida.')
+        srs = osr.SpatialReference()
+        srs.ImportFromWkt(projection_wkt)
+        source = None
+        # GDAL < 3.11: driver vetorial "Memory"; a partir da 3.11 ele foi fundido ao "MEM".
+        for name in ('Memory', 'MEM'):
+            driver = ogr.GetDriverByName(name)
+            if driver is not None and driver.GetMetadataItem('DCAP_VECTOR') == 'YES':
+                source = driver.CreateDataSource('estudo')
+                break
+        if source is None:
+            raise RuntimeError('GDAL sem driver vetorial em memória para o recorte pela área de estudo.')
+        layer = source.CreateLayer('estudo', srs, ogr.wkbUnknown)
+        feature = ogr.Feature(layer.GetLayerDefn())
+        feature.SetGeometry(geometry)
+        layer.CreateFeature(feature)
+        target = gdal.GetDriverByName('MEM').Create('', int(width), int(height), 1, gdal.GDT_Byte)
+        target.SetGeoTransform(tuple(float(v) for v in geotransform))
+        target.SetProjection(projection_wkt)
+        target.GetRasterBand(1).Fill(0)
+        gdal.RasterizeLayer(target, [1], layer, burn_values=[1], options=['ALL_TOUCHED=FALSE'])
+        return target.GetRasterBand(1).ReadAsArray() != 0
+
+    return burn()
 
 
 def grid_from_bbox(bounds, resolution):

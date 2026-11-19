@@ -145,7 +145,7 @@ class VoronoiVectorFormatsGdalTests(unittest.TestCase):
         ds = gdal.GetDriverByName('GTiff').Create(str(friction), 30, 25, 1, gdal.GDT_Float32)
         ds.SetGeoTransform(self.transform)
         ds.SetProjection(self.wkt)
-        surface = np.zeros((25, 30), dtype=np.float32)
+        surface = np.ones((25, 30), dtype=np.float32)  # 1.4.0: nota 0 é recusada
         surface[:, 14:16] = 50.  # faixa de alto atrito entre os centros
         ds.GetRasterBand(1).WriteArray(surface)
         ds = None

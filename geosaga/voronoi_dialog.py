@@ -29,6 +29,14 @@ from .voronoi_output import VECTOR_FORMATS, layer_uri, output_family, vector_ext
 from .errors import log_exception
 
 
+def _is_null(value):
+    """NULL do QGIS: None no PyQt6; QVariant nulo em versões que ainda o expõem."""
+    if value is None:
+        return True
+    is_null = getattr(value, 'isNull', None)
+    return bool(is_null()) if callable(is_null) else False
+
+
 RASTER_RESULT_HINT = (
     'Em branco, o mapa é gravado num arquivo temporário e carregado no QGIS (o QGIS não '
     'mantém rasters em memória; salve-o antes de fechar o QGIS). Com um arquivo indicado, '
@@ -75,7 +83,7 @@ class VoronoiRasterTask(QgsTask):
     no método finished(), que o QGIS invoca na thread principal.
     """
     def __init__(self, points, destination, wkt, transform, width, height, mode, vectorize, friction_path=None, friction_components=None,
-                 vector_format='.gpkg', keep_raster=True):
+                 vector_format='.gpkg', keep_raster=True, friction_vector=None, study_wkb=None):
         super().__init__('Vista Saga - Voronoi raster', QgsTask.Flag.CanCancel)
         self.points = tuple(points)  # Generator é uma dataclass simples, sem QObject.
         self.destination = str(destination)
@@ -89,6 +97,10 @@ class VoronoiRasterTask(QgsTask):
         self.keep_raster = bool(keep_raster)
         self.friction_path = str(friction_path) if friction_path else None
         self.friction_components = tuple(dict(spec) for spec in friction_components) if friction_components else None
+        # Atrito vetorial: WKB e notas já extraídos na thread principal (sem QgsVectorLayer aqui).
+        self.friction_vector = dict(friction_vector) if friction_vector else None
+        # Área de estudo (WKB) para o recorte da guia Raster (1.4.0-dev6).
+        self.study_wkb = bytes(study_wkb) if study_wkb else None
         self.result = None
         self.error = None
         self.ui_callback = None
@@ -101,6 +113,7 @@ class VoronoiRasterTask(QgsTask):
                 progress=self.setProgress, cancelled=self.isCanceled,
                 friction_path=self.friction_path, friction_components=self.friction_components,
                 vector_format=self.vector_format, keep_raster=self.keep_raster,
+                friction_vector=self.friction_vector, study_wkb=self.study_wkb,
             )
             return not self.isCanceled()
         except InterruptedError:
@@ -118,8 +131,49 @@ class VoronoiRasterTask(QgsTask):
             callback(self, bool(success))
 
 
+class VoronoiVectorTask(QgsTask):
+    """Vetor direto com atrito em segundo plano (1.4.0-dev5): pode levar minutos com dados reais.
+
+    Só dados isolados (WKB, notas, pontos); nada de QgsMapLayer em run(). Progresso em porcentagem
+    pelo QgsTask e cancelamento pelo botão do diálogo ou do gerenciador de tarefas do QGIS.
+    """
+    def __init__(self, points, bounds, destination, wkt, mode, study_geometry, friction_spec):
+        super().__init__('Vista Saga - Voronoi vetorial com atrito', QgsTask.Flag.CanCancel)
+        self.points = tuple(points)
+        self.bounds = tuple(float(v) for v in bounds)
+        self.destination = str(destination)
+        self.wkt = str(wkt)
+        self.mode = str(mode)
+        self.study_geometry = QgsGeometry(study_geometry) if study_geometry is not None else None
+        self.friction_spec = dict(friction_spec)
+        self.result = None
+        self.error = None
+        self.ui_callback = None
+
+    def run(self):
+        try:
+            self.result = save_vector_voronoi(
+                self.points, self.bounds, self.destination, self.wkt, mode=self.mode,
+                study_geometry=self.study_geometry, progress=self.setProgress, cancelled=self.isCanceled,
+                friction_features=self.friction_spec['features'], search_spacing=None,
+                friction_info=self.friction_spec)
+            return not self.isCanceled()
+        except InterruptedError:
+            return False
+        except Exception as exc:
+            log_exception()
+            self.error = str(exc)
+            return False
+
+    def finished(self, success):
+        callback = self.ui_callback
+        self.ui_callback = None
+        if callback is not None:
+            callback(self, bool(success))
+
+
 class VoronoiDialog(QDialog):
-    """Quatro modalidades disponíveis; atrito e massa+atrito experimentais."""
+    """Quatro modalidades (massa como M/d²); atrito raster ou vetorial (1.4.0)."""
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
@@ -155,8 +209,8 @@ class VoronoiDialog(QDialog):
             self.tabs.addTab(scroll, tr(title))
             self._pages.append(body)
         content_layout = self._pages[0]
-        self.intro = _WrapLabel(tr('Delimite áreas de influência: Simples, com Massa, com Atrito e com Massa e Atrito. '
-                            'Os modelos que utilizam atrito ainda exigem validação com o Vista SAGA original.'))
+        self.intro = _WrapLabel(tr('Delimite áreas de influência: Simples, com Massa, com Atrito e com Massa e Atrito '
+                            '(massa como M/d²).'))
         self.intro.setWordWrap(True)
         content_layout.addWidget(self.intro)
 
@@ -164,8 +218,8 @@ class VoronoiDialog(QDialog):
         model_form = QFormLayout(options)
         self.mode = QComboBox()
         self.mode.addItems([tr('Simples'), tr('Com Massa'),
-                            tr('Com Atrito (experimental)'),
-                            tr('Com Massa e Atrito (experimental)')])
+                            tr('Com Atrito'),
+                            tr('Com Massa e Atrito')])
         self.mode.currentIndexChanged.connect(self._update_mode)
         model_form.addRow(tr('Modalidade:'),self.mode)
         self.method_note = _WrapLabel(tr('Simples: o ponto mais próximo assume cada célula da grade.'))
@@ -196,13 +250,34 @@ class VoronoiDialog(QDialog):
         self.grid_layer.setToolTip(tr('Opcional: utilize a extensão, resolução e SRC de um raster de referência.'))
         self.grid_label=QLabel(tr('Raster de referência:'))
         form.addRow(self.grid_label,self.grid_layer)
+        # 1.4.0: a superfície de atrito pode ser raster (notas nas células) ou vetorial
+        # (polígonos com nota por classe ou por coluna, rasterizados na grade da análise).
+        self.friction_kind = QComboBox()
+        self.friction_kind.addItem(tr('Raster'), 'raster')
+        self.friction_kind.addItem(tr('Vetorial (polígonos)'), 'vector')
+        self.friction_kind.currentIndexChanged.connect(self._update_mode)
+        self.friction_kind_label = QLabel(tr('Tipo de superfície:'))
+        form.addRow(self.friction_kind_label, self.friction_kind)
         self.friction_layer = QgsMapLayerComboBox()
         self.friction_layer.setAllowEmptyLayer(True)
         self.friction_layer.setFilters(Qgis.LayerFilter.RasterLayer)
         self.friction_layer.setShowCrs(True)
         self.friction_label = QLabel(tr('Superfície de atrito:'))
-        self.friction_layer.setToolTip(tr('GeoTIFF monobanda com valores >= 0; zero tem custo basal 1; NoData é barreira.'))
+        self.friction_layer.setToolTip(tr('GeoTIFF monobanda: o valor de cada célula é a nota de atrito (> 0); NoData fica sem resultado e é atravessado com nota 1.'))
         form.addRow(self.friction_label,self.friction_layer)
+        self.friction_vector_layer = QgsMapLayerComboBox()
+        self.friction_vector_layer.setAllowEmptyLayer(True)
+        self.friction_vector_layer.setFilters(Qgis.LayerFilter.PolygonLayer)
+        self.friction_vector_layer.setShowCrs(True)
+        self.friction_vector_layer.layerChanged.connect(self._refresh_friction_fields)
+        self.friction_vector_label = QLabel(tr('Polígonos de atrito:'))
+        form.addRow(self.friction_vector_label, self.friction_vector_layer)
+        self.friction_rating_field = QComboBox()
+        self.friction_rating_field.setToolTip(tr('Coluna numérica com a nota de atrito de cada polígono (> 0). '
+                                                 'Área sem polígono e feições com a coluna vazia ficam sem resultado '
+                                                 'e são atravessadas com nota 1.'))
+        self.friction_rating_label = QLabel(tr('Coluna de atrito:'))
+        form.addRow(self.friction_rating_label, self.friction_rating_field)
         self.multi_friction = QCheckBox(tr('Combinar múltiplas superfícies de atrito (pesos e notas)'))
         self.multi_friction.toggled.connect(self._on_multi_friction_toggled)
         form.addRow('', self.multi_friction)
@@ -226,7 +301,7 @@ class VoronoiDialog(QDialog):
         stack_hint = QLabel(tr('Selecione até 12 rasters. Edite o peso positivo e, se necessário, as notas '
                             'por classe (ex.: 1=2;2=8) dando dois cliques nas células. '
                             'Sem notas, serão usados os valores originais. '
-                            'NoData em qualquer mapa será barreira.'))
+                            'NoData em qualquer mapa: célula sem resultado, atravessada com nota 1.'))
         stack_hint.setWordWrap(True)
         stack_dialog_box.addWidget(stack_hint)
         self.friction_stack_table = QTableWidget(0, 3)
@@ -328,6 +403,8 @@ class VoronoiDialog(QDialog):
         layout.addLayout(control)
         self._temporary = True
         self._refresh_fields()
+        # A camada de polígonos pode já vir selecionada (sem sinal de troca): preenche as colunas.
+        self._refresh_friction_fields()
         self._update_mode()
         self._update_extent()
         self._update_output()
@@ -341,7 +418,7 @@ class VoronoiDialog(QDialog):
         for position, widget in enumerate(self._shared):
             self._pages[index].insertWidget(position, widget)
         self._shared_page = index
-        self._update_output()
+        self._update_mode()
 
     def _kind(self):
         return 'raster' if self.tabs.currentIndex() == 0 else 'vector'
@@ -483,6 +560,62 @@ class VoronoiDialog(QDialog):
             raise ValueError('Limite de 12 superfícies de atrito.')
         return comps
 
+    # ------------------------------------------------------ atrito vetorial (1.4.0)
+    def _vector_friction(self):
+        """Atrito por polígonos: sempre na guia Vetorial (vetor direto, modelo contínuo); na guia
+        Raster, quando escolhido em "Tipo de superfície" (polígonos convertidos em notas na grade)."""
+        return self.mode.currentIndex() in (2, 3) and (
+            self._kind() == 'vector' or self.friction_kind.currentData() == 'vector')
+
+    def _refresh_friction_fields(self, *_):
+        layer = self.friction_vector_layer.currentLayer()
+        previous = self.friction_rating_field.currentData()
+        self.friction_rating_field.clear()
+        if isinstance(layer, QgsVectorLayer):
+            for field in layer.fields():
+                if field.isNumeric():
+                    self.friction_rating_field.addItem(field.name(), field.name())
+            index = self.friction_rating_field.findData(previous) if previous else -1
+            if index < 0:
+                names = [self.friction_rating_field.itemData(i) for i in range(self.friction_rating_field.count())]
+                index = next((self.friction_rating_field.findData(name) for name in names
+                              if str(name).upper() in ('ATRITO', 'NOTA', 'FRICTION', 'CUSTO')), -1)
+            if index >= 0:
+                self.friction_rating_field.setCurrentIndex(index)
+
+    def _friction_vector_spec(self, crs):
+        """Extrai WKB e nota (coluna de atrito) das feições, na thread principal; sem reprojeção.
+
+        Área sem polígono e feições com a coluna vazia: sem resultado, atravessáveis com nota 1 (custo
+        basal do Vista SAGA; decisão do autor na 1.4.0-dev5).
+        """
+        from .voronoi_friction_vector import OUTSIDE_RATING, ratings_from_column
+        layer = self.friction_vector_layer.currentLayer()
+        if not isinstance(layer, QgsVectorLayer) or not layer.isValid():
+            raise ValueError('Selecione a camada de polígonos de atrito.')
+        if layer.crs() != crs:
+            raise ValueError('Os polígonos de atrito precisam estar no SRC da análise ({0}); '
+                             'reprojete a camada antes.'.format(crs.authid() or crs.description()))
+        name = self.friction_rating_field.currentData()
+        if not name:
+            raise ValueError('Escolha a coluna de atrito.')
+        geometries, values = [], []
+        for feature in layer.getFeatures():
+            geometry = feature.geometry()
+            if geometry is None or geometry.isNull() or geometry.isEmpty():
+                continue
+            value = feature[name]
+            geometries.append(bytes(geometry.asWkb()))
+            values.append(None if _is_null(value) else value)
+        if not geometries:
+            raise ValueError('A camada de atrito não tem polígonos.')
+        ratings = ratings_from_column(values)
+        if all(rating is None for rating in ratings):
+            raise ValueError('A coluna de atrito está vazia em todas as feições.')
+        return {'features': list(zip(geometries, ratings)), 'outside': OUTSIDE_RATING,
+                'layer_name': layer.name(), 'rating_field': name,
+                'skipped': sum(1 for v in values if v is None), 'source': layer.source()}
+
     def _refresh_fields(self, *_):
         layer = self.point_layer.currentLayer()
         self.label_field.clear()
@@ -510,21 +643,35 @@ class VoronoiDialog(QDialog):
         self.mass_field.setVisible(weighted)
         self.mass_label.setVisible(weighted)
         self.mass_field.setEnabled(weighted)
-        multi = friction and self.multi_friction.isChecked()
-        self.friction_layer.setVisible(friction and not multi)
-        self.friction_label.setVisible(friction and not multi)
-        self.multi_friction.setVisible(friction)
+        vector_friction = self._vector_friction()
+        raster_friction = friction and not vector_friction
+        multi = raster_friction and self.multi_friction.isChecked()
+        # Na guia Vetorial, o atrito é sempre vetorial (modelo contínuo): sem "Tipo de superfície".
+        self.friction_kind.setVisible(friction and self._kind() == 'raster')
+        self.friction_kind_label.setVisible(friction and self._kind() == 'raster')
+        self.friction_layer.setVisible(raster_friction and not multi)
+        self.friction_label.setVisible(raster_friction and not multi)
+        self.multi_friction.setVisible(raster_friction)
         self.friction_stack_group.setVisible(multi)
-        self.extent_mode.setVisible(not friction)
-        self.extent_label.setVisible(not friction)
+        for widget in (self.friction_vector_layer, self.friction_vector_label,
+                       self.friction_rating_field, self.friction_rating_label):
+            widget.setVisible(vector_friction)
+        # Atrito raster: a grade é a do próprio raster. Atrito vetorial: extensão e resolução da análise.
+        self.extent_mode.setVisible(not raster_friction)
+        self.extent_label.setVisible(not raster_friction)
         self._update_extent()
         if friction:
-            title = 'Com Massa e Atrito' if weighted else 'Com Atrito'
-            formula = 'D × soma(1 + atrito) / massa' if weighted else 'D × soma(1 + atrito)'
-            self.method_note.setText(title + ' (experimental): minimizar ' + formula +
-                                     ' em segmento reto; NoData é barreira. Grade do raster de atrito.')
+            if weighted:
+                self.method_note.setText(tr('Com Massa e Atrito: menor custo acumulado '
+                                            '(distância ao polo × nota × passo, na reta polo-célula) dividido '
+                                            'pela massa, o que equivale a M/d²; células sem nota ficam sem '
+                                            'resultado e são atravessadas com nota 1.'))
+            else:
+                self.method_note.setText(tr('Com Atrito: menor custo acumulado '
+                                            '(distância ao polo × nota × passo, na reta polo-célula); '
+                                            'células sem nota ficam sem resultado e são atravessadas com nota 1.'))
         elif weighted:
-            self.method_note.setText(tr('Com Massa: maximiza M/d; selecione campo numérico positivo.'))
+            self.method_note.setText(tr('Com Massa: maximiza M/d²; selecione campo numérico positivo.'))
         else:
             self.method_note.setText(tr('Simples: menor distância euclidiana; sem massa nem atrito.'))
         self._update_output()
@@ -534,10 +681,11 @@ class VoronoiDialog(QDialog):
 
     def _update_extent(self, *_):
         choice=self.extent_mode.currentData()
-        use_polygon=choice=='polygon' and self.mode.currentIndex() not in (2,3)
+        own_grid=self.mode.currentIndex() not in (2,3) or self._vector_friction()
+        use_polygon=choice=='polygon' and own_grid
         self.area_layer.setVisible(use_polygon)
         self.area_label.setVisible(use_polygon)
-        manual=choice=='manual' and self.mode.currentIndex() not in (2,3)
+        manual=choice=='manual' and own_grid
         for widget,label in zip(self.manual_bounds,self.manual_labels):
             widget.setVisible(manual)
             label.setVisible(manual)
@@ -556,19 +704,30 @@ class VoronoiDialog(QDialog):
             return  # ainda montando a janela
         vector = self._kind() == 'vector'
         friction = self.mode.currentIndex() in (2,3)
+        vector_friction = self._vector_friction()
+        raster_friction = friction and not vector_friction
         reference = self.extent_mode.currentData() == 'reference'
-        self.grid_layer.setVisible(not vector and reference and not friction)
-        self.grid_label.setVisible(not vector and reference and not friction)
-        self.resolution.setVisible(not vector and not reference and not friction)
-        self.resolution_label.setVisible(not vector and not reference and not friction)
-        self.resolution.setEnabled(not vector and not reference and not friction)
+        # Resolução só na guia Raster (grade da análise). Na guia Vetorial com atrito, o espaçamento da
+        # busca é automático desde a 1.4.0 (decisão do autor): o campo não aparece.
+        gridded = not vector and not raster_friction
+        self.grid_layer.setVisible(gridded and reference and not vector)
+        self.grid_label.setVisible(gridded and reference and not vector)
+        self.resolution.setVisible(gridded and not reference)
+        self.resolution_label.setVisible(gridded and not reference)
+        self.resolution.setEnabled(gridded and not reference)
         self.extent_mode.model().item(4).setEnabled(not vector)
         if vector and reference:
             self.extent_mode.setCurrentIndex(0)
-        if friction:
-            note = ('Vetorial com atrito: o atrito é uma superfície raster; as áreas são calculadas na '
-                    'grade dessa superfície e convertidas em polígonos (bordas nos pixels).' if vector else
-                    'Com Atrito: extensão, resolução e SRC herdados do raster de resistência; '
+        if vector and vector_friction:
+            note = ('Vetor direto com atrito (modelo contínuo): fronteiras traçadas sem grade, com tolerância '
+                    'de 0,5 m e conferência automática; o detalhamento da busca é escolhido pelos dados e '
+                    'informado no resumo. Área sem polígono e coluna vazia: sem resultado, atravessadas com nota 1.')
+        elif vector_friction:
+            note = ('Atrito vetorial: os polígonos são convertidos em notas na grade da análise (extensão e '
+                    'resolução escolhidas), pelo centro de cada célula; área sem polígono e coluna vazia: sem '
+                    'resultado, atravessadas com nota 1. O resultado segue essa grade.')
+        elif friction:
+            note = ('Com Atrito: extensão, resolução e SRC herdados do raster de atrito; '
                     'a grade não será reprojetada.')
         elif vector and self.mode.currentIndex() == 1:
             note = ('Vetor direto com massa: fronteiras exatas (círculos de Apolônio), arcos com '
@@ -576,7 +735,7 @@ class VoronoiDialog(QDialog):
         elif vector:
             note = 'Vetor direto: polígonos exatos recortados à extensão e à área poligonal.'
         else:
-            note = 'Raster: resolução necessária. A extensão poligonal define o retângulo envolvente.'
+            note = 'Raster: resolução necessária. Com extensão de camada poligonal, só as células com o centro dentro da área recebem resultado.'
         self.grid_note.setText(tr(note))
 
     def _choose_output(self, index):
@@ -687,7 +846,8 @@ class VoronoiDialog(QDialog):
             raise ValueError('Extensão inválida: os máximos precisam superar os mínimos.')
         return bounds,study
 
-    def _get_grid(self, point_layer, points):
+    def _get_grid(self, point_layer, points, crs=None):
+        """Grade da análise; ``crs`` substitui o SRC dos pontos (atrito vetorial: o da camada)."""
         reference=self.grid_layer.currentLayer()
         if self.extent_mode.currentData()=='reference':
             if reference is None:
@@ -702,7 +862,7 @@ class VoronoiDialog(QDialog):
                   reference.crs(),dataset.GetProjectionRef())
             dataset=None
             return data
-        crs=point_layer.crs()
+        crs=crs if crs is not None else point_layer.crs()
         if not crs.isValid():
             raise ValueError('Defina o SRC dos pontos antes do processamento.')
         bounds,study=self._analysis_extent(crs,points)
@@ -759,12 +919,24 @@ class VoronoiDialog(QDialog):
         asynchronous = False
         try:
             # Vetorial: exato (sem grade) no Simples e Com Massa; com atrito, na grade do atrito.
-            direct=kind=='vector' and self.mode.currentIndex() in (0,1)
+            # Guia Vetorial: vetor direto nas quatro modalidades (com atrito, modelo contínuo).
+            direct=kind=='vector'
+            friction_spec=None
             if direct:
-                crs=layer.crs()
-                if not crs.isValid() or crs.isGeographic():
-                    raise ValueError('Reprojete os pontos para um SRC projetado antes da análise.')
+                if self.mode.currentIndex() in (2,3):
+                    friction_layer=self.friction_vector_layer.currentLayer()
+                    if not isinstance(friction_layer,QgsVectorLayer) or not friction_layer.isValid():
+                        raise ValueError('Selecione a camada de polígonos de atrito.')
+                    crs=friction_layer.crs()
+                    if not crs.isValid() or crs.isGeographic():
+                        raise ValueError('Os polígonos de atrito exigem SRC projetado.')
+                else:
+                    crs=layer.crs()
+                    if not crs.isValid() or crs.isGeographic():
+                        raise ValueError('Reprojete os pontos para um SRC projetado antes da análise.')
                 points=self._get_generators(crs)
+                if self.mode.currentIndex() in (2,3):
+                    friction_spec=self._friction_vector_spec(crs)
                 bounds,study=self._analysis_extent(crs,points)
                 if bounds is None:
                     bounds=(min(p.x for p in points),min(p.y for p in points),
@@ -775,8 +947,24 @@ class VoronoiDialog(QDialog):
                 friction_mode = self.mode.currentIndex() in (2,3)
                 friction_path = None
                 friction_components = None
+                friction_vector = None
                 reference = None
-                if friction_mode:
+                if friction_mode and self._vector_friction():
+                    friction_vector_layer = self.friction_vector_layer.currentLayer()
+                    if not isinstance(friction_vector_layer, QgsVectorLayer) or not friction_vector_layer.isValid():
+                        raise ValueError('Selecione a camada de polígonos de atrito.')
+                    crs = friction_vector_layer.crs()
+                    if not crs.isValid() or crs.isGeographic():
+                        raise ValueError('Os polígonos de atrito exigem SRC projetado.')
+                    points = self._get_generators(crs)
+                    if self.extent_mode.currentData() == 'reference':
+                        reference = self.grid_layer.currentLayer()
+                    transform, width, height, grid_crs, wkt = self._get_grid(layer, points, crs=crs)
+                    if grid_crs != crs:
+                        raise ValueError('O raster de referência precisa estar no SRC dos polígonos de atrito.')
+                    wkt = crs.toWkt()
+                    friction_vector = self._friction_vector_spec(crs)
+                elif friction_mode:
                     if self.multi_friction.isChecked():
                         friction_components = self._friction_components_from_ui()
                         first_id = friction_components[0]['layer_id']
@@ -806,6 +994,12 @@ class VoronoiDialog(QDialog):
                         raise ValueError('A análise exige SRC projetado. Reprojete os dados.')
                     points=self._get_generators(crs)
                     transform,width,height,crs,wkt=self._get_grid(layer,points)
+                # Guia Raster com extensão de camada poligonal: recorte pela área de estudo, como na
+                # guia Vetorial (1.4.0-dev6). Com atrito raster, a grade é a do próprio raster.
+                study_wkb = None
+                if self.extent_mode.currentData() == 'polygon' and not (friction_mode and not friction_vector):
+                    _, study_geometry = self._analysis_extent(crs, points)
+                    study_wkb = bytes(study_geometry.asWkb())
             if kind=='raster':
                 suffix='.tif'
                 if chosen and not chosen.lower().endswith(('.tif','.tiff')):
@@ -821,7 +1015,10 @@ class VoronoiDialog(QDialog):
             def same_file(first, second):
                 return os.path.normcase(os.path.realpath(first))==os.path.normcase(os.path.realpath(second))
             forbidden=[layer.source().split('|')[0]]
-            if self.extent_mode.currentData()=='polygon' and not (self.mode.currentIndex() in (2,3)):
+            if self._vector_friction() and self.friction_vector_layer.currentLayer() is not None:
+                forbidden.append(self.friction_vector_layer.currentLayer().source().split('|')[0])
+            if self.extent_mode.currentData()=='polygon' and (self.mode.currentIndex() not in (2,3)
+                                                              or self._vector_friction()):
                 study_layer=self.area_layer.currentLayer()
                 if study_layer is not None:
                     forbidden.append(study_layer.source().split('|')[0])
@@ -831,9 +1028,26 @@ class VoronoiDialog(QDialog):
             def progress(value):
                 dialog.setValue(int(value))
                 QApplication.processEvents()
+            if direct and friction_spec:
+                # Com atrito, o vetor direto pode levar minutos: tarefa em segundo plano, com progresso.
+                task = VoronoiVectorTask(points, bounds, destination, crs.toWkt(),
+                                         'mass_friction' if self.mode.currentIndex()==3 else 'friction',
+                                         study, friction_spec)
+                task.ui_callback = self._on_raster_task_finished
+                task.progressChanged.connect(self._on_raster_task_progress)
+                dialog.canceled.connect(task.cancel)
+                self._task = task
+                self._progress_dialog = dialog
+                try:
+                    QgsApplication.taskManager().addTask(task)
+                except Exception:
+                    self._task = None
+                    self._progress_dialog = None
+                    task.ui_callback = None
+                    raise
+                asynchronous = True
+                return
             if direct:
-                if self.mode.currentIndex() not in (0,1):
-                    raise ValueError('Vetor direto disponível para Voronoi Simples e Com Massa.')
                 result=save_vector_voronoi(points,bounds,destination,crs.toWkt(),
                     mode='mass' if self.mode.currentIndex()==1 else 'simple',
                     study_geometry=study,progress=progress,cancelled=dialog.wasCanceled)
@@ -849,10 +1063,11 @@ class VoronoiDialog(QDialog):
                           'friction' if self.mode.currentIndex()==2 else
                           'mass' if self.mode.currentIndex()==1 else 'simple'),
                     vectorize=kind=='vector',
-                    friction_path=friction_path if friction_mode else None,
+                    friction_path=friction_path if friction_mode and not friction_vector else None,
                     friction_components=friction_components if friction_mode else None,
+                    friction_vector=friction_vector if friction_mode else None,
                     vector_format=suffix if kind=='vector' else '.gpkg',
-                    keep_raster=kind=='raster')
+                    keep_raster=kind=='raster', study_wkb=study_wkb)
                 # Recebe o resultado na thread principal; NUNCA processEvents()
                 # nem acesso ao QGIS/Qt no worker raster.
                 task.ui_callback = self._on_raster_task_finished
@@ -919,9 +1134,13 @@ class VoronoiDialog(QDialog):
         if success and task.result:
             try:
                 self._load_output(task.result)
-                self.status.setText(
-                    tr(f'Voronoi concluído: {len(task.points)} centros; '
-                    f'{task.result["pixels_valid"]:,} pixels classificados.'))
+                if task.result.get('vector_direct'):
+                    self.status.setText(tr('Voronoi vetorial concluído: {count} regiões.').format(
+                        count=len(task.result['rows'])))
+                else:
+                    self.status.setText(
+                        tr(f'Voronoi concluído: {len(task.points)} centros; '
+                        f'{task.result["pixels_valid"]:,} pixels classificados.'))
                 QMessageBox.information(self,tr('Voronoi concluído'),self._result_message(task.result))
             except Exception as exc:
                 log_exception()

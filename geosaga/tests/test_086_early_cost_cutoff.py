@@ -1,44 +1,46 @@
-"""Testes independentes de QGIS/GDAL para acelerar trajetórias sem aproximação."""
+"""Interrupção antecipada das trajetórias (poda exata), no modelo do Vista SAGA desde a 1.4.0."""
 import unittest
 import numpy as np
 from geosaga.voronoi_core import Generator
-from geosaga.voronoi_friction import _straight_cost_batch, assign_friction_window
-from geosaga.tests.test_voronoi_friction_pruning_081 import reference
+from geosaga.voronoi_friction import _vista_saga_cost_batch, assign_friction_window
+from geosaga.tests.friction_reference import path_cost, reference
 
 
 class TestFrictionEarlyCutoff086(unittest.TestCase):
-    def test_no_cutoff_matches_complete_tracing(self):
+    def test_batch_matches_scalar_reference(self):
         rng=np.random.default_rng(391)
         for seed in range(6):
             raster=rng.uniform(0, 19, (14, 17))
             raster[4, 6] = np.nan
-            start=(1.15+.3*seed, 2.35)
-            dest_x=rng.uniform(.5, 16.5, 50)
-            dest_y=rng.uniform(.5, 13.5, 50)
-            old=_straight_cost_batch(raster,*start,dest_x,dest_y)
-            new=_straight_cost_batch(raster,*start,dest_x,dest_y,max_costs=np.inf)
-            np.testing.assert_array_equal(new,old)
+            start=(1+seed, 2)
+            cols=rng.integers(0, 17, 60)
+            rows=rng.integers(0, 14, 60)
+            got=_vista_saga_cost_batch(raster,*start,cols,rows,pixel_x=10.,pixel_y=10.)
+            expected=[path_cost(raster,*start,int(c),int(r),10.,10.) for c,r in zip(cols,rows)]
+            np.testing.assert_allclose(got,expected,rtol=1e-12)
+            unlimited=_vista_saga_cost_batch(raster,*start,cols,rows,pixel_x=10.,pixel_y=10.,max_costs=np.inf)
+            np.testing.assert_array_equal(unlimited,got)
 
     def test_cutoff_returns_inf_only_when_full_cost_exceeds_threshold(self):
         raster=np.full((3,15), 4.)
-        cols=np.arange(15,dtype=float)+.5
-        ys=np.full(15, .5)
-        full=_straight_cost_batch(raster,.5,.5,cols,ys)
+        cols=np.arange(15)
+        rows=np.zeros(15,dtype=int)
+        full=_vista_saga_cost_batch(raster,0,0,cols,rows)
         limits=np.array([1, 5, 10, 15, 20, 100, 500, 0, 100, 100, 1, 1, 5, 50, 2.],dtype=float)
         stats={}
-        got=_straight_cost_batch(raster,.5,.5,cols,ys,max_costs=limits,stats=stats)
+        got=_vista_saga_cost_batch(raster,0,0,cols,rows,max_costs=limits,stats=stats)
         for old,new,lim in zip(full,got,limits):
             self.assertEqual(np.isfinite(new), old<=lim)
             if old<=lim:
                 self.assertEqual(old,new)
         self.assertGreater(stats['early_stops'],0)
-        self.assertLess(stats['visited_cells'],sum(1+i for i in range(15)))
+        self.assertLess(stats['visited_cells'],sum(range(15)))
 
     def test_equal_cost_limit_preserved(self):
-        raster=np.zeros((1,7))
-        destination=np.array([3.5])
-        cost=_straight_cost_batch(raster,.5,.5,destination,np.array([.5]))[0]
-        same=_straight_cost_batch(raster,.5,.5,destination,np.array([.5]),max_costs=[cost])[0]
+        raster=np.ones((1,7))
+        cost=_vista_saga_cost_batch(raster,0,0,np.array([3]),np.array([0]))[0]
+        same=_vista_saga_cost_batch(raster,0,0,np.array([3]),np.array([0]),max_costs=[cost])[0]
+        self.assertEqual(cost,6.)  # 1×1 + 2×1 + 3×1
         self.assertEqual(cost,same)
 
     def test_random_modes_match_exhaustive_reference(self):
@@ -64,4 +66,4 @@ class TestFrictionEarlyCutoff086(unittest.TestCase):
         fr=np.zeros((1,2))
         for bad in ([float('nan')],[float('-inf')],[-1]):
             with self.assertRaisesRegex(ValueError,'não negativos'):
-                _straight_cost_batch(fr,.5,.5,np.array([1.5]),np.array([.5]),max_costs=bad)
+                _vista_saga_cost_batch(fr,0,0,np.array([1]),np.array([0]),max_costs=bad)

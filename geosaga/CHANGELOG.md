@@ -1,3 +1,69 @@
+## 1.4.0 — Voronoi fiel ao Vista SAGA e atrito vetorial (2026-11-19)
+
+- **Mudança de método, validada contra o Vista SAGA original** (caso sintético de 80 × 60
+  células, comparação célula a célula; ver `NOTAS_DA_VERSAO_140.md`):
+  - **Com Massa: maior M/d²** (antes, M/d). Raster: menor d²/M. Vetor exato: discos de Apolônio
+    com razão √(M_leve/M_pesado). Reproduz 100% das células do Vista SAGA (exceto empates); o
+    modelo antigo divergia em 15,6% das células.
+  - **Atrito no modelo do Vista SAGA:** custo acumulado = soma de distância ao polo × nota ×
+    passo (√2 na diagonal) nas células da reta de Bresenham polo-célula; com massa, dividido
+    pela massa (equivale a M/d²). A **nota entra direto como custo** (nota 1 = custo basal; sai o
+    1 + C). Reproduz 99,7% das células; as diferenças ficam na fronteira entre regiões. A célula
+    do polo é sempre dele. Poda exata reformulada.
+  - Com Atrito e Com Massa e Atrito deixam de ser "experimentais".
+- **Superfície de atrito vetorial** (Com Atrito e Com Massa e Atrito): polígonos com a nota na
+  **coluna de atrito** (sem atribuição manual). Área sem polígono e coluna vazia: **sem resultado,
+  atravessáveis com nota 1** (custo basal do Vista SAGA, padrão da classe FUNDO; dev5). A regra
+  anterior (barreira) distorcia áreas de estudo côncavas: a reta que saía da área ficava bloqueada.
+  - **Guia Vetorial: vetor direto, sem rasterização (modelo contínuo).** Custo = integral de
+    distância ao polo × nota ao longo do segmento polo-ponto, calculada exatamente pelos
+    cruzamentos com as bordas dos polígonos; com massa, dividido por M. Fronteiras traçadas
+    numericamente (malha de busca deslocada, refinamento local, tolerância de 0,5 m desde a dev4;
+    pontas de cunhas finas e junções podem ficar encurtadas); partição
+    sem sobreposições nem lacunas; recorte exato pela cobertura dos polígonos. Coincide com o
+    Vista SAGA em 99,60% (com massa) e 99,52% (sem massa) das células; com nota uniforme,
+    reproduz os discos de Apolônio do Com Massa a menos de 1 cm. Regiões menores que o espaçamento
+    da busca podem não ser detectadas (a conferência automática reduz essa chance).
+  - **Conferência automática do traçado:** cada célula é testada nos lados e no interior, com
+    subdivisão onde houver suspeita; depois, o modelo é comparado com os polígonos em um ponto por
+    célula, com novo traçado local onde divergir (até 3 passadas). O `_resumo.txt` informa o
+    resultado e avisa se restar divergência. Corrige a região partida em duas (espaçamento 20 m) do
+    teste do autor.
+  - **Sem o campo "Espaçamento da busca" (dev4):** o espaçamento é escolhido pelos dados (maior lado
+    da extensão / 100, até 1/4 da largura do polígono de atrito mais estreito, com teto de 100 mil
+    nós) e a tolerância padrão é de 0,5 m (ou 1/2000 do maior lado em extensões pequenas), coerente
+    com mapas temáticos 1:10.000. Os dois valores saem no `_resumo.txt`.
+  - **Desempenho e progresso (dev5, teste com dados reais do autor: 40 mil vértices, 10 polos):** índice
+    angular das arestas por polo (exato; 70× mais rápido); o refinamento vai até estabilizar (o limite
+    fixo de rodadas deixava pontas soltas e regiões fundidas); conferência final por carimbo das
+    regiões; execução em segundo plano (tarefa do QGIS) com progresso em porcentagem e cancelamento.
+    O caso real, que não terminava em mais de 18 min, leva cerca de 2 min.
+  - **Guia Raster:** os polígonos viram notas na grade da análise (extensão e resolução), pelo
+    centro da célula, e o cálculo segue o modelo célula a célula do Vista SAGA (99,7%).
+  - Sem reprojeção: a camada de polígonos define o SRC da análise.
+- **dev6 (teste da dev5 com dados reais):** guia Raster **recorta pela área de estudo** quando a extensão
+  vem de camada poligonal (antes, só o retângulo envolvente); **NoData do raster de atrito sem resultado,
+  atravessável com nota 1** (antes, barreira); lascas do recorte final (largura média < 2 × tolerância)
+  incorporadas ao vizinho; `_resumo.txt` do vetor direto com o tempo de cálculo e as partes com área
+  < 25 m² (só informadas); resumo do raster com atrito com a regra de passagem conforme a fonte.
+- **Nota de atrito 0 recusada** (raster, coluna vetorial e combinação de superfícies): custo zero cria
+  empates resolvidos pela ordem dos pontos, e o comportamento do Vista SAGA com nota 0 não foi
+  testado. Para "quase sem atrito", use um valor pequeno, como 0,1. Rasters de atrito antigos com
+  valor 0 precisam ser revistos.
+- Sem opção do modelo da 1.3 na interface: para reproduzir resultados antigos, use o ZIP da 1.3.0.
+- **Segundo caso de validação, independente (bacia real, 19/11/2026):** Simples e Com Massa 100% (5 m);
+  com atrito (10 m), guia Raster 99,46% / 99,42% das células, 97-98% das divergências na fronteira; guia
+  Vetorial 99,29% / 99,06%. Pelo critério de comparabilidade aceito pelo autor (células ≥ 99%, fronteira
+  ≥ 90%, área ≤ 1% por região), a guia Raster atende no Com Massa e Atrito e falha no critério 3 no Com
+  Atrito (uma região pequena, 1,33%); a guia Vetorial falha no 3 (e no 2 com massa). Declarado sem rever
+  o critério. Para comparar com o Vista SAGA, use a guia Raster. Limitação observada do Vista SAGA
+  original: com atrito, saída vazia ou incompleta, sem aviso, fora da grade de 10 m do caso.
+- Scripts de validação: `scripts/gerar_caso_atrito.py`, `scripts/comparar_caso_atrito.py`,
+  `scripts/comparar_vetor_plugin.py`, `scripts/comparar_caso_bacia.py` (critérios de comparabilidade).
+- Guia Vetorial: vetor direto nas quatro modalidades (antes, com atrito, poligonização da grade).
+- Interface do Voronoi sem menções ao Vista SAGA (introdução e notas de método, em português, inglês e
+  espanhol), a pedido do autor; relatórios, notas da versão e documentação mantêm a descrição da validação.
+
 ## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (2026-11-17)
 
 - **Análises Voronoi no padrão dos demais módulos:** guias “Raster” e “Vetorial”, como na

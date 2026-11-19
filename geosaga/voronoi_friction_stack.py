@@ -31,8 +31,8 @@ def parse_class_notes(text):
             value = float(score.strip())
         except ValueError:
             raise ValueError('Códigos e notas devem ser valores numéricos.') from None
-        if not (math.isfinite(code) and math.isfinite(value) and value >= 0):
-            raise ValueError('Notas/códigos precisam ser finitos, com resistência >= 0.')
+        if not (math.isfinite(code) and math.isfinite(value) and value > 0):
+            raise ValueError('Notas/códigos precisam ser finitos, com nota de atrito maior que 0.')
         if code in mapping:
             raise ValueError(f'Código repetido no mapa de notas: {code:g}.')
         mapping[code] = value

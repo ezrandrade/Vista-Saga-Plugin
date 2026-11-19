@@ -8,6 +8,7 @@ import math
 import os
 import shutil
 import tempfile
+import time
 from .voronoi_core import validate_generators
 from .voronoi_output import LAYER_NAME, VECTOR_FORMATS, export_vector, publish_outputs
 
@@ -83,8 +84,11 @@ def _ogr_polygon(points):
 
 
 def _apollonius_disk(light, heavy):
-    """Disco em que o centro mais leve vence: d_leve / d_pesado < k, k = M_leve / M_pesado < 1."""
-    k = float(light.mass) / float(heavy.mass)
+    """Disco em que o centro mais leve vence: d_leve / d_pesado < k, k = √(M_leve / M_pesado) < 1.
+
+    Lei M/d² do Vista SAGA (1.4.0): M_leve/d_leve² > M_pesado/d_pesado² ⇔ d_leve/d_pesado < k.
+    """
+    k = math.sqrt(float(light.mass) / float(heavy.mass))
     factor = 1. - k*k
     cx = (light.x - k*k*heavy.x) / factor
     cy = (light.y - k*k*heavy.y) / factor
@@ -170,7 +174,7 @@ def _collect_polygons(geometry, target):
 
 
 def mass_voronoi_polygons(generators, bounds, *, tolerance, cancelled=None, progress=None):
-    """Voronoi multiplicativamente ponderado exato (maior M/d vence), em vetor.
+    """Voronoi Com Massa exato (maior M/d² vence, lei do Vista SAGA), em vetor.
 
     Para cada centro i, a região é a caixa intersectada com os discos de
     Apolônio em que i vence os centros mais pesados, menos os discos em que
@@ -246,6 +250,35 @@ def mass_voronoi_polygons(generators, bounds, *, tolerance, cancelled=None, prog
     return results
 
 
+# Partes abaixo da escala (1.4.0-dev6, decisão do autor): só informadas no resumo, sem alterar a
+# geometria. Limiar = (5 m)², o PEC Classe A a 1:10.000 (Decreto 89.817/1984), escala dos mapas
+# de atrito do autor; igual a 1 pixel de 5 m.
+SMALL_PART_M2 = 25.0
+
+
+def _small_parts_text(records, units):
+    """Linhas do resumo sobre partes com área < SMALL_PART_M2 (geometria inalterada)."""
+    from osgeo import ogr
+    from .voronoi_friction_continuous import small_parts
+    regions = []
+    for generator, geometry, _ in records:
+        if not isinstance(geometry, ogr.Geometry):
+            geometry = ogr.CreateGeometryFromWkb(bytes(geometry.asWkb()))
+        if ogr.GT_Flatten(geometry.GetGeometryType()) == ogr.wkbPolygon:
+            geometry = ogr.ForceToMultiPolygon(geometry)
+        regions.append((generator, geometry))
+    found = small_parts(regions, units, SMALL_PART_M2)
+    head = f'Partes com área menor que {SMALL_PART_M2:g} m² ((5 m)², abaixo da escala 1:10.000; PEC Classe A): '
+    if not found:
+        return head + 'nenhuma.\n'
+    count = sum(n for _, n, _ in found)
+    area = sum(a for _, _, a in found)
+    lines = [head + f'{count}, somando {area:.1f} m². Mantidas na geometria (só informadas):']
+    for generator, n, a in found:
+        lines.append(f'  {generator.label or f"Centro {generator.identifier}"}: {n} parte(s), {a:.1f} m²')
+    return '\n'.join(lines) + '\n'
+
+
 def save_simple_voronoi(generators,bounds,destination,projection_wkt,**kw):
     """Compatibilidade: Voronoi Simples vetorial direto."""
     return save_vector_voronoi(generators,bounds,destination,projection_wkt,mode='simple',**kw)
@@ -253,17 +286,27 @@ def save_simple_voronoi(generators,bounds,destination,projection_wkt,**kw):
 
 def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='simple',
                         study_geometry=None,progress=None,cancelled=None,
-                        arc_tolerance_m=DEFAULT_ARC_TOLERANCE_M):
+                        arc_tolerance_m=DEFAULT_ARC_TOLERANCE_M,friction_features=None,
+                        search_spacing=None,friction_info=None,friction_tolerance_m=None):
     """Grava a camada vetorial (formato pela extensão) + CSV/TXT com substituição segura.
 
-    mode: 'simple' (bissetrizes) ou 'mass' (maior M/d; círculos de Apolônio
-    com arcos de desvio máximo ``arc_tolerance_m`` metros).
+    mode: 'simple' (bissetrizes), 'mass' (maior M/d²; círculos de Apolônio com arcos de desvio
+    máximo ``arc_tolerance_m`` metros) ou, desde a 1.4.0, 'friction' / 'mass_friction' (modelo
+    contínuo do atrito, voronoi_friction_continuous): friction_features = [(wkb, nota ou None)];
+    search_spacing = espaçamento da malha de busca (unidades do SRC; None = automático, o padrão da
+    interface desde a 1.4.0); friction_tolerance_m = tolerância das fronteiras em metros (None =
+    padrão de 0,5 m). friction_info: camada, coluna e feições sem nota, para o relatório.
     study_geometry: QgsGeometry já transformada para o SRC de saída.
     """
     from osgeo import ogr, osr
-    if mode not in ('simple','mass'):
-        raise ValueError('Vetor direto disponível para Voronoi Simples e Com Massa.')
-    validate_generators(generators, weighted=mode=='mass')
+    if mode not in ('simple','mass','friction','mass_friction'):
+        raise ValueError('Modalidade de Voronoi desconhecida.')
+    friction=mode in ('friction','mass_friction')
+    if friction and not friction_features:
+        raise ValueError('O vetor direto com atrito exige polígonos de atrito com a coluna de notas.')
+    if friction and search_spacing is not None and not (math.isfinite(search_spacing) and search_spacing > 0):
+        raise ValueError('Informe o espaçamento da busca (positivo).')
+    validate_generators(generators, weighted=mode in ('mass','mass_friction'))
     srs=osr.SpatialReference()
     if not projection_wkt or srs.ImportFromWkt(projection_wkt) or not srs.IsProjected():
         raise ValueError('Voronoi requer SRC projetado válido.')
@@ -301,6 +344,8 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             if layer.CreateField(ogr.FieldDefn(name,kind)) != ogr.OGRERR_NONE:
                 raise OSError(f'Falha ao criar campo {name}')
         records=[]
+        started=time.perf_counter()
+        clip_slivers=0
         if mode=='simple':
             from qgis.core import QgsGeometry, QgsPointXY
             for generator,ring in simple_voronoi_polygons(generators,bounds,cancelled=cancelled,progress=progress):
@@ -319,14 +364,33 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             # Geometrias OGR do começo ao fim; a área de estudo entra pelo WKB.
             study=(ogr.CreateGeometryFromWkb(bytes(study_geometry.asWkb()))
                    if study_geometry is not None else None)
-            for generator,geometry in mass_voronoi_polygons(
-                    generators,bounds,tolerance=arc_tolerance_m/units,
-                    cancelled=cancelled,progress=progress):
-                if study is not None:
+            if friction:
+                from .voronoi_friction_continuous import friction_voronoi_polygons
+                outside=(friction_info or {}).get('outside')
+                regions,friction_stats=friction_voronoi_polygons(
+                    generators,friction_features,bounds,
+                    outside_rating=None if outside in (None,'barreira') else float(outside),
+                    spacing=None if search_spacing is None else float(search_spacing),
+                    tolerance=None if friction_tolerance_m is None else friction_tolerance_m/units,
+                    units_to_meters=units,mass_weighted=mode=='mass_friction',
+                    cancelled=cancelled,progress=(lambda v: progress(int(v*.75))) if progress else None)
+            else:
+                regions=mass_voronoi_polygons(generators,bounds,tolerance=arc_tolerance_m/units,
+                                              cancelled=cancelled,progress=progress)
+            if study is not None:
+                clipped_regions=[]
+                for generator,geometry in regions:
                     clipped=_clean(geometry.Intersection(study))
                     geometry=ogr.Geometry(ogr.wkbMultiPolygon)
                     if clipped is not None and not clipped.IsEmpty():
                         _collect_polygons(clipped,geometry)
+                    clipped_regions.append((generator,geometry))
+                regions=clipped_regions
+                if friction:
+                    # Lascas do recorte final: mesma regra das faces-fio do traçado (1.4.0-dev6).
+                    from .voronoi_friction_continuous import absorb_clip_slivers
+                    regions,clip_slivers=absorb_clip_slivers(regions,friction_stats['tolerance'])
+            for generator,geometry in regions:
                 if geometry.IsEmpty() or not geometry.GetGeometryCount():
                     continue
                 if not geometry.IsValid():
@@ -335,6 +399,7 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
                 if area<=1.e-10:
                     continue
                 records.append((generator,geometry,area))
+        elapsed=time.perf_counter()-started
         total=sum(entry[2] for entry in records)
         if not total:
             raise ValueError('A área de análise não contém regiões de influência válidas.')
@@ -378,12 +443,56 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             report.write('Vista Saga Plugin - Análises Voronoi\n')
             if mode=='simple':
                 report.write('Modalidade: Simples; saída vetorial direta (sem rasterização)\n')
+            elif friction:
+                report.write(('Modalidade: Com Massa e Atrito' if mode=='mass_friction' else 'Modalidade: Com Atrito')
+                             + '; saída vetorial direta (modelo contínuo, sem rasterização)\n')
+                report.write('Critério: menor custo A = integral de s × nota ao longo do segmento reto polo-ponto '
+                             '(s = distância ao polo)' + (', dividido pela massa (equivale a M/d²)' if mode=='mass_friction' else '')
+                             + '. Versão contínua do atrito do Vista SAGA (não é cópia do cálculo célula a célula): coincide '
+                             'com o Vista SAGA original em 99,5% a 99,6% das células no caso sintético e em 99,1% a 99,3% '
+                             'numa bacia real (grade de 10 m), com diferenças também longe da fronteira. Para reproduzir '
+                             'o Vista SAGA, use a guia Raster (99,4% a 99,7%).\n')
+                info=friction_info or {}
+                outside=info.get('outside')
+                report.write(f"Polígonos de atrito: {info.get('layer_name','')}; notas da coluna "
+                             f"{info.get('rating_field','')}. Área sem polígono e feições com a coluna vazia "
+                             f"({info.get('skipped',0)}): "
+                             + ('barreira (sem resultado e sem passagem). ' if outside in (None,'barreira') else
+                                f'sem resultado, atravessáveis com nota {float(outside):g} (custo basal do Vista SAGA, '
+                                'padrão da classe FUNDO). ')
+                             + 'Em sobreposições vale a última feição.\n')
+                spacing_used=friction_stats['spacing']*units
+                tolerance_used=friction_stats['tolerance']*units
+                report.write(f"Fronteiras traçadas numericamente, com refinamento local: espaçamento da busca de "
+                             f"{spacing_used:.3g} m ({'automático: maior lado da extensão / 100, até 1/4 da largura do polígono de atrito mais estreito' if friction_stats.get('spacing_automatic') else 'informado'}) "
+                             f"e tolerância de {tolerance_used:.3g} m (padrão: 0,5 m, ou 1/2000 do maior lado da extensão "
+                             "se for menor; coerente com mapas temáticos 1:10.000, de erro-padrão de 3 m no PEC Classe A). "
+                             "Regiões menores que o espaçamento podem não ser detectadas; a conferência automática abaixo "
+                             "verifica o resultado.\n")
+                report.write(f"Nós avaliados: {friction_stats['evaluations']}; células da malha adaptativa: "
+                             f"{friction_stats['cells']}; vértices de fronteira: {friction_stats['boundary_vertices']}.\n")
+                check=friction_stats.get('check') or {}
+                report.write(f"Conferência automática: {check.get('samples',0)} pontos (um por célula da malha de busca) "
+                             f"comparados com o modelo; {check.get('divergent',0)} divergência(s) longe da fronteira após "
+                             f"{check.get('passes',0)} passada(s) de traçado"
+                             + (f" (correção local em {check.get('forced_cells',0)} célula(s))" if check.get('forced_cells') else '')
+                             + '.\n')
+                if clip_slivers:
+                    report.write(f"Recorte pela área de estudo: {clip_slivers} lasca(s) de largura média menor que "
+                                 f"{2*tolerance_used:.3g} m (2 × tolerância) incorporada(s) à região vizinha de maior "
+                                 "fronteira comum.\n")
+                if check.get('divergent'):
+                    report.write('ATENÇÃO: restaram divergências entre os polígonos e o modelo'
+                                 + (' (limite de memória da correção atingido)' if check.get('budget_hit') else '')
+                                 + '. Repita com um espaçamento da busca menor.\n')
             else:
-                report.write('Modalidade: Com Massa (maior M/d); saída vetorial direta (sem rasterização)\n')
+                report.write('Modalidade: Com Massa (maior M/d², modelo do Vista SAGA); saída vetorial direta (sem rasterização)\n')
                 report.write('Fronteiras entre centros de massas diferentes: arcos de círculos de Apolônio, '
                              f'aproximados por segmentos com desvio máximo de {2*arc_tolerance_m/3:.4g} m '
                              f'(tolerância {arc_tolerance_m:g} m); massas iguais: bissetrizes. '
                              'Regiões podem ter mais de uma parte (multipolígono).\n')
+            report.write(f'Tempo de cálculo (s): {elapsed:.1f}\n')
+            report.write(_small_parts_text(records,units))
             report.write(f'Formato: {VECTOR_FORMATS[os.path.splitext(destination)[1].lower()][1]}\n')
             report.write('Extensão finita definida pelo usuário; distâncias euclidianas no SRC projetado.\n')
             report.write('Áreas métricas planares calculadas nas unidades lineares do SRC.\n\n')
@@ -391,7 +500,10 @@ def save_vector_voronoi(generators,bounds,destination,projection_wkt,*,mode='sim
             for row in rows:
                 report.write(f"{row['ID']} | {row['CENTRO']} | {row['MASSA']:.3f} | "
                              f"{row['AREA_M2']:.3f} | {row['AREA_HA']:.6f} | {row['PCT_AREA']:.4f}\n")
-            report.write('\nA equivalência com o Vista SAGA original depende de validação comparativa.\n')
+            if mode in ('simple','mass'):
+                report.write('\nSimples e Com Massa reproduziram 100% das células do Vista SAGA original no caso '
+                             'sintético e numa bacia real (esta pela guia Raster, que coincide com este vetor '
+                             'no centro das células), exceto empates.\n')
         # Mesmo padrão de backup/rollback do módulo raster (família vetorial inteira).
         publish_outputs(stage,outputs)
         if progress: progress(100)

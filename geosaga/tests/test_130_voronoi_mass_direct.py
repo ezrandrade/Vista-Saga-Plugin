@@ -1,6 +1,6 @@
 """1.3.0: Voronoi Com Massa em vetor direto (círculos de Apolônio, sem grade).
 
-Região de cada centro = onde M/d é máximo. Testes com GDAL/OGR real; pulados sem ``osgeo``.
+Região de cada centro = onde M/d² é máximo (lei do Vista SAGA, desde a 1.4.0). Testes com GDAL/OGR real; pulados sem ``osgeo``.
 """
 import csv
 import math
@@ -25,8 +25,8 @@ def _polygon_area(ring):
 class MassDirectWiringTests(unittest.TestCase):
     def test_dialog_enables_direct_vector_for_mass(self):
         content = (Path(__file__).resolve().parents[1] / 'voronoi_dialog.py').read_text(encoding='utf-8')
-        self.assertIn("direct=kind=='vector' and self.mode.currentIndex() in (0,1)", content)
-        self.assertIn("mode='mass' if self.mode.currentIndex()==1 else 'simple'", content)
+        self.assertIn("direct=kind=='vector'\n", content)
+        self.assertIn("'mass' if self.mode.currentIndex()==1 else 'simple'", content)
 
 
 @unittest.skipUnless(HAS_GDAL, 'GDAL/OGR indisponível')
@@ -40,12 +40,13 @@ class MassVoronoiPolygonsTests(unittest.TestCase):
                 mass_voronoi_polygons(points, bounds, tolerance=tolerance)}
 
     def test_two_centres_match_apollonius_circle(self):
-        # A (M=1) vence onde d_A/d_B < 1/2: disco de centro (-10/3, 0) e raio 20/3.
+        # A (M=1) vence onde 1/d_A² > 2/d_B², isto é, d_A/d_B < k = 1/√2:
+        # disco de centro (-10, 0) e raio k × 10 / (1 - k²) = 10√2.
         result = self._polygons([Generator(1, 0, 0, 1.), Generator(2, 10, 0, 2.)], (-50, -50, 50, 50))
-        radius = 0.5 * 10 / 0.75
+        radius = 10 * math.sqrt(2)
         self.assertAlmostEqual(result[1].GetArea(), math.pi * radius**2, delta=0.005)
         self.assertAlmostEqual(result[1].GetArea() + result[2].GetArea(), 10000., places=4)
-        cx, cy = -10 / 3, 0.
+        cx, cy = -10., 0.
         ring = result[1].GetGeometryRef(0).GetGeometryRef(0)
         for i in range(ring.GetPointCount()):
             x, y = ring.GetX(i), ring.GetY(i)
@@ -75,7 +76,7 @@ class MassVoronoiPolygonsTests(unittest.TestCase):
         checked = 0
         for _ in range(2000):
             x, y = rnd.uniform(0, 10000), rnd.uniform(0, 8000)
-            scores = sorted((math.hypot(x - p.x, y - p.y) / p.mass, p.identifier) for p in points)
+            scores = sorted((math.hypot(x - p.x, y - p.y) / math.sqrt(p.mass), p.identifier) for p in points)
             if scores[1][0] - scores[0][0] < 1.e-4 * scores[0][0]:
                 continue  # perto da fronteira: dentro da tolerância dos arcos
             point = ogr.Geometry(ogr.wkbPoint)
@@ -139,12 +140,13 @@ class SaveMassVectorTests(unittest.TestCase):
                     table = list(csv.DictReader(handle, delimiter=';'))
                 self.assertAlmostEqual(sum(float(r['PCT_AREA']) for r in table), 100., places=6)
                 report = Path(result['txt']).read_text(encoding='utf-8')
-                self.assertIn('Com Massa (maior M/d); saída vetorial direta', report)
+                self.assertIn('Com Massa (maior M/d², modelo do Vista SAGA); saída vetorial direta', report)
                 self.assertIn('círculos de Apolônio', report)
 
     def test_friction_mode_rejected(self):
         from geosaga.voronoi_vector import save_vector_voronoi
-        with self.assertRaisesRegex(ValueError, 'Simples e Com Massa'):
+        # 1.4.0: o vetor direto com atrito existe, mas exige os polígonos de atrito.
+        with self.assertRaisesRegex(ValueError, 'polígonos de atrito'):
             save_vector_voronoi(self.points, self.bounds, str(Path(self.folder.name) / 'x.gpkg'),
                                 self.wkt, mode='friction')
 

@@ -1,8 +1,8 @@
 """Núcleo testável do Voronoi Espacial (raster discretizado).
 
-0.7.0: simples (menor distância euclidiana) e massa (maior M/d).
-Os modelos de atrito e massa+atrito não são declarados equivalentes ao SAGA
-até reconstrução/validação da integração do atrito ao longo da trajetória.
+Simples: menor distância euclidiana. Com Massa: maior M/d² (1.4.0), a lei do Vista SAGA/UFRJ,
+confirmada célula a célula contra o programa original (antes da 1.4.0, o plugin usava M/d).
+O atrito fica em voronoi_friction.py.
 """
 from dataclasses import dataclass
 import math
@@ -42,7 +42,7 @@ def validate_generators(generators, *, weighted=False):
 def assign_window(generators, geotransform, width, y_offset, height, *, mode='simple', mask=None):
     """Calcula IDs por centro de pixel; desempate pela ordem dos pontos.
 
-    'mass': maximiza M / d, equivalente a minimizar d² / M². IDs 0
+    'mass': maximiza M / d², equivalente a minimizar d² / M. IDs 0
     representam áreas fora de máscara; a distância exata zero pertence
     ao respectivo centro gerador. A métrica exige CRS projetado.
     """
@@ -65,7 +65,7 @@ def assign_window(generators, geotransform, width, y_offset, height, *, mode='si
         dx = gx - generator.x
         dy = gy - generator.y
         dist_sq = dx * dx + dy * dy
-        score = dist_sq / (generator.mass ** 2) if mode == 'mass' else dist_sq
+        score = dist_sq / generator.mass if mode == 'mass' else dist_sq
         # '<' estável: empate conserva o primeiro ponto na ordem informada.
         better = score < best
         labels[better] = generator.identifier
