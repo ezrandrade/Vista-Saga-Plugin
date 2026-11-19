@@ -149,6 +149,54 @@ forma clássica do modelo gravitacional.
 O mesmo teste confirmou o arquivo de pontos do Vista SAGA: `Nome;Massa;X:Y`, com X:Y = coluna e
 linha **contadas a partir de 1**.
 
+## Segundo caso, independente: bacia real (19/11/2026)
+
+O autor rodou no Vista SAGA original (Windows 7 de 32 bits) uma bacia urbana real: uso do solo com três
+classes de atrito (notas 1, 3 e 5; FUNDO com nota 1), 10 polos com massas de 4.261 a 73.139 e área de
+estudo de 2.347 ha. O plugin rodou sobre o **mesmo RS2**, na mesma grade e com os mesmos polos
+(`scripts/comparar_caso_bacia.py`).
+
+- **Simples e Com Massa, grade de 5 m (990 × 2.214): 100%** das 2.191.850 células, sem empates.
+- **Com atrito, grade de 10 m (495 × 1.107)**, critérios calculados dentro da área de estudo:
+
+| Modalidade | Guia | (1) Células | (2) Divergências na fronteira | (3) Maior diferença de área por região | Critério |
+|---|---|---|---|---|---|
+| Com Atrito | Raster | 99,46% | 97,2% | **1,33%** (região de 86 ha, -1,15 ha) | **não atende (3)** |
+| Com Massa e Atrito | Raster | 99,42% | 97,9% | 0,82% | atende |
+| Com Atrito | Vetorial | 99,29% | 93,4% | **1,91%** | **não atende (3)** |
+| Com Massa e Atrito | Vetorial | 99,06% | **88,9%** | **1,99%** | **não atende (2, 3)** |
+
+**Critério de comparabilidade** (aceito pelo autor em 19/11/2026, antes do cálculo região a região):
+(1) pelo menos 99% das células da área de estudo iguais às do Vista SAGA na mesma grade; (2) pelo menos
+90% das divergências na fronteira entre regiões; (3) nenhuma região com diferença de área maior que 1%
+da própria área. **Decisão do autor:** manter o critério como foi aceito e declarar o resultado; o
+critério não foi revisto depois de conhecidos os números.
+
+**Leitura dos resultados.**
+- A **guia Raster** atende os critérios 1 e 2 nas duas modalidades e o 3 no Com Massa e Atrito. No Com
+  Atrito, falha no critério 3 por uma só região pequena: 98% das células divergentes dela ficam na
+  fronteira, com saldo de 0,13 célula por célula de fronteira. É um viés pequeno de borda, que numa região
+  pequena em grade de 10 m passa de 1% da área. Nenhuma região é deslocada.
+- A **guia Vetorial** não é uma cópia do Vista SAGA: calcula o mesmo modelo no limite contínuo, sem a soma
+  célula a célula. Perto dos polos coincide; longe deles, fora da área de estudo, as fronteiras se afastam
+  mais (97,2% a mais de 1 km da bacia, contra 99,7% da guia Raster), o que é coerente com um termo de
+  discretização da soma do Vista SAGA que o modelo contínuo não tem (interpretação não demonstrada).
+- Na divergência entre as guias observada nos dados reais da dev5 (15 a 20 ha, sul da bacia), **o Vista
+  SAGA fica com a guia Raster**.
+
+**Qual guia usar.** Para resultados que precisam ser comparáveis ao Vista SAGA, use a **guia Raster**,
+declarando a coincidência medida. A guia Vetorial é a versão contínua do mesmo método (independente da
+resolução); se for usada, declare-a como tal, com a coincidência medida (99,1 a 99,3% das células).
+
+**Limitação do Vista SAGA original, observada (causa não confirmada).** Com atrito, a saída só saiu
+correta com a grade de 10 m (495 × 1.107). Com 5 m (990 × 2.214), a saída veio com metade das linhas e
+colunas e sem nenhuma região (mapa todo amarelo, código fora da legenda); com 20 m (247 × 553), veio com
+o dobro, e o cálculo ocupou só o canto superior esquerdo. Não houve mensagem de erro. Simples e Com Massa
+funcionaram em 5 m. Confira sempre se a saída do Vista SAGA mostra as regiões antes de usá-la.
+
+O critério 3 não foi calculado no caso sintético de 17/11 (as saídas daquele caso não estão nesta
+sessão); os critérios 1 e 2 se cumprem nele (99,7%; diferenças só na fronteira).
+
 ## Testes
 
 - Suíte histórica e `tests/unit` verdes; testes do atrito reescritos contra uma referência escalar
@@ -171,8 +219,10 @@ linha **contadas a partir de 1**.
   divergências. Vetor × raster (5 m), célula a célula: Simples e Com Massa 100%; **Com Atrito 99,36% e
   Com Massa e Atrito 99,14%** (15 a 20 ha de diferença, até 3,8 ha numa região, com deslocamento
   sistemático). É a diferença entre o modelo contínuo e o célula a célula em percursos longos sobre um
-  mosaico fragmentado. **Qual dos dois se aproxima mais do Vista SAGA nesses dados não foi testado**:
-  só uma rodada da mesma bacia no Vista SAGA original decide.
+  mosaico fragmentado. Resolvido pelo segundo caso (bacia no Vista SAGA original, acima): o Vista SAGA
+  fica com a guia Raster.
 - dev6: suítes verdes (testes novos em `test_150_voronoi_dev6.py`); diálogo conferido em QGIS 3.34
   sem interface gráfica com dados sintéticos (bacia côncava, raster de atrito com faixa NoData).
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev6`).
+- Teste do autor da dev6 (QGIS 4): **dev6 aprovada** (19/11/2026).
+- Validação na bacia real contra o Vista SAGA original (19/11/2026): ver "Segundo caso, independente";
+  `scripts/comparar_caso_bacia.py` e `tests/unit/test_comparar_caso_bacia.py`.

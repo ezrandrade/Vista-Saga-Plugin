@@ -88,9 +88,14 @@ essas bibliotecas faltam.
   como…”, gravados via `voronoi_output.py`. Vetorial: Simples e Com Massa exatos
   (`save_vector_voronoi`; Com Massa = `mass_voronoi_polygons`, decisão de método do autor na
   1.3.0: discos de Apolônio e bissetrizes em OGR/GEOS, tolerância de 1 cm, desvio máximo 2/3 cm,
-  sem viés, disco gerado sobre a extensão inteira para os vizinhos coincidirem); com atrito,
-  poligonização na grade do atrito (`run_voronoi(vectorize=True, keep_raster=False)`). O autor
+  sem viés, disco gerado sobre a extensão inteira para os vizinhos coincidirem). O autor
   retirou “Vetor (poligonização)” e “GeoTIFF + vetor”: não reintroduzir sem pedido.
+- **Voronoi (1.4.0, decisões de método do autor):** Com Massa = M/d²; atrito no modelo célula a célula do
+  Vista SAGA na guia Raster e, na guia Vetorial, vetor direto pelo modelo contínuo (ver
+  `NOTAS_DA_VERSAO_140.md`). **Critério de comparabilidade com o Vista SAGA** (19/11/2026): ≥ 99% das
+  células da área de estudo, ≥ 90% das divergências na fronteira, ≤ 1% de diferença de área por região;
+  conferir com `scripts/comparar_caso_bacia.py` antes de mudar o atrito. Na bacia real, a guia Raster
+  falha no critério 3 no Com Atrito (1,33%, região pequena), declarado sem rever o critério.
 - **Mann–Kendall** saiu da Monitoria na 1.2.0 e volta como módulo próprio na 2.0;
   `monitoring_trends.py` e as funções de relatório ficam reservadas.
 - **Avaliação:** as três guias têm o mesmo leiaute (projeto, escala, critérios e pesos, classes,

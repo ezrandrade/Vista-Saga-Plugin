@@ -44,6 +44,14 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   1,91% (Mangabeiras): não atende o 3; Vetorial Com Massa e Atrito 99,063% / 88,9% / 1,99% (Mangabeiras):
   não atende o 2 nem o 3. Fechamento suspenso até decisão do autor (manter o critério e declarar a
   falha, investigar a causa, ou rever o critério 3, com o risco de ajuste depois de ver os dados).
+  **Decisão do autor (19/11): opção 1, manter o critério e declarar a falha.** Na guia Raster, Com
+  Atrito, a região que falha (Mangabeiras) tem 98% das divergências na fronteira, saldo de 0,13 célula
+  por célula de fronteira.
+- **1.4.0 FECHADA (19/11, sessão 4):** notas e CHANGELOG sem "(em teste)", seção "Segundo caso,
+  independente" com os critérios, decisão e limitação do Vista SAGA; `_resumo.txt` com a validação na
+  bacia; `scripts/comparar_caso_bacia.py` + teste; `CLAUDE.md` com o critério. Suítes 465 (3 pulados) +
+  42. ZIP final `dist/Vista_Saga_Plugin_QGIS4_v1.4.0.zip` enviado ao autor. **Falta (autor):** merge do
+  PR #13 e tag `v1.4.0` (o proxy das sessões recusa tags).
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o

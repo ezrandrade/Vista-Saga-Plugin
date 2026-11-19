@@ -51,8 +51,15 @@
   testado. Para "quase sem atrito", use um valor pequeno, como 0,1. Rasters de atrito antigos com
   valor 0 precisam ser revistos.
 - Sem opção do modelo da 1.3 na interface: para reproduzir resultados antigos, use o ZIP da 1.3.0.
+- **Segundo caso de validação, independente (bacia real, 19/11/2026):** Simples e Com Massa 100% (5 m);
+  com atrito (10 m), guia Raster 99,46% / 99,42% das células, 97-98% das divergências na fronteira; guia
+  Vetorial 99,29% / 99,06%. Pelo critério de comparabilidade aceito pelo autor (células ≥ 99%, fronteira
+  ≥ 90%, área ≤ 1% por região), a guia Raster atende no Com Massa e Atrito e falha no critério 3 no Com
+  Atrito (uma região pequena, 1,33%); a guia Vetorial falha no 3 (e no 2 com massa). Declarado sem rever
+  o critério. Para comparar com o Vista SAGA, use a guia Raster. Limitação observada do Vista SAGA
+  original: com atrito, saída vazia ou incompleta, sem aviso, fora da grade de 10 m do caso.
 - Scripts de validação: `scripts/gerar_caso_atrito.py`, `scripts/comparar_caso_atrito.py`,
-  `scripts/comparar_vetor_plugin.py`.
+  `scripts/comparar_vetor_plugin.py`, `scripts/comparar_caso_bacia.py` (critérios de comparabilidade).
 - Guia Vetorial: vetor direto nas quatro modalidades (antes, com atrito, poligonização da grade).
 
 ## 1.3.0 — Voronoi: guias Raster e Vetorial, vetor exato Com Massa (2026-11-17)
