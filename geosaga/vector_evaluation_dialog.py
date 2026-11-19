@@ -762,6 +762,7 @@ class VectorEvaluationDialog(QWidget):
             self.run_button.setEnabled(False)
             self.close_button.setEnabled(False)
             progress = QProgressDialog(tr('Calculando notas das feições…'), tr('Cancelar'), 0, 100, self)
+            progress.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
             progress.setMinimumDuration(0)
             progress.setWindowModality(Qt.WindowModality.WindowModal)
 

@@ -35,7 +35,7 @@ class RS2ConverterDialog(QDialog):
     def __init__(self, iface, parent=None):
         super().__init__(parent)
         self.iface = iface
-        self.setWindowTitle(tr('Vista Saga Plugin - Conversor de formatos'))
+        self.setWindowTitle(tr('Vista Saga Plugin - Conversor de Formatos'))
         self.setMinimumWidth(690)
         self.resize(750, 480)  # altura final ajustada ao conteúdo em _fit_height()
         self.setModal(False)
@@ -948,7 +948,7 @@ class RS2ConverterDialog(QDialog):
                 QMessageBox.warning(self, tr('Entrada TIFF'), tr(str(exc)))
                 return
         progress = QProgressDialog(tr('Convertendo mapas…'), tr('Cancelar'), 0, 100, self)
-        progress.setWindowTitle(tr('Vista Saga Plugin - conversor'))
+        progress.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         progress.setMinimumDuration(0)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.show()

@@ -347,6 +347,7 @@ class EvaluationDialog(QDialog):
 
     def _scan_with_progress(self, path):
         dlg = QProgressDialog(tr('Identificando classes temáticas…'), tr('Cancelar'), 0, 100, self)
+        dlg.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         dlg.setWindowModality(Qt.WindowModality.WindowModal)
         dlg.setMinimumDuration(250)
         last_progress = [-1]

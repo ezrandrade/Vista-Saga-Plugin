@@ -691,6 +691,7 @@ class TaskProgressWindow:
         from qgis.PyQt.QtWidgets import QProgressDialog
         self._task = task
         dialog = QProgressDialog(tr(label), tr('Cancelar'), 0, 100, parent)
+        dialog.setWindowTitle(parent.window().windowTitle())  # título da janela do módulo
         dialog.setWindowModality(Qt.WindowModality.NonModal)
         dialog.setMinimumDuration(0)
         dialog.setAutoClose(False)

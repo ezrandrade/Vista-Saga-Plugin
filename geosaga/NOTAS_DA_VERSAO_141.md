@@ -34,6 +34,15 @@ O desfecho que antes aparecia na linha de status (concluída, cancelada, prévia
 projeto salvo ou carregado) aparece na **barra de mensagens do QGIS**, acima do mapa. Falhas continuam
 em caixas de mensagem.
 
+### Títulos das janelas (dev2)
+
+- A janela do Conversor se chama "Vista Saga Plugin - Conversor de Formatos", como no menu.
+- As janelas de progresso levam o título da janela do módulo ("Vista Saga Plugin - Monitoria",
+  "Vista Saga Plugin - Avaliação" etc.), em vez de títulos diferentes em cada módulo.
+- Não muda: nos módulos que calculam em segundo plano (Voronoi, Monitoria raster, Avaliação raster), a
+  janela de progresso não bloqueia a janela do módulo; nos demais, bloqueia enquanto roda (diferença de
+  arquitetura, mantida por decisão do autor).
+
 ## Decisões do autor (19/11/2026)
 
 - Botão de ação "Executar" em todos os módulos; "Validar" só na Avaliação (única exceção).
@@ -47,4 +56,4 @@ em caixas de mensagem.
   fixos, o Validar só na Avaliação, a janela de progresso e o rodapé comum das guias vetoriais.
 - Janelas abertas em QGIS 3.34 sem interface gráfica (não é o alvo): rodapés capturados nos 7 módulos e
   nas guias, e a janela de progresso.
-- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev1`).
+- **Pendente:** teste do autor no QGIS 4 (ZIP `-dev2`).

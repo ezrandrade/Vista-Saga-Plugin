@@ -14,6 +14,10 @@
   caixas de mensagem.
 - **Conversor de Formatos:** "Propriedades RS2…" saiu do rodapé para junto do campo "Arquivo de entrada",
   que é o arquivo que ele inspeciona.
+- **Títulos das janelas (dev2):** "Vista Saga Plugin - Conversor de Formatos", como no menu (antes,
+  "formatos" em minúscula); as janelas de progresso de todos os módulos usam o título da janela do módulo
+  (antes, "Vista Saga - Assinatura", "Vista Saga Plugin - conversor", "Vista Saga - Monitoria vetorial" ou
+  nenhum título próprio).
 - Nenhum cálculo alterado. Teste: `test_160_rodape_padrao.py`.
 
 ## 1.4.0 — Voronoi fiel ao Vista SAGA e atrito vetorial (2026-11-19)

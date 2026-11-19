@@ -623,6 +623,7 @@ class ImageSequenceDialog(QDialog):
         self.run_button.setEnabled(False)
         self.close_button.setEnabled(False)
         progress = QProgressDialog(tr('Renderizando quadros…'), tr('Cancelar'), 0, len(self.entries), self)
+        progress.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
         progress.setMinimumDuration(0)
         frames = []

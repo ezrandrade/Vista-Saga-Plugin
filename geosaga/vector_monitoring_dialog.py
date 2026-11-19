@@ -232,7 +232,7 @@ class VectorMonitoringDialog(QWidget):
         self.run_button.setEnabled(False)
         self.status.setText(tr('Executando interseção e cálculo das áreas…'))
         dialog = QProgressDialog(tr('Monitoria vetorial em execução…'), tr('Cancelar'), 0, 100, self)
-        dialog.setWindowTitle(tr('Vista Saga - Monitoria vetorial'))
+        dialog.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         dialog.setWindowModality(Qt.WindowModality.WindowModal)
         dialog.setMinimumDuration(0)
         dialog.setValue(0)

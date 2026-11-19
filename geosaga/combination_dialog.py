@@ -428,6 +428,7 @@ class CombinationDialog(QDialog):
         self.start.setEnabled(False)
         self.close_button.setEnabled(False)
         pg = QProgressDialog(tr('Combinando mapas…'),tr('Cancelar'),0,100,self)
+        pg.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         pg.setWindowModality(Qt.WindowModality.WindowModal)
         pg.setMinimumDuration(0)
         pg.setAutoClose(False)

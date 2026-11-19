@@ -6,7 +6,7 @@ Atualize ao fim de cada sessão de trabalho. As entradas mais recentes ficam no 
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4: 1.4.0 fechada; 1.4.1-dev1 em teste) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 19/11/2026, sessão 4: 1.4.0 fechada; 1.4.1-dev2 em teste) <<<
 
 Leia esta seção primeiro; o histórico detalhado vem depois, da entrada mais recente para a mais antiga.
 **A versão válida deste arquivo é a do repositório** (branch `feat/voronoi-atrito-fiel`); cópias guardadas
@@ -77,7 +77,12 @@ pelo autor podem estar desatualizadas (aconteceu na sessão 3).
   `Vista_Saga_Plugin_QGIS4_v1.4.1-dev1.zip`. **PR:**
   [ezrandrade/Vista-Saga-Plugin#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14), base
   `feat/voronoi-atrito-fiel` (depende do #13; depois do merge do #13, mudar a base para `main`).
-  Pendente: teste do autor no QGIS 4.
+- **1.4.1-dev2 (19/11, pedido do autor):** título "Vista Saga Plugin - Conversor de Formatos" (como no
+  menu); janelas de progresso com o título da janela do módulo (`self.window().windowTitle()`, também nos
+  formulários embutidos). Mantida, por decisão do autor, a diferença de modalidade da janela de progresso
+  (não bloqueia nos módulos em segundo plano; bloqueia nos demais). Não auditado ainda: o miolo de cada
+  módulo (grupos, rótulos, alinhamentos, textos de ajuda). Suítes 475 (3 pulados) + 42. ZIP
+  `Vista_Saga_Plugin_QGIS4_v1.4.1-dev2.zip`. Pendente: teste do autor no QGIS 4.
   Próximo: fechamento da 1.4.0 (nota de método das duas guias com a validação
   na bacia; tirar "(em teste)"; ZIP final; merge do PR #13 e tag v1.4.0 pelo autor).
 - **Vista SAGA roda no Windows 7 32 bits em VirtualBox** (PC principal do autor). O `[ATRITOS]` resolveu o

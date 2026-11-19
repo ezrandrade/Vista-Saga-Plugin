@@ -399,7 +399,7 @@ class SignatureDialog(QDialog):
         self._busy = True
         self.run_button.setEnabled(False)
         popup = QProgressDialog(tr('Calculando as assinaturas…'), tr('Cancelar'), 0, 100, self)
-        popup.setWindowTitle(tr('Vista Saga - Assinatura'))
+        popup.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         popup.setWindowModality(Qt.WindowModality.WindowModal)
         popup.setMinimumDuration(0)
         popup.setValue(0)

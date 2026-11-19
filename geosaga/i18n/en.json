@@ -1572,5 +1572,6 @@
   "GDAL sem driver vetorial em memória para o recorte pela área de estudo.": "GDAL has no in-memory vector driver for clipping to the study area.",
   "Nenhuma célula da grade tem o centro dentro da área de estudo; use células menores.": "No grid cell has its centre inside the study area; use smaller cells.",
   "Área de estudo vazia ou inválida.": "Empty or invalid study area.",
-  "Avaliação em execução…": "Evaluation running…"
+  "Avaliação em execução…": "Evaluation running…",
+  "Vista Saga Plugin - Conversor de Formatos": "Vista Saga Plugin - Format converter"
 }

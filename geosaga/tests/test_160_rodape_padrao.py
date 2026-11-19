@@ -77,6 +77,29 @@ class RodapePadrao160(unittest.TestCase):
                       source('vector_evaluation_dialog.py'))
 
 
+class TitulosDasJanelas160(unittest.TestCase):
+    """1.4.1-dev2: título do Conversor igual ao menu; janelas de progresso com o título do módulo."""
+
+    def test_titulo_do_conversor(self):
+        code = source('rs2_dialog.py')
+        self.assertIn("setWindowTitle(tr('Vista Saga Plugin - Conversor de Formatos'))", code)
+        self.assertNotIn("'Vista Saga Plugin - Conversor de formatos'", code)
+
+    def test_janelas_de_progresso_com_titulo_do_modulo(self):
+        for name in DIALOGS + ['ui_shared.py']:
+            lines = source(name).splitlines()
+            for i, line in enumerate(lines):
+                match = re.match(r'\s*(\w+)\s*=\s*QProgressDialog\(', line)
+                if not match:
+                    continue
+                var = match.group(1)
+                window = '\n'.join(lines[i + 1:i + 4])
+                self.assertRegex(window, rf'{var}\.setWindowTitle\((self|parent)\.window\(\)\.windowTitle\(\)\)',
+                                 f'{name}:{i + 1}')
+        for name in DIALOGS:
+            self.assertNotRegex(source(name), r"setWindowTitle\(tr\('Vista Saga - ", name)
+
+
 class FooterStatus160(unittest.TestCase):
     def setUp(self):
         # ui_shared importa tr de geosaga.i18n; carrega o pacote sem QGIS.

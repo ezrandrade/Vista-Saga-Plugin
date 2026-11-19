@@ -913,6 +913,7 @@ class VoronoiDialog(QDialog):
         self.run_button.setEnabled(False)
         self.close_button.setEnabled(False)
         dialog=QProgressDialog(tr('Calculando áreas de influência…'),tr('Cancelar'),0,100,self)
+        dialog.setWindowTitle(self.window().windowTitle())  # título da janela do módulo (1.4.1)
         dialog.setWindowModality(Qt.WindowModality.NonModal)
         dialog.setMinimumDuration(0)
         dialog.setAutoClose(False)
