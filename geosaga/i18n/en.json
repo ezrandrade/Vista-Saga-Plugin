@@ -1675,5 +1675,12 @@
   "Área asn. ha": "Signed area ha",
   "% Área asn.": "% Signed area",
   "% Categoria": "% Category",
-  "Mapas raster (*.tif *.tiff *.rs2 *.img *.vrt);;Todos os arquivos (*)": "Raster maps (*.tif *.tiff *.rs2 *.img *.vrt);;All files (*)"
+  "Mapas raster (*.tif *.tiff *.rs2 *.img *.vrt);;Todos os arquivos (*)": "Raster maps (*.tif *.tiff *.rs2 *.img *.vrt);;All files (*)",
+  "Selecione as feições da camada de referência no mapa do QGIS; a janela fica aberta enquanto você seleciona.": "Select the features of the reference layer on the QGIS map; the window stays open while you select.",
+  "Selecionar no mapa": "Select on map",
+  "Torna a camada de referência a camada ativa e liga a ferramenta de seleção do QGIS: clique nas feições no mapa (Ctrl+clique acrescenta ou retira uma feição).": "Makes the reference layer the active layer and turns on the QGIS selection tool: click the features on the map (Ctrl+click adds or removes a feature).",
+  "Desselecionar todas": "Deselect all",
+  "Limpa a seleção da camada de referência.": "Clears the selection of the reference layer.",
+  "Selecione no mapa as feições de {0}; a janela da Assinatura continua aberta.": "Select the features of {0} on the map; the Signature window stays open.",
+  "Nenhuma feição selecionada em {0}. Use \"Selecionar no mapa\" e clique nas feições no mapa do QGIS, ou \"Selecionar todas\".": "No feature selected in {0}. Use \"Select on map\" and click the features on the QGIS map, or \"Select all\"."
 }

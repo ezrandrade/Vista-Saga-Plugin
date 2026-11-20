@@ -59,6 +59,19 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   (dev5)** com `raster = None` após o laço; teste estrutural `test_150_vetor_rs2_temporarios.py` (falha sem
   a correção). As pastas que já existem precisam ser apagadas à mão. Suítes: 511 (3 pulados) e 42.
 
+### Teste do autor com o dev5 (20/11/2026)
+
+- Vetor → RS2 sem pastas ocultas: correção confirmada pelo autor.
+- **Guia Vetorial: o autor não conseguiu selecionar uma feição** (só havia "Selecionar todas") e, ao
+  executar, recebeu "Selecione pelo menos uma feição do mapa de referência". Falha de projeto da janela: a
+  instrução de usar as ferramentas do QGIS estava só na dica, e a ferramenta de seleção do QGIS age sobre a
+  **camada ativa**, que podia não ser a referência.
+- **Correção (dev6):** texto visível no grupo "2. Seleção na referência"; botões **"Selecionar no mapa"**
+  (ativa a camada de referência com `iface.setActiveLayer` e liga `iface.actionSelect()`), "Selecionar
+  todas" e **"Desselecionar todas"**; mensagem de erro que explica o que fazer quando nada está
+  selecionado. Integração em QGIS real com interface simulada. Suítes: 511 (3 pulados) e 42. ZIP
+  `Vista_Saga_Plugin_QGIS4_v1.5.0-dev6.zip`. O lote projeto + legado + limpeza passa a ser o **dev7**.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
@@ -67,7 +80,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
    Poço); (b) "Marcar todas" e comparar com `assinatura02.txt` (esperado: 100%); (c) guia Vetorial com
    camadas do autor, seleção pelas ferramentas do QGIS e contador da janela; (d) leiaute, textos, dicas e o
    que faltar em relação ao módulo antigo.
-2. Ajustes conforme o teste (dev3 feito: nomes pelo estilo do QGIS); depois **dev6**: projeto como na Avaliação (`*.geosaga.json`,
+2. Ajustes conforme o teste (dev3 feito: nomes pelo estilo do QGIS); depois **dev7**: projeto como na Avaliação (`*.geosaga.json`,
    Novo/Abrir/Salvar), algoritmo Processing `geosaga:assinatura` marcado como obsoleto e oculto (conferir o
    nome do indicador no QGIS 4), retirada do motor antigo (`signature_engine.py`, `signature_core.py` e
    seus testes; atualizar `tests/qgis/smoke_qgis.py`, que ainda chama `signature_engine`).

@@ -213,14 +213,26 @@ class SignatureDialog(QDialog):
         group.setToolTip(tr('Selecione as feições na camada de referência com as ferramentas de seleção do QGIS '
                             '(selecionar, desselecionar, selecionar por expressão).'))
         form = QFormLayout(group)
+        how = QLabel(tr('Selecione as feições da camada de referência no mapa do QGIS; a janela fica aberta '
+                        'enquanto você seleciona.'))
+        how.setWordWrap(True)
+        form.addRow(how)
         self.selection_info = QLabel()
         self.selection_info.setWordWrap(True)
         form.addRow(tr('Selecionadas:'), self.selection_info)
         row = QHBoxLayout()
+        on_map = QPushButton(tr('Selecionar no mapa'))
+        on_map.setToolTip(tr('Torna a camada de referência a camada ativa e liga a ferramenta de seleção do '
+                             'QGIS: clique nas feições no mapa (Ctrl+clique acrescenta ou retira uma feição).'))
+        on_map.clicked.connect(self._select_on_map)
         select_all = QPushButton(tr('Selecionar todas'))
         select_all.setToolTip(tr('Seleciona todas as feições da camada de referência (o mapa inteiro).'))
         select_all.clicked.connect(self._select_all_features)
-        row.addWidget(select_all)
+        clear = QPushButton(tr('Desselecionar todas'))
+        clear.setToolTip(tr('Limpa a seleção da camada de referência.'))
+        clear.clicked.connect(self._clear_selection)
+        for button in (on_map, select_all, clear):
+            row.addWidget(button)
         row.addStretch(1)
         form.addRow('', row)
         self.feature_name = QComboBox()
@@ -548,6 +560,29 @@ class SignatureDialog(QDialog):
         if layer is not None:
             layer.selectAll()
 
+    def _clear_selection(self):
+        layer = self._reference_layer()
+        if layer is not None:
+            layer.removeSelection()
+
+    def _select_on_map(self):
+        """A ferramenta de seleção do QGIS age sobre a camada ativa: ativa a referência e liga a ferramenta."""
+        layer = self._reference_layer()
+        if layer is None:
+            QMessageBox.information(self, tr('Assinatura'), tr('Adicione o mapa de referência à lista.'))
+            return
+        if self.iface is None:
+            return
+        self.iface.setActiveLayer(layer)
+        for name in ('actionSelect', 'actionSelectRectangle'):
+            getter = getattr(self.iface, name, None)
+            if getter is not None:
+                getter().trigger()
+                break
+        self.iface.mapCanvas().setFocus()
+        report_outcome(None, 'Assinatura', tr('Selecione no mapa as feições de {0}; a janela da Assinatura continua '
+                                              'aberta.').format(layer.name()), 'info', self.iface)
+
     # ------------------------------------------------------------------ execução
     def _save_as(self):
         path, _ = QFileDialog.getSaveFileName(self, tr('Relatórios da Assinatura'),
@@ -596,6 +631,9 @@ class SignatureDialog(QDialog):
                 continue
             name = _plain(feature[name_field]) if name_field else None
             selected.append((feature.id(), name if name is not None else feature.id(), bytes(geometry.asWkb())))
+        if not selected:
+            raise ValueError(f'Nenhuma feição selecionada em {reference.name()}. Use "Selecionar no mapa" e clique '
+                             'nas feições no mapa do QGIS, ou "Selecionar todas".')
         return maps, selected
 
     def run(self):

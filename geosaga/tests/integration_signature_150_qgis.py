@@ -48,6 +48,32 @@ def _square(x0, x1):
     return f'POLYGON(({x0} 0,{x1} 0,{x1} 100,{x0} 100,{x0} 0))'
 
 
+class _FakeIface:
+    """O mínimo do QgisInterface usado por "Selecionar no mapa"."""
+
+    def __init__(self):
+        from qgis.PyQt.QtWidgets import QAction
+        from qgis.gui import QgsMapCanvas
+        self.active = None
+        self.select_triggered = False
+        self._action = QAction()
+        self._action.triggered.connect(lambda *_: setattr(self, 'select_triggered', True))
+        self._canvas = QgsMapCanvas()
+
+    def setActiveLayer(self, layer):
+        self.active = layer
+        return True
+
+    def actionSelect(self):
+        return self._action
+
+    def mapCanvas(self):
+        return self._canvas
+
+    def messageBar(self):
+        raise RuntimeError('sem barra de mensagens no teste')
+
+
 def _rows(path):
     with open(path, encoding='utf-8-sig', newline='') as stream:
         return list(csv.DictReader(stream, delimiter=';'))
@@ -97,6 +123,23 @@ def run():
         dialog._refresh_list(1)
         bairros.selectByIds([f.id() for f in bairros.getFeatures() if f['CLASSE'] == 2])
         assert dialog.selection_info.text().endswith(': 1.'), dialog.selection_info.text()
+        # Botões de seleção (teste do autor, 20/11/2026): a ferramenta do QGIS age sobre a camada ativa.
+        iface = _FakeIface()
+        dialog.iface = iface
+        dialog._select_on_map()
+        assert iface.active is bairros and iface.select_triggered, (iface.active, iface.select_triggered)
+        dialog._clear_selection()
+        assert bairros.selectedFeatureCount() == 0
+        try:
+            dialog._vector_inputs()
+        except ValueError as exc:
+            assert 'Selecionar no mapa' in str(exc), exc
+        else:
+            raise AssertionError('execução sem seleção deveria ser recusada')
+        dialog._select_all_features()
+        assert bairros.selectedFeatureCount() == 2
+        bairros.selectByIds([f.id() for f in bairros.getFeatures() if f['CLASSE'] == 2])
+        dialog.iface = None
         dialog.path.setText(os.path.join(folder, 'vetor.csv'))
         dialog.run()
         rows = _rows(os.path.join(folder, 'vetor.csv'))
