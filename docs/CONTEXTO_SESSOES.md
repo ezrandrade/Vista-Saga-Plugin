@@ -92,7 +92,16 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
      escopo, possível no futuro.
    - **Guia Vetorial (proposta do Claude, a confirmar ao discutir a interface):** a seleção da camada de
      referência feita com as ferramentas nativas do QGIS.
-   - Pergunta 1 encerrada. Em aberto: perguntas 2 a 5 (uma a uma, com colocações do autor).
+   - Pergunta 1 encerrada.
+   **Decisões do autor (20/11/2026, pergunta 2, recomendação do Claude aceita):**
+   - **As duas porcentagens do Vista SAGA:** `% Área Asn.` (base = máscara) e `% Categoria` (base = classe
+     no mapa inteiro).
+   - **FUNDO (RS2) e NoData (GeoTIFF) contam como classe qualquer**, dentro da base, como no Vista SAGA
+     (o caso de referência valida a conta inteira). Percentual só entre classes reais: não incluído
+     (possível coluna extra, se o autor pedir).
+   - Guia Vetorial, parte da máscara sem polígono num mapa assinado: por coerência, linha "Sem classe"
+     dentro da base (equivalente do FUNDO); confirmar na pergunta 3.
+   - Em aberto: perguntas 3 a 5 (uma a uma).
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -159,6 +168,7 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
   pergunta 1 respondida (união); seleção = máscara pintada, balde por 4 vizinhos.
 - Decisão do autor: sem pintura, só selecionar/desselecionar (Raster e Vetorial); união e também por feição.
 - Guia Raster: feição = classe inteira, por lista de classes (recomendação do Claude aceita). Pergunta 1 encerrada.
+- Pergunta 2: duas porcentagens do Vista SAGA; FUNDO/NoData contam como classe (recomendação aceita).
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
