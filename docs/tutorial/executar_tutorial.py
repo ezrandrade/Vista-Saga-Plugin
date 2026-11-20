@@ -1,7 +1,7 @@
 """Executa o tutorial de Vila Serena com os motores do plugin e registra os números esperados.
 
 Uso, na raiz do repositório:
-    python3.12 docs/tutorial/executar_tutorial.py <pasta_de_trabalho>
+    python3.12 docs/tutorial/executar_tutorial.py <pasta_de_trabalho> [pt|en|es]
 
 Gera <trabalho>/dados (gerar_dados.py), roda os sete módulos com as mesmas funções que as janelas usam,
 grava os resultados em <trabalho>/resultados e um resumo numérico em <trabalho>/numeros.json, que o texto
@@ -29,7 +29,14 @@ EVALUATION = {
         ('uso_solo_2020.tif', 'Uso do solo 2020', 35, {'1': 8, '2': 1, '3': 6, '4': 9}, ['5']),
     ],
 }
-BAIRROS = {1: 'Beira-Rio', 2: 'Centro', 3: 'Alto da Serra', 4: 'Porto', 5: 'Jardim Novo', 6: 'Vila Verde'}
+CRITERIA = {'pt': ['Declividade', 'Solos', 'Uso do solo 2020'], 'en': ['Slope', 'Soils', 'Land use 2020'],
+            'es': ['Pendiente', 'Suelos', 'Uso del suelo 2020']}
+TITLES = {'pt': {'avaliacao': 'Aptidão à expansão urbana - Vila Serena', 'assinatura': 'Centro e Beira-Rio',
+                 'monitoria': 'Uso do solo 2000 - 2020'},
+          'en': {'avaliacao': 'Suitability for urban growth - Vila Serena', 'assinatura': 'Downtown and Riverside',
+                 'monitoria': 'Land use 2000 - 2020'},
+          'es': {'avaliacao': 'Aptitud para la expansión urbana - Vila Serena', 'assinatura': 'Centro y Ribera',
+                 'monitoria': 'Uso del suelo 2000 - 2020'}}
 
 
 def _legend(path):
@@ -40,21 +47,22 @@ def _legend(path):
     return {str(i): name for i, name in enumerate(names) if name and i}
 
 
-def run(work):
+def run(work, lang='pt'):
     from osgeo import ogr
     data = os.path.join(work, 'dados')
     out = os.path.join(work, 'resultados')
     for folder in (data, out):
         if os.path.isdir(folder):
             shutil.rmtree(folder)
-    gerar_dados.build(data)
+    gerar_dados.build(data, lang)
+    names = CRITERIA[lang]
     os.makedirs(out)
     numbers = {}
 
     # Projeto da Avaliação pronto para "Abrir projeto..." (vai junto com os dados).
     project = {'formato': 'geosaga-avaliacao', 'versao': 1, 'escala': EVALUATION['escala'],
                'camadas': [{'arquivo': f, 'nome': n, 'peso': w, 'notas': notes, 'bloqueadas': blocked}
-                           for f, n, w, notes, blocked in EVALUATION['criterios']]}
+                           for (f, _n, w, notes, blocked), n in zip(EVALUATION['criterios'], names)]}
     with open(os.path.join(data, 'aptidao_expansao.geosaga.json'), 'w', encoding='utf-8') as stream:
         json.dump(project, stream, ensure_ascii=False, indent=2)
 
@@ -78,14 +86,14 @@ def run(work):
     # 2. Assinatura: bairros.tif (referência) + uso 2020 + solos + declividade; Centro e Beira-Rio.
     from geosaga.signature_raster import open_raster_map, run_raster_signature
     from geosaga.signature_reports import write_csv, write_txt
-    maps = [open_raster_map(os.path.join(out, 'bairros.tif'), labels={str(k): v for k, v in BAIRROS.items()})]
+    maps = [open_raster_map(os.path.join(out, 'bairros.tif'), labels={str(k): v for k, v in enumerate(gerar_dados.NAMES[lang]['bairros'], 1)})]
     maps += [open_raster_map(os.path.join(data, f)) for f in ('uso_solo_2020.tif', 'solos.tif', 'declividade.tif')]
     result = run_raster_signature(maps, [2, 1], per_feature=True)
-    write_txt(os.path.join(out, 'assinatura.txt'), result, title='Centro e Beira-Rio')
+    write_txt(os.path.join(out, 'assinatura.txt'), result, title=TITLES[lang]['assinatura'])
     write_csv(os.path.join(out, 'assinatura.csv'), result)
-    sig = {}
+    sig = {}  # recorte ('uniao' ou código do bairro) -> mapa -> código da classe -> [ha, % área asn., % categoria]
     for cut in [result.union] + result.features:
-        sig[cut.name] = {m.name: {r.display: [round(r.asn_ha, 2), round(r.pct_area, 2),
+        sig['uniao' if cut is result.union else str(cut.key)] = {m.name: {r.code_text: [round(r.asn_ha, 2), round(r.pct_area, 2),
                                               None if r.pct_category is None else round(r.pct_category, 2)]
                                   for r in m.rows} for m in cut.maps}
     numbers['assinatura'] = sig
@@ -94,7 +102,7 @@ def run(work):
     from geosaga.monitoring_engine import run_monitoring
     mon = run_monitoring(os.path.join(data, 'uso_solo_2000.tif'), os.path.join(data, 'uso_solo_2020.tif'),
                          os.path.join(out, 'transicoes_2000_2020.tif'), before_label='2000', after_label='2020',
-                         title='Uso do solo 2000 - 2020')
+                         title=TITLES[lang]['monitoria'])
     numbers['monitoria'] = {k: v for k, v in mon.items() if isinstance(v, (int, float, str))}
 
     # 4. Combinação: uso 2020 x solos.
@@ -108,11 +116,11 @@ def run(work):
     config = {'escala': EVALUATION['escala'],
               'camadas': [{'peso': w, 'notas': notes, 'bloqueadas': blocked}
                           for _, _, w, notes, blocked in EVALUATION['criterios']],
-              'nomes': [n for _, n, _, _, _ in EVALUATION['criterios']],
+              'nomes': names,
               'legendas': [_legend(os.path.join(data, f)) for f, *_ in EVALUATION['criterios']]}
     ev = run_evaluation([os.path.join(data, f) for f, *_ in EVALUATION['criterios']], config,
                         os.path.join(out, 'aptidao_expansao.tif'), os.path.join(out, 'aptidao_expansao_relatorio.csv'),
-                        EVALUATION['titulo'], report_txt=os.path.join(out, 'aptidao_expansao_relatorio.txt'))
+                        TITLES[lang]['avaliacao'], report_txt=os.path.join(out, 'aptidao_expansao_relatorio.txt'))
     # Área por nota final como no relatório (agrupamento do relatório: arredondamento half-up).
     with open(os.path.join(out, 'aptidao_expansao_relatorio.txt'), encoding='utf-8-sig') as stream:
         lines = stream.read().split('RESUMO POR NOTA FINAL')[1].strip().splitlines()[1:]
@@ -142,4 +150,5 @@ def run(work):
 
 
 if __name__ == '__main__':
-    print(json.dumps(run(os.path.abspath(sys.argv[1])), ensure_ascii=False, indent=1, default=str)[:6000])
+    lang = sys.argv[2] if len(sys.argv) > 2 else 'pt'
+    print(json.dumps(run(os.path.abspath(sys.argv[1]), lang), ensure_ascii=False, indent=1, default=str)[:3000])

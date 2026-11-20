@@ -21,7 +21,11 @@ from qgis.PyQt.QtWidgets import QFileDialog, QTabWidget  # noqa: E402
 
 from geosaga import i18n  # noqa: E402
 
-BAIRROS = {'pt': ['Beira-Rio', 'Centro', 'Alto da Serra', 'Porto', 'Jardim Novo', 'Vila Verde']}
+sys.path.insert(0, HERE)
+import gerar_dados  # noqa: E402
+from executar_tutorial import TITLES  # noqa: E402
+
+BAIRROS = {lang: v['bairros'] for lang, v in gerar_dados.NAMES.items()}
 LAYER_NAMES = {
     'pt': {'uso': 'Uso do solo', 'solos': 'Solos', 'decl': 'Declividade', 'atrito': 'Atrito',
            'bairros': 'Bairros', 'escolas': 'Escolas', 'bairros_r': 'Bairros (raster)', 'title': 'Uso do solo'},
@@ -50,7 +54,7 @@ def _layers(work, lang):
     # Passo do tutorial: renomear as classes do raster dos bairros na Simbologia (Classe 1 -> Beira-Rio...).
     renderer = layers['bairros_r'].renderer()
     if hasattr(renderer, 'setLabel'):
-        for code, name in enumerate(BAIRROS['pt'], 1):
+        for code, name in enumerate(BAIRROS[lang], 1):
             renderer.setLabel(code, name)
     for layer in layers.values():
         layer.setCrs(crs)
@@ -107,7 +111,7 @@ def capture(work, lang):
     for i, key in enumerate(d._ref_classes):
         if key in (1, 2):
             d.class_list.item(i).setCheckState(Qt.CheckState.Checked)
-    d.title.setText('Centro e Beira-Rio')
+    d.title.setText(TITLES[lang]['assinatura'])
     d.path.setText(os.path.join(res, 'assinatura.csv'))
     process()
     grab(d, f'{shots}/t03_assinatura_configuracao.png', 900, 800)
@@ -198,9 +202,8 @@ def capture(work, lang):
     d.height_spin.setValue(600)
     gif = os.path.join(res, 'vila_serena_2000_2020.gif')
     d.output.setText(gif)
-    if lang == 'pt':
-        d.export_png.setChecked(True)
-        d._run()
+    d.export_png.setChecked(True)
+    d._run()
     process()
     grab(d, f'{shots}/t10_sequenciador.png', 900, 900)
     d.close()

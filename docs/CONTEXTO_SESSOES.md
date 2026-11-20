@@ -256,6 +256,10 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   3. O TXT da Avaliação rodado pelo motor mostrou códigos (não nomes) na coluna Legenda dos critérios, mesmo com
      `legendas` na configuração; conferir se ocorre também pela janela.
   4. Título real da seção do Sequenciador é "3. Saídas e prévia" (o tutorial foi corrigido).
+- **Tutorial traduzido (20/11/2026, pedido do autor):** inglês e espanhol, 26 p. cada, com dados, capturas (interface
+  no idioma) e figuras próprias de cada idioma; números idênticos aos do pt (só o tamanho do RS2 varia: 140.002 /
+  139.998 bytes, pelos nomes das classes). Texto em `tutorial_<idioma>.py`; os números da Assinatura em
+  `numeros.json` passaram a ser indexados por código (recorte 'uniao'/'1'/'2', classe '1'…'5').
 
 ### Próximo passo (início da sessão 6)
 

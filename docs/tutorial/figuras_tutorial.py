@@ -163,12 +163,11 @@ def build(work, lang):
 
     # f04 - assinatura: % área assinada do uso 2020 (Centro, Beira-Rio, Vila Serena inteira)
     sig = numbers['assinatura']
-    names = {k: v for k, v in sig.items() if k != 'União da seleção'}
-    centro = next(v for k, v in names.items() if 'Centro' in k)['uso_solo_2020.tif']
-    beira = next(v for k, v in names.items() if 'Beira' in k)['uso_solo_2020.tif']
+    centro = sig['2']['uso_solo_2020.tif']   # 2 = Centro, 1 = Beira-Rio (códigos dos bairros)
+    beira = sig['1']['uso_solo_2020.tif']
     whole = _read(os.path.join(data, 'uso_solo_2020.tif'))
     total = [float((whole == c).mean() * 100) for c in range(1, 6)]
-    rows = [k for k in centro if not k.startswith('0 ')]
+    rows = [k for k in centro if k != '0']
     values = [[centro[k][1] for k in rows], [beira[k][1] for k in rows], total]
     fig, ax = plt.subplots(figsize=(8.2, 3.6))
     height = 0.26
