@@ -42,6 +42,23 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   (3 classes no vetor; 20 bairros no RS2). Suítes: 510 (3 pulados) e 42. ZIP
   `Vista_Saga_Plugin_QGIS4_v1.5.0-dev4.zip`. Renumeração: projeto + legado + limpeza passa a ser o **dev5**.
 
+### Teste do autor com o dev4 (20/11/2026; Conversor e guia Raster)
+
+- Mapas: Bairros, Escolaridade e **Pedologia** (novo), em RS2 (Vista SAGA e plugin) e em GeoTIFF gerado pelo
+  Vetor → GeoTIFF do plugin; casos Barro Duro e mapa inteiro.
+- **Plugin × Vista SAGA nos RS2:** mapa inteiro **32/32 = 100%**; Barro Duro 28/32, só as 4 células
+  diagonais já conhecidas. **O CSV do plugin no QGIS 4 do autor é idêntico ao do motor no contêiner** (32
+  linhas). Nomes das classes e o FUNDO aparecem nos relatórios dos TIF (correção do dev4 confirmada).
+- TIF × RS2 diferem por construção: o Vetor → GeoTIFF usa a extensão do vetor (495 × 1107, origem não
+  inteira, numeração pela ordem do vetor). Ex.: Barro Duro 15.756 células no TIF, 15.783 no RS2. Ideia para
+  o futuro (sem decisão): opção de alinhar o Vetor → GeoTIFF à grade de um raster de referência, como o
+  Vetor → RS2 já faz.
+- **Defeito achado no ZIP do autor:** pastas `.vista_vector_rs2_*` com `cobertura.tif` deixadas na pasta de
+  saída pelo Vetor → RS2. Causa: a variável do laço que prepara as grades temporárias mantinha o
+  `cobertura.tif` aberto; no Windows a limpeza falhava em silêncio (`ignore_cleanup_errors`). **Corrigido
+  (dev5)** com `raster = None` após o laço; teste estrutural `test_150_vetor_rs2_temporarios.py` (falha sem
+  a correção). As pastas que já existem precisam ser apagadas à mão. Suítes: 511 (3 pulados) e 42.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
@@ -50,7 +67,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
    Poço); (b) "Marcar todas" e comparar com `assinatura02.txt` (esperado: 100%); (c) guia Vetorial com
    camadas do autor, seleção pelas ferramentas do QGIS e contador da janela; (d) leiaute, textos, dicas e o
    que faltar em relação ao módulo antigo.
-2. Ajustes conforme o teste (dev3 feito: nomes pelo estilo do QGIS); depois **dev5**: projeto como na Avaliação (`*.geosaga.json`,
+2. Ajustes conforme o teste (dev3 feito: nomes pelo estilo do QGIS); depois **dev6**: projeto como na Avaliação (`*.geosaga.json`,
    Novo/Abrir/Salvar), algoritmo Processing `geosaga:assinatura` marcado como obsoleto e oculto (conferir o
    nome do indicador no QGIS 4), retirada do motor antigo (`signature_engine.py`, `signature_core.py` e
    seus testes; atualizar `tests/qgis/smoke_qgis.py`, que ainda chama `signature_engine`).
