@@ -8,6 +8,7 @@
 - **Correções de tradução:** dicas passadas à função `button()` nunca eram traduzidas (ex.: "Atualiza a lista de
   camadas raster…", "Divide 100% igualmente…"); rótulos "X mínimo:", "Y mínimo:", "X máximo:", "Y máximo:" do
   Voronoi apareciam em português nos outros idiomas.
+- **Catálogo do QGIS:** o `metadata.txt` não usa mais o sinal de porcentagem (trocado por "percent"): o catálogo lê o arquivo com `ConfigParser` e recusava o pacote. Novo teste `tests/unit/test_metadata_catalogo.py`.
 - Nenhum cálculo alterado.
 - Testes: `tests/qgis/tooltip_inventory.py` (abre cada módulo em QGIS real, todas as guias, e falha se houver
   widget sem dica; `--lista` exporta as dicas para revisão); `tests/unit/test_i18n.py` passa a conferir o texto

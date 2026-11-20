@@ -261,6 +261,21 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   139.998 bytes, pelos nomes das classes). Texto em `tutorial_<idioma>.py`; os números da Assinatura em
   `numeros.json` passaram a ser indexados por código (recorte 'uniao'/'1'/'2', classe '1'…'5').
 
+### Publicação da 1.6.0 (20/11/2026, pedido explícito do autor)
+
+- **Merges feitos pelo Claude (pedido do autor):** PR #16 (1.5.0) -> `main` em `dfe2924`; PR #17 (1.6.0) -> `main`
+  em `c967d8f`. ZIP final `Vista_Saga_Plugin_QGIS4_v1.6.0.zip` (código idêntico ao dev3 homologado; testes OK).
+- **Release/tag no GitHub: bloqueado** ("Creating, editing, or deleting releases is not permitted for this session
+  type"). Fica com o autor: Release `v1.6.0` no commit `c967d8f` com o ZIP anexado (e, se quiser, `v1.5.0` em
+  `dfe2924`).
+- **Catálogo do QGIS: não publicado.** O catálogo está na **1.0.4** (não 1.0.3), mantenedor `ezrandrade`. O upload
+  XML-RPC com a conta OSGeo salva na sessão foi recusado pelo servidor (HTTP 403, depois de injetada a credencial:
+  usuário/senha incorretos ou conta sem permissão). O autor recusou fornecer um token do plugin
+  (plugins.qgis.org/plugins/geosaga/tokens/). Alternativa: enviar o ZIP pela página do plugin ("Add version").
+- **Recusa do catálogo ao envio manual do autor:** o validador lê o `metadata.txt` com `ConfigParser` e o '%' do "about" e do changelog (desde a 1.4.0) quebrava a leitura. Corrigido trocando '%' por "percent" e criado `tests/unit/test_metadata_catalogo.py` (lê como o catálogo e proíbe '%'). ZIP 1.6.0 gerado de novo (só o metadata e o CHANGELOG mudam). Nova tentativa de publicação (Release e catálogo) também bloqueada; o autor envia manualmente.
+- Uma credencial "Conta OSGeo (catálogo de complementos do QGIS)" ficou salva no ambiente pessoal
+  "Vista-Saga-Plugin"; como foi recusada, o autor pode removê-la nas configurações do ambiente.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
