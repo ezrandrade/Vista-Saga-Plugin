@@ -1,7 +1,8 @@
 # Vista Saga Plugin 1.5.0 — notas da versão
 
-> Em andamento (20/11/2026). A **Assinatura** está concluída e homologada pelo autor no QGIS 4; falta o
-> item 2 da versão, **dicas (caixas amarelas) em todos os módulos**. Inclui tudo da 1.4.2.
+> Versão estável (20/11/2026), homologada pelo autor no QGIS 4. Inclui tudo da 1.4.2. As dicas (caixas
+> amarelas) em todos os módulos, previstas de início para esta versão, passaram para a 1.6.0 (decisão do
+> autor).
 
 ## Assinatura no modelo do Vista SAGA
 

@@ -132,6 +132,16 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   widgets sem dica por módulo, textos curtos e padronizados via `tr()` (en/es), teste que confira a
   cobertura (como `test_150_assinatura_janela.test_botoes_e_campos_com_dica`). A Assinatura já tem.
 
+### 1.5.0 fechada; dicas viram a 1.6.0 (20/11/2026)
+
+- **Decisão do autor:** registrar as dicas como **versão 1.6.0**; a 1.5.0 fecha com Assinatura, Conversor e
+  nomes dos resultados (CHANGELOG sem "em andamento"; notas como versão estável). PR #16 aguarda o merge do
+  autor; tag `v1.5.0` = commit de merge do #16.
+- **1.6.0 (dicas):** branch `feat/dicas-todos-modulos`, criada a partir da `feat/assinatura-e-dicas` (o #16
+  ainda não foi mesclado); o PR da 1.6.0 abre com base na `main` depois do merge do #16.
+- **Escopo das dicas (decisão do autor):** só **botões, campos, caixas de marcar e listas** (sem cabeçalhos
+  de tabela nem abas). **Começar pela Avaliação.** Lotes de 2-3 módulos, um ZIP por lote.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
@@ -160,7 +170,8 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 | 1.4.0 | fechada, homologada, **mesclada** | `feat/voronoi-atrito-fiel` / [#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13) | `49056f9` |
 | 1.4.1 | fechada, homologada, **mesclada** | `feat/interface-padrao` / [#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14) | `5c6c876` |
 | 1.4.2 | fechada, homologada, **mesclada** | `fix/sequenciador-guias` / [#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) | `0d58783` |
-| 1.5.0 | **em andamento** (Assinatura e Conversor homologados; falta: dicas em todos os módulos) | `feat/assinatura-e-dicas` / [#16](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/16) | - |
+| 1.5.0 | fechada, homologada, **sem merge** | `feat/assinatura-e-dicas` / [#16](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/16) (base `main`) | - |
+| 1.6.0 | **em andamento** (dicas em todos os módulos) | `feat/dicas-todos-modulos` (a partir da 1.5.0) / PR depois do merge do #16 | - |
 
 **Pendências do autor (o proxy das sessões recusa criar tags):**
 1. Tags (no remoto só existe a `v1.0.4`, conferido em 20/11/2026): `v1.3.0` = `87406de`,

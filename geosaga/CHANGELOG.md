@@ -1,4 +1,4 @@
-## 1.5.0 — Assinatura no modelo do Vista SAGA (em andamento: dicas em todos os módulos)
+## 1.5.0 — Assinatura no modelo do Vista SAGA (2026-11-20)
 
 - **Assinatura refeita no modelo do Vista SAGA** (decisões do autor de 20/11/2026; ver
   `NOTAS_DA_VERSAO_150.md`): lista de mapas com a **referência no topo**; a seleção na referência é o limite;
