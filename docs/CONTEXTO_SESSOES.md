@@ -10,7 +10,25 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026, sessão 5: versão 1.5.0 em andamento) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026, fim da sessão 5: 1.5.0-dev2 em teste pelo autor) <<<
+
+### Próximo passo (início da sessão 6)
+
+1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
+   Roteiro: (a) guia Raster com os 3 RS2 (Bairros primeiro, informar o SRC), marcar Antares, Gruta de
+   Lourdes, Jacintinho e Poço e comparar com `assinatura01.txt` (esperado: só a diferença de 1 célula do
+   Poço); (b) "Marcar todas" e comparar com `assinatura02.txt` (esperado: 100%); (c) guia Vetorial com
+   camadas do autor, seleção pelas ferramentas do QGIS e contador da janela; (d) leiaute, textos, dicas e o
+   que faltar em relação ao módulo antigo.
+2. Ajustes do dev2 conforme o teste; depois **dev3**: projeto como na Avaliação (`*.geosaga.json`,
+   Novo/Abrir/Salvar), algoritmo Processing `geosaga:assinatura` marcado como obsoleto e oculto (conferir o
+   nome do indicador no QGIS 4), retirada do motor antigo (`signature_engine.py`, `signature_core.py` e
+   seus testes; atualizar `tests/qgis/smoke_qgis.py`, que ainda chama `signature_engine`).
+3. Fechamento da Assinatura (CHANGELOG, `metadata.txt` 1.5.0, `NOTAS_DA_VERSAO_150.md`, homologação) e
+   então as dicas em todos os módulos (a janela da Assinatura já tem dicas em todos os botões e campos).
+4. Para comparar de novo com o Vista SAGA, os dados do autor (3 RS2, 2 relatórios, 2 vídeos) **não ficam
+   entre sessões**: pedir que ele os reenvie (`assinaturas.zip`) e usar
+   `scripts/comparar_assinatura_vista_saga.py --src EPSG:31985` (SRC usado só porque o RS2 não registra).
 
 > **Natureza do projeto (registro do autor, 20/11/2026):** o Vista Saga Plugin é um **projeto pessoal
 > do autor e não a tese de doutorado dele**. Menções anteriores a "tese" (inclusive no histórico e no
@@ -216,6 +234,14 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - GitHub: só a API REST (`gh api repos/ezrandrade/Vista-Saga-Plugin/...`); GraphQL indisponível nas sessões.
 
 ---
+
+## 20/11/2026 (sessão 5) — resumo do encerramento
+
+- Registro do autor: o plugin é projeto pessoal, não a tese (`CLAUDE.md` corrigido).
+- Assinatura redesenhada no modelo do Vista SAGA a partir de vídeos e relatórios do autor; perguntas 1 a 5 e
+  pendências da proposta decididas (`docs/ASSINATURA_150_PROPOSTA.md`).
+- dev1 (motor) e dev2 (janela) feitos; PR #16 aberto; ZIP `-dev2` entregue para teste no QGIS 4.
+- Detalhes das decisões e dos lotes na Retomada rápida, item "Versão 1.5.0".
 
 ## 20/11/2026 (sessão 5)
 
