@@ -114,7 +114,8 @@ class VectorEvaluationDialog(QWidget):
         root.addWidget(intro)
 
         top = QHBoxLayout()
-        top.addWidget(button('Novo projeto', self.new_project))
+        top.addWidget(button('Novo projeto', self.new_project,
+                             'Limpa os critérios, pesos e notas para começar uma avaliação nova.'))
         top.addWidget(button('Abrir projeto…', self.open_project,
                              'Reabre pesos, notas e classes não avaliadas de uma avaliação anterior.'))
         top.addWidget(button('Salvar projeto…', self.save_project,
@@ -127,6 +128,7 @@ class VectorEvaluationDialog(QWidget):
         self.scale_combo = QComboBox()
         self.scale_combo.addItem(tr('0 a 10'), 10)
         self.scale_combo.addItem(tr('0 a 100'), 100)
+        self.scale_combo.setToolTip(tr('Escala das notas das classes: de 0 a 10 ou de 0 a 100.'))
         self.scale_combo.currentIndexChanged.connect(self._update_score_limits)
         meta.addWidget(self.scale_combo)
         meta.addStretch(1)
@@ -185,8 +187,9 @@ class VectorEvaluationDialog(QWidget):
         self.batch_note.setRange(0, 10)
         self.batch_note.setDecimals(2)
         self.batch_note.setSingleStep(1)
+        self.batch_note.setToolTip(tr('Nota a repetir nas classes selecionadas na tabela, com o botão Aplicar.'))
         batch.addWidget(self.batch_note)
-        batch.addWidget(button('Aplicar', self.apply_note))
+        batch.addWidget(button('Aplicar', self.apply_note, 'Dá a nota ao lado a todas as classes selecionadas na tabela.'))
         batch.addStretch(1)
         rl.addLayout(batch)
         tip = QLabel(tr(PENDING_HINT))
@@ -206,11 +209,12 @@ class VectorEvaluationDialog(QWidget):
         self.status = FooterStatus(tr(self.START_STATUS))
         self.status.setWordWrap(True)
         foot.addStretch(1)
-        self.validate_button = button('Validar', self.validate_configuration)
+        self.validate_button = button('Validar', self.validate_configuration, 'Confere pesos, notas e classes pendentes, sem executar a avaliação.')
         foot.addWidget(self.validate_button)
-        self.run_button = button(self.RUN_TEXT, self.execute)
+        self.run_button = button(self.RUN_TEXT, self.execute,
+                                 'Executa a avaliação e grava o mapa e os relatórios.')
         foot.addWidget(self.run_button)
-        self.close_button = button('Fechar', self._close_form)
+        self.close_button = button('Fechar', self._close_form, 'Fecha a janela da Avaliação.')
         foot.addWidget(self.close_button)
         root.addLayout(foot)
 
@@ -221,6 +225,7 @@ class VectorEvaluationDialog(QWidget):
         self.layer_combo = QgsMapLayerComboBox()
         self.layer_combo.setFilters(Qgis.LayerFilter.PolygonLayer)
         self.layer_combo.setAllowEmptyLayer(True, tr('- selecione um polígono -'))
+        self.layer_combo.setToolTip(tr('Camada de polígonos cujos campos serão os critérios da avaliação.'))
         self.layer_combo.layerChanged.connect(self._layer_changed)
         layer_row.addWidget(self.layer_combo, 1)
         layer_row.addWidget(button('Atualizar', self._populate_fields,
@@ -232,9 +237,12 @@ class VectorEvaluationDialog(QWidget):
         field_row = QHBoxLayout()
         field_row.addWidget(QLabel(tr('Campo:')))
         self.field_combo = QComboBox()
+        self.field_combo.setToolTip(tr('Campo da camada a acrescentar como critério.'))
         field_row.addWidget(self.field_combo, 1)
-        field_row.addWidget(button('Adicionar campo', self.add_field))
-        field_row.addWidget(button('Remover', self.remove_field))
+        field_row.addWidget(button('Adicionar campo', self.add_field,
+                                  'Acrescenta o campo escolhido como critério da avaliação.'))
+        field_row.addWidget(button('Remover', self.remove_field,
+                                  'Retira da avaliação os critérios selecionados na tabela.'))
         layout.addLayout(field_row)
 
     def _close_form(self):

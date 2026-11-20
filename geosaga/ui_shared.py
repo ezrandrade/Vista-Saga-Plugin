@@ -156,6 +156,7 @@ def weight_spin(value, callback=None):
     spin.setSpecialValueText(' ')
     spin.setAlignment(_number_alignment())
     spin.setValue(float(value))
+    spin.setToolTip(tr('Peso na avaliação, em %. Os pesos somam 100%.'))
     if callback is not None:
         spin.valueChanged.connect(callback)
     return spin
@@ -171,6 +172,7 @@ def score_spin(scale, value=None):
     spin.setSpecialValueText('—')
     spin.setAlignment(_number_alignment())
     spin.setValue(-1 if value is None else float(value))
+    spin.setToolTip(tr('Nota da classe. Sem nota, a execução fica bloqueada.'))
     return spin
 
 
@@ -217,16 +219,21 @@ class OutputSection:
         self.edit = QLineEdit()
         self.edit.setPlaceholderText(tr(placeholder))
         self.edit.setClearButtonEnabled(True)
+        self.edit.setToolTip(tr('Arquivo do resultado. Em branco, o resultado fica temporário e é carregado '
+                                'no QGIS.'))
         row.addWidget(self.edit, 1)
         browse_button = QPushButton(tr('Procurar…'))
+        browse_button.setToolTip(tr('Escolhe onde salvar o resultado.'))
         browse_button.clicked.connect(browse)
         row.addWidget(browse_button)
         layout.addLayout(row)
         reports = QHBoxLayout()
         self.csv_check = QCheckBox(tr('Relatório CSV (combinações, notas e áreas)'))
         self.csv_check.setChecked(True)
+        self.csv_check.setToolTip(tr('Grava o relatório CSV ao lado do resultado.'))
         self.txt_check = QCheckBox(tr('Relatório TXT (modelo Vista SAGA)'))
         self.txt_check.setChecked(True)
+        self.txt_check.setToolTip(tr('Grava o relatório TXT ao lado do resultado.'))
         reports.addWidget(self.csv_check)
         reports.addWidget(self.txt_check)
         reports.addStretch(1)

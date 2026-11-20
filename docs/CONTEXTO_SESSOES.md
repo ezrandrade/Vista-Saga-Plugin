@@ -142,6 +142,22 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 - **Escopo das dicas (decisão do autor):** só **botões, campos, caixas de marcar e listas** (sem cabeçalhos
   de tabela nem abas). **Começar pela Avaliação.** Lotes de 2-3 módulos, um ZIP por lote.
 
+### 1.6.0-dev1 (20/11/2026): dicas da Avaliação
+
+- Ferramenta `tests/qgis/tooltip_inventory.py`: abre o módulo em QGIS real (todas as guias, inclusive as
+  montadas sob demanda), lista botões, campos, caixas de marcar e listas sem dica e falha se houver algum
+  (ignora peças internas do Qt: botão de canto da tabela, botão de limpar do campo, setas das abas). Sem
+  argumentos, confere os módulos concluídos (`DONE`: Assinatura e Avaliação).
+- **Avaliação: 44 widgets sem dica → 0**, nas três guias. Dicas na seção "3. Resultado" (`OutputSection`) e
+  nos campos de peso e nota das tabelas (`weight_spin`, `score_spin`) ficam no `ui_shared.py` e valem para
+  todos os módulos que os usam. Padrão dos textos: frase curta no indicativo ("Acrescenta…", "Retira…").
+- **Falha antiga corrigida:** dicas passadas à função `button()` nunca eram traduzidas (ex.: "Atualiza a lista
+  de camadas raster…", "Divide 100% igualmente…"); `tests/unit/test_i18n.py` passou a conferir o texto e a
+  dica de `button()`. Dica da nota sem o caractere "—" (o teste de travessão barrou).
+- Testes antigos que procuravam `button('Fechar', self.close)` etc. ajustados para o começo da chamada.
+  Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.5.0`→ `-1.6.0-dev1` (versão só no ZIP; o
+  `metadata.txt` fica 1.5.0 até o fechamento da 1.6.0).
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.

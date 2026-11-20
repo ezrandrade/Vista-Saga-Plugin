@@ -20,7 +20,7 @@ class UiConsistencyTests(unittest.TestCase):
 
     def test_raster_evaluation_can_close_after_task(self):
         text = source('evaluation_dialog.py')
-        self.assertIn("self.close_button = button('Fechar', self.close)", text)
+        self.assertIn("self.close_button = button('Fechar', self.close,", text)  # 1.6.0: com dica
         self.assertIn('self.close_button.setEnabled(False)', text)
         self.assertIn('self.close_button.setEnabled(True)', text)
 
@@ -32,7 +32,7 @@ class UiConsistencyTests(unittest.TestCase):
         self.assertIn('self.close_button.setEnabled(True)', text)
 
     def test_vector_evaluations_can_close(self):
-        self.assertIn("self.close_button = button('Fechar', self._close_form)", source('vector_evaluation_dialog.py'))
+        self.assertIn("self.close_button = button('Fechar', self._close_form,", source('vector_evaluation_dialog.py'))
         text = source('vector_evaluation_dialog.py')
         self.assertIn('self.close_button.setEnabled(False)', text)
         self.assertIn('self.close_button.setEnabled(True)', text)

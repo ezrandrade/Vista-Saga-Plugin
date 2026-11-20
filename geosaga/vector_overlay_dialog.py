@@ -48,6 +48,7 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
         from_files.clicked.connect(self.add_files)
         row.addWidget(from_files)
         remove = QPushButton(tr('Remover'))
+        remove.setToolTip(tr('Retira da avaliação os mapas selecionados na tabela.'))
         remove.clicked.connect(self.remove_field)
         row.addWidget(remove)
         row.addStretch(1)

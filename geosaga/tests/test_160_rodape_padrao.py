@@ -34,7 +34,7 @@ class RodapePadrao160(unittest.TestCase):
         for name in ['signature_dialog.py', 'monitoring_dialog.py', 'vector_monitoring_dialog.py',
                      'voronoi_dialog.py', 'combination_dialog.py', 'image_sequence_dialog.py']:
             self.assertIn('QPushButton(tr(RUN_TEXT))', source(name), name)
-        self.assertIn('button(RUN_TEXT, self.execute)', source('evaluation_dialog.py'))
+        self.assertIn('button(RUN_TEXT, self.execute,', source('evaluation_dialog.py'))  # 1.6.0: com dica
         self.assertIn('RUN_TEXT = STANDARD_RUN_TEXT', source('vector_evaluation_dialog.py'))
         self.assertNotIn('RUN_TEXT =', source('vector_overlay_dialog.py'))   # herda o "Executar"
         self.assertIn("QPushButton(tr('Executar'))", source('rs2_dialog.py'))
@@ -73,7 +73,7 @@ class RodapePadrao160(unittest.TestCase):
         self.assertIn('self._footer.insertWidget(position, dialog.validate_button)', code)
         self.assertIn('self._footer.insertWidget(position + 1, dialog.run_button)', code)
         self.assertIn('self._update_footer(index)', code)
-        self.assertIn('self.validate_button = button(\'Validar\', self.validate_configuration)',
+        self.assertIn('self.validate_button = button(\'Validar\', self.validate_configuration,',
                       source('vector_evaluation_dialog.py'))
 
 
