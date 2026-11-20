@@ -24,7 +24,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 | 1.4.0 | fechada, homologada, **mesclada** | `feat/voronoi-atrito-fiel` / [#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13) | `49056f9` |
 | 1.4.1 | fechada, homologada, **mesclada** | `feat/interface-padrao` / [#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14) | `5c6c876` |
 | 1.4.2 | fechada, homologada, **mesclada** | `fix/sequenciador-guias` / [#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) | `0d58783` |
-| 1.5.0 | **em andamento** | `feat/assinatura-e-dicas` / PR a abrir | - |
+| 1.5.0 | **em andamento** (Assinatura: dev1 = motor, concluído) | `feat/assinatura-e-dicas` / PR a abrir com o ZIP do dev2 | - |
 
 **Pendências do autor (o proxy das sessões recusa criar tags):**
 1. Tags (no remoto só existe a `v1.0.4`, conferido em 20/11/2026): `v1.3.0` = `87406de`,
@@ -128,7 +128,23 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
    Processing **obsoleto e oculto**); saídas TXT e CSV no padrão do plugin, **sem GeoPackage**; **qualquer
    SRC projetado em metros** (revendo "somente UTM" após a ressalva do Claude); guia Raster com os formatos
    do GDAL (OSGeo) e o RS2; projeto como na Avaliação (`*.geosaga.json`, Novo/Abrir/Salvar).
-   **Proposta sem pendências**; próximo passo: aprovação do plano de lotes e programação.
+   **Proposta sem pendências.** Plano de lotes aprovado (20/11/2026): dev1 motor e validação; dev2 janela
+   nova; dev3 projeto, legado obsoleto e traduções; fechamento (CHANGELOG, notas, homologação); depois as
+   dicas em todos os módulos.
+   **dev1 concluído (20/11/2026), sem mudança de interface (a janela atual ainda usa o motor antigo):**
+   - `geosaga/signature_model.py` (linhas e porcentagens; "Sem classe", "Sobreposição excluída", NoData),
+     `signature_raster.py` (GDAL + RS2, mesmo SRC projetado em metros, mesma grade, feição = classe;
+     NoData com nome na legenda, como o FUNDO de um RS2 convertido, conta como essa classe),
+     `signature_vector.py` (OGR/GEOS, testável sem QGIS; a janela entregará WKB e classes),
+     `signature_reports.py` (TXT e CSV em português; CSV `;`, UTF-8 com BOM).
+   - `geosaga/tests/test_150_assinatura_motor.py` (22 testes, dados sintéticos com a célula diagonal);
+     suítes: 499 (3 pulados) e 42.
+   - `scripts/comparar_assinatura_vista_saga.py`, rodado pelo Claude com os dados do autor: relatório 2
+     (mapa inteiro) 31/31 classes = 100%; relatório 1 (4 bairros) 28/31: as 3 diferenças são exatamente a
+     célula diagonal do Poço (1 célula em cada mapa), diferença prevista e aceita.
+   - Decisão de implementação a confirmar com o autor: na guia Vetorial, a sobreposição excluída entra na
+     base como linha própria ("Sobreposição excluída"), para as porcentagens somarem 100%.
+   - Próximo: dev2 (janela nova) e PR da 1.5.0 com o ZIP `-dev2`.
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -201,6 +217,8 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - Pergunta 5 encerrada (recomendações aceitas por hora); proposta em `docs/ASSINATURA_150_PROPOSTA.md`.
 - Pendências da proposta resolvidas: legado obsoleto e oculto, TXT+CSV sem GeoPackage, SRC projetado em metros,
   GDAL + RS2, projeto como na Avaliação.
+- dev1 (motor novo da Assinatura) concluído: 22 testes; comparação com o Vista SAGA 100% no mapa inteiro e só a
+  diferença prevista (célula diagonal) na seleção de 4 bairros.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
