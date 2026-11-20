@@ -49,7 +49,7 @@ def _table(stream, msig, raster):
     else:
         stream.write('Cat. - Legendas | Total ha | Área asn. ha | % Área asn. | % Categoria\n')
     for row in msig.rows:
-        name = f'{row.code_text} - {row.label}' if row.code_text else row.label
+        name = row.display
         category = '' if row.pct_category is None else f'{row.pct_category:.2f}'
         if raster:
             stream.write(f'{name} | {row.total_cells} | {row.total_ha:.2f} | {row.asn_cells} | '

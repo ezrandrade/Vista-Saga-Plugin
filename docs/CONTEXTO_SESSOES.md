@@ -72,6 +72,20 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   selecionado. Integração em QGIS real com interface simulada. Suítes: 511 (3 pulados) e 42. ZIP
   `Vista_Saga_Plugin_QGIS4_v1.5.0-dev6.zip`. O lote projeto + legado + limpeza passa a ser o **dev7**.
 
+### Teste do autor com o dev6 (20/11/2026; guia Vetorial)
+
+- Seleção funcionou (Barro Duro e os 20 bairros). Mapas vetoriais: `Bairros_Reginaldo`, `Escolaridade_31985`,
+  `Pedologia_31985` (EPSG:31985). Sem relatório do Vista SAGA (ele não assina vetor); comparação com o
+  raster do plugin no Barro Duro: maior diferença de % Área asn. = 0,09 ponto (ex.: Neossolos Flúvicos
+  5,27% no vetor × 5,36% no raster; Barro Duro 157,60 ha × 157,83 ha).
+- **Corrigido (sem ZIP ainda):** nome repetido quando o código da classe é texto ("Barro Duro - Barro Duro");
+  agora "código - nome" só quando são diferentes (`ClassRow.display`). Teste novo; suítes 512 (3 pulados) e 42.
+- **Em aberto, decisão de método do autor:** resíduos geométricos minúsculos entre polígonos vizinhos geram
+  linhas e avisos de "0,0000 ha" ("Sobreposição excluída" e "Sem classe" no Barro Duro; 0,0015 ha sem
+  classe na bacia inteira). Proposta do Claude: adotar a regra da Combinação vetorial (decisão do autor na
+  1.2.0): sobreposições e lacunas com largura média < 1 cm toleradas, sem linha própria, e registradas no
+  resumo do TXT; acima disso, como hoje.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.

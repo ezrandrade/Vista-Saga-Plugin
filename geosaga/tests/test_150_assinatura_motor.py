@@ -261,6 +261,16 @@ class VectorSignatureTests(unittest.TestCase):
         none = run_vector_signature([self.ref, self.uso], self.selected, per_feature=False)
         self.assertEqual(none.features, [])
 
+    def test_text_code_is_not_repeated_in_label(self):
+        result = run_vector_signature([self.ref], self.selected)
+        row = self.row(result.union.maps[0], 'A')
+        self.assertEqual(row.display, 'A - Bairro A')  # código e nome diferentes: os dois
+        same = VectorMap('Nomes', self.wkt, [(1, _square(0, 0, 10, 10), 'Centro', None)])
+        named = run_vector_signature([self.ref, same], self.selected).union.maps[1]
+        self.assertEqual(self.row(named, 'Centro').display, 'Centro')  # antes: "Centro - Centro"
+        uso = run_vector_signature([self.ref, self.uso], self.selected).union.maps[1]
+        self.assertEqual(self.row(uso, 1).display, '1 - Edificada')
+
     def test_strict_overlap_stops(self):
         with self.assertRaisesRegex(ValueError, 'se sobrepõem'):
             run_vector_signature([self.ref, self.uso], self.selected, overlap='strict')

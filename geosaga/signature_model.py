@@ -41,6 +41,12 @@ class ClassRow:
     def code_text(self):
         return '' if is_special(self.key) else str(self.key)
 
+    @property
+    def display(self):
+        """Rótulo de tabela: "código - nome", ou só o nome quando o código já é o próprio nome (vetor)."""
+        code = self.code_text
+        return self.label if not code or code == self.label else f'{code} - {self.label}'
+
 
 @dataclass
 class MapSignature:

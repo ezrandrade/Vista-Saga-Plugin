@@ -731,7 +731,7 @@ class SignatureDialog(QDialog):
         rows = [(m.name, r) for m in cut.maps for r in m.rows]
         self.table.setRowCount(len(rows))
         for i, (name, row) in enumerate(rows):
-            label = f'{row.code_text} - {row.label}' if row.code_text else tr(row.label)
+            label = row.display if row.code_text else tr(row.label)
             values = [name, label, '' if row.total_cells is None else row.total_cells, f'{row.total_ha:.{places}f}',
                       '' if row.asn_cells is None else row.asn_cells, f'{row.asn_ha:.{places}f}',
                       f'{row.pct_area:.2f}', '' if row.pct_category is None else f'{row.pct_category:.2f}']
