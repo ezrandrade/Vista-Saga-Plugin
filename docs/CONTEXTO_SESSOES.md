@@ -158,6 +158,17 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev1.zip` (versão só no ZIP; o
   `metadata.txt` fica 1.5.0 até o fechamento da 1.6.0).
 
+### 1.6.0-dev2 (20/11/2026): dicas da Monitoria e das Análises Voronoi
+
+- Autor aprovou os textos da Avaliação (dev1).
+- **Monitoria: 32 widgets sem dica → 0** (guias Raster e Vetorial). **Voronoi: 25 → 0** (inclusive a janela
+  das superfícies de atrito integradas). Rótulos "X mínimo:", "Y mínimo:", "X máximo:", "Y máximo:" do
+  Voronoi não eram traduzidos (sem `tr()`); corrigido.
+- `tests/qgis/tooltip_inventory.py`: mostra o atributo e o rótulo do formulário de cada widget sem dica;
+  opção `--lista arquivo.md` exporta, em português, todas as dicas para revisão; `DONE` com Assinatura,
+  Avaliação, Monitoria e Voronoi. Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev2.zip`.
+- Restam: Combinação de Mapas, Conversor de Formatos e Sequenciador de Mapas (próximo lote).
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
