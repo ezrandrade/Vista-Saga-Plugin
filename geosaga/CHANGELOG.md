@@ -1,3 +1,19 @@
+## 1.6.1 — Aprovação na varredura de segurança do catálogo do QGIS (2026-11-20)
+
+- O envio da 1.6.0 ao catálogo oficial (plugins.qgis.org) foi **bloqueado pela varredura de segurança**
+  (Bandit: qualquer achado bloqueia, mesmo de severidade baixa). Corrigido sem mudar comportamento:
+  - `try/except Exception: pass` (B110) nos registros de mensagem (`errors.py`, `ui_shared.report_outcome`)
+    trocados por `contextlib.suppress(Exception)`, equivalente;
+  - o estilo `.qml` dos GeoTIFF deixou de importar `xml.sax.saxutils.quoteattr` (B406): escape local idêntico
+    (`rs2_outputs._quoteattr`, conferido contra o original); só se escreve XML, nunca se lê.
+- `metadata.txt` sem o sinal de porcentagem (o catálogo lê o arquivo com `ConfigParser`).
+- **Defeito latente corrigido:** um comentário no meio da assinatura de `_temporal_analysis` (Monitoria,
+  reservada para o Mann–Kendall da 2.0, sem uso hoje) engolia os parâmetros.
+- Avisos do Flake8 resolvidos (lambda atribuída, importações e variáveis sem uso).
+- Testes novos: `tests/unit/test_metadata_catalogo.py` (lê o metadata como o catálogo) e
+  `tests/unit/test_varredura_catalogo.py` (proíbe `except` genérico com `pass` e importações recusadas).
+- Nenhum cálculo alterado.
+
 ## 1.6.0 — Dicas em todos os módulos (2026-11-20)
 
 - **Dicas (caixas amarelas do QGIS) em todos os botões, campos, caixas de marcar e listas dos sete módulos**

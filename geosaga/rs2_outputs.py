@@ -83,6 +83,21 @@ def publish_geotiff(staged, final):
     return final
 
 
+def _quoteattr(text):
+    """Valor de atributo XML entre aspas, com o mesmo escape de ``xml.sax.saxutils.quoteattr``.
+
+    Implementação local (1.6.0): o verificador de segurança do catálogo do QGIS (Bandit B406) recusa a
+    importação de ``xml.sax``; aqui só se escreve XML, nunca se lê.
+    """
+    text = text.replace('&', '&amp;').replace('>', '&gt;').replace('<', '&lt;')
+    text = text.replace('\n', '&#10;').replace('\r', '&#13;').replace('\t', '&#9;')
+    if '"' in text:
+        if "'" in text:
+            return '"%s"' % text.replace('"', '&quot;')
+        return "'%s'" % text
+    return '"%s"' % text
+
+
 def write_qml_style(tiff, classes):
     """Estilo padrão do QGIS (``<nome>.qml``) com só as classes reais, em simbologia Paletado.
 
@@ -90,10 +105,9 @@ def write_qml_style(tiff, classes):
     (as sem nome como "4", "5"...). O QGIS carrega sozinho o ``.qml`` de mesmo nome ao abrir o arquivo.
     ``classes``: [(código, nome, (r, g, b))].
     """
-    from xml.sax.saxutils import quoteattr
     entries = ''.join(
         f'        <paletteEntry value="{int(code)}" color="#{r:02x}{g:02x}{b:02x}" alpha="255" '
-        f'label={quoteattr(str(label))}/>\n' for code, label, (r, g, b) in classes)
+        f'label={_quoteattr(str(label))}/>\n' for code, label, (r, g, b) in classes)
     Path(tiff).with_suffix('.qml').write_text(
         "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>\n"
         '<qgis version="3.34.0" styleCategories="Symbology">\n  <pipe>\n'

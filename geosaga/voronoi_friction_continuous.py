@@ -584,8 +584,6 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
     outside_rating: nota de passagem da área sem polígono (sem resultado); None = barreira.
     Retorna ([(centro, multipolígono OGR)], estatísticas).
     """
-    from osgeo import ogr
-    from .gdal_scope import gdal_exceptions
     xmin, ymin, xmax, ymax = map(float, bounds)
     if not all(math.isfinite(v) for v in (xmin, ymin, xmax, ymax)) or xmin >= xmax or ymin >= ymax:
         raise ValueError('A extensão do Voronoi precisa ter área positiva.')
@@ -620,8 +618,6 @@ def friction_voronoi_polygons(generators, features, bounds, *, spacing=None, tol
         lattice.labels(keys[start:start + chunk])
         report(5 + 15 * min(1.0, (start + chunk) / len(keys)))
     base_nodes = nx * ny
-    R = 2 ** _REFINE_LEVEL
-    sub = step // R
 
     def corners(i0, j0, size):
         return lattice.labels([(i0, j0), (i0 + size, j0), (i0 + size, j0 + size), (i0, j0 + size)])
