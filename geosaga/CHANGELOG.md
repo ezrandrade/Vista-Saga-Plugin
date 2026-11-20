@@ -1,7 +1,7 @@
 ## 1.6.0 — Dicas em todos os módulos (2026-11-20)
 
 - **Dicas (caixas amarelas do QGIS) em todos os botões, campos, caixas de marcar e listas dos sete módulos**
-  (decisão do autor: sem cabeçalhos de tabela nem abas). Antes, 216 widgets não tinham dica: Avaliação 44,
+  (decisão do autor: sem cabeçalhos de tabela nem abas). Antes, 184 widgets não tinham dica: Avaliação 44,
   Monitoria 32, Análises Voronoi 25, Combinação de Mapas 24, Conversor de Formatos 26, Sequenciador de Mapas
   33 (a Assinatura já tinha todas na 1.5.0). Textos curtos, no indicativo, traduzidos para inglês e espanhol.
 - Dicas compartilhadas no `ui_shared.py`: seção "3. Resultado" da Avaliação e campos de peso e nota das tabelas.
