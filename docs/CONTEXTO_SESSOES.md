@@ -223,6 +223,21 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
      (hoje o manual não traz endereço nenhum).
   5. Continuam pendentes: merge do PR #16, PR da 1.6.0 (base `main`), tags `v1.5.0` e `v1.6.0`.
 
+### Imagens do site oficial (20/11/2026)
+
+- O site (https://vistasagaplugin.wordpress.com/) tem 7 imagens na página inicial, uma por módulo: capturas de
+  30/10/2026 de janelas **vazias de versão antiga** (títulos com travessão, "Calcular assinatura", "Gerar Voronoi",
+  caixas de temporário). A página "Sobre" ainda é o texto de exemplo do WordPress.
+- Novas imagens em `docs/site/` (ver `README.md` ali): `janelas/` (7 janelas da 1.6.0 preenchidas com dados
+  sintéticos, 2x, barra de título com o título real) e `resultados/` (infográficos do manual). Gerador:
+  `docs/manual/build_site_images.py`; `capture_windows.py` ganhou `VSP_MANUAL_DATA` (pasta de nome legível),
+  SRC explícito nas camadas (listas mostravam "[]") e o Conversor preenchido (Bairros/CODIGO).
+- Ambiente pessoal "Vista-Saga-Plugin" criado (aprovado pelo autor) com acesso ao site e aos servidores de imagem
+  do WordPress; a sessão passou a usá-lo.
+- Achados no texto do site, para o autor decidir: diz que o plugin "pode ser obtido no repositório oficial de
+  complementos do QGIS" (o catálogo ainda está na 1.0.3); "Combinação de Mapas" fala em "tipo de operação
+  configurada" (não há operações a escolher); seção "Documentação visual" promete capturas que agora existem.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.

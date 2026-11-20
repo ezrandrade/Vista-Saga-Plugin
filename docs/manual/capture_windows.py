@@ -24,7 +24,7 @@ APP.initQgis()
 
 import numpy as np  # noqa: E402
 from osgeo import gdal, ogr, osr  # noqa: E402
-from qgis.core import QgsProject, QgsRasterLayer, QgsVectorLayer  # noqa: E402
+from qgis.core import QgsCoordinateReferenceSystem, QgsProject, QgsRasterLayer, QgsVectorLayer  # noqa: E402
 from qgis.PyQt.QtCore import Qt  # noqa: E402
 from qgis.PyQt.QtWidgets import (  # noqa: E402
     QAbstractButton, QFileDialog, QInputDialog, QMessageBox, QTabBar, QTabWidget,
@@ -146,7 +146,10 @@ def make_data(folder, lang):
         'uso_v': QgsVectorLayer(paths['uso_v'], n['uso_v'], 'ogr'),
         'pontos': QgsVectorLayer(paths['pontos'], n['pontos'], 'ogr'),
     }
+    crs = QgsCoordinateReferenceSystem('EPSG:31985')
+    project.setCrs(crs)
     for layer in layers.values():
+        layer.setCrs(crs)  # o WKT do GDAL nem sempre casa com o código EPSG (listas mostravam "[]")
         project.addMapLayer(layer)
     return paths, layers
 
@@ -227,7 +230,12 @@ def grab(dialog, path, width=900, height=680):
 def capture(lang, out):
     i18n.qgis_language = lambda: lang
     i18n.translate_for_locale.cache_clear()
-    folder = tempfile.mkdtemp(prefix=f'vsp_manual_{lang}_')
+    base = os.environ.get('VSP_MANUAL_DATA')  # pasta de nome legível para capturas do site (opcional)
+    if base:
+        folder = os.path.join(base, lang)
+        os.makedirs(folder, exist_ok=True)
+    else:
+        folder = tempfile.mkdtemp(prefix=f'vsp_manual_{lang}_')
     paths, layers = make_data(folder, lang)
     shots = os.path.join(out, lang, 'janelas')
     os.makedirs(shots, exist_ok=True)
@@ -326,6 +334,10 @@ def capture(lang, out):
     d = RS2ConverterDialog(None)
     d.show()
     d.mode.setCurrentIndex(4)
+    _process()
+    d.loaded_layers.setLayer(layers['bairros'])
+    d._use_layer()
+    d.vector_field.setCurrentText('CODIGO')
     _process()
     grab(d, f'{shots}/conversor.png', 820, 760)
     d.advanced_toggle.setChecked(True)
