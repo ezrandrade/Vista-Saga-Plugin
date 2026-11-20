@@ -10,7 +10,12 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 
 ---
 
-## >>> RETOMADA RÁPIDA (criada em 19/11/2026, fim da sessão 4; próxima: versão 1.5.0) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026, sessão 5: versão 1.5.0 em andamento) <<<
+
+> **Natureza do projeto (registro do autor, 20/11/2026):** o Vista Saga Plugin é um **projeto pessoal
+> do autor e não a tese de doutorado dele**. Menções anteriores a "tese" (inclusive no histórico e no
+> `CLAUDE.md` até a 1.4.2) estão superadas. O rigor de método (testes de regressão, justificativa
+> escrita, validação no Vista SAGA quando houver comparabilidade) continua valendo como boa prática.
 
 ### Onde está o trabalho
 
@@ -18,22 +23,34 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 |---|---|---|---|
 | 1.4.0 | fechada, homologada, **mesclada** | `feat/voronoi-atrito-fiel` / [#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13) | `49056f9` |
 | 1.4.1 | fechada, homologada, **mesclada** | `feat/interface-padrao` / [#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14) | `5c6c876` |
-| 1.4.2 | fechada, homologada, **sem merge** | `fix/sequenciador-guias` / [#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) (base `main`) | - |
+| 1.4.2 | fechada, homologada, **mesclada** | `fix/sequenciador-guias` / [#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) | `0d58783` |
+| 1.5.0 | **em andamento** | `feat/assinatura-e-dicas` / PR a abrir | - |
 
 **Pendências do autor (o proxy das sessões recusa criar tags):**
-1. Merge do PR #15 (ou pedir ao Claude, via API, `merge_method=merge`, título `Merge PR #15: …`).
-2. Tags: `v1.3.0` = `87406de`, `v1.4.0` = `49056f9`, `v1.4.1` = `5c6c876`, `v1.4.2` = merge do #15.
+1. Tags (no remoto só existe a `v1.0.4`, conferido em 20/11/2026): `v1.3.0` = `87406de`,
+   `v1.4.0` = `49056f9`, `v1.4.1` = `5c6c876`, `v1.4.2` = `0d58783`.
    Comandos (Codespaces): `git fetch origin`; `git tag -a vX.Y.Z <commit> -m "Vista Saga Plugin X.Y.Z"`;
    `git push origin vX.Y.Z`. Tags antigas (v1.0.5 a v1.2.1): commits no `CLAUDE.md`.
 
-### Próxima sessão: versão 1.5.0 (pedido do autor, 19/11/2026)
+### Versão 1.5.0 (pedido do autor, 19/11/2026)
 
-Começar com uma **branch nova a partir da `main`** (depois do merge do #15) e um único PR, com ZIPs
+Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um único PR, com ZIPs
 `-devN` a cada lote (fluxo do `CLAUDE.md`). Escopo combinado:
 
 1. **Revisão do módulo Assinatura** (`signature_dialog.py`, motor, Processing `geosaga:assinatura`,
    relatórios). Escopo detalhado a definir com o autor no início da sessão (sugestão: levantar primeiro o
    que o módulo faz hoje, as diferenças para o Vista SAGA e os problemas conhecidos, e só então propor).
+   **Achados do levantamento (20/11/2026):**
+   - **No Vista SAGA, a Assinatura trabalha com um mapa ou com vários mapas ao mesmo tempo** (informação
+     do autor). O plugin hoje aceita **um único mapa temático** por execução (raster ou vetorial):
+     lacuna de funcionalidade, não só de interface.
+   - Raster conta pixels pelo centro da célula (cobertura pode passar de 100%); vetorial por interseção
+     exata, com exclusão da região de sobreposição entre classes (padrão) ou modo estrito.
+   - Interface fora do padrão do plugin: caixas "Resultado temporário" e "Carregar GeoPackage" e CSV
+     obrigatório; três textos explicativos fixos (candidatos a dicas).
+   - Mensagens de erro do motor montadas com f-string e traduzidas por `tr(str(exc))` provavelmente não
+     casam com o catálogo (a confirmar).
+   - Sem registro de validação contra o Vista SAGA original (a 0.5.0 consta como "homologação pendente").
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -88,6 +105,13 @@ Começar com uma **branch nova a partir da `main`** (depois do merge do #15) e u
 - GitHub: só a API REST (`gh api repos/ezrandrade/Vista-Saga-Plugin/...`); GraphQL indisponível nas sessões.
 
 ---
+
+## 20/11/2026 (sessão 5)
+
+- PR #15 já mesclado (`0d58783`); branch `feat/assinatura-e-dicas` criada para a 1.5.0.
+- Registro do autor: o plugin é projeto pessoal, não a tese; `CLAUDE.md` corrigido.
+- Levantamento inicial da Assinatura (achados na Retomada rápida); informação do autor: no Vista SAGA a
+  Assinatura aceita um mapa ou vários.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
