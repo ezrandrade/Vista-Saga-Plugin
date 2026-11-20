@@ -16,7 +16,7 @@ from pathlib import Path
 import tempfile
 
 from .rs2_format import RS2Error
-from .rs2_outputs import publish_geotiff
+from .rs2_outputs import publish_geotiff, write_qml_style
 from .gdal_scope import with_gdal_exceptions
 
 VECTOR_EXTENSIONS = frozenset({'.gpkg', '.shp', '.geojson', '.json', '.fgb'})
@@ -126,21 +126,29 @@ def _write_categories(band, categories, gdal):
         return
     if max(keys) > 4096:
         return  # evita metadados e paleta enormes para código numérico esparso
+    from .vector_rs2 import default_color  # importação local: vector_rs2 importa este módulo
     maximum = max(keys)
     names = ['FUNDO'] + [f'Classe {i}' for i in range(1, maximum + 1)]
     colors = gdal.ColorTable()
     colors.SetColorEntry(0, (255, 255, 255, 255))
-    has_palette = False
     for value, (label, color) in categories.items():
         names[value] = label
         if color:
             rgb = tuple(int(color[i:i+2], 16) for i in (1, 3, 5))
-            colors.SetColorEntry(value, (*rgb, 255))
-            has_palette = True
+        else:
+            # Sem COR_HEX, cor padrão (a mesma do Vetor -> RS2). Antes (até a 1.4.2) a paleta só era
+            # gravada com COR_HEX, e o QGIS abria o mapa em tons de cinza, sem mostrar os nomes das
+            # classes, que ficavam só no .aux.xml (observação do autor, 20/11/2026).
+            rgb = default_color(value)[:3]
+        colors.SetColorEntry(value, (*rgb, 255))
     band.SetCategoryNames(names)
-    if has_palette and maximum <= 255:
+    if maximum <= 255:
         band.SetRasterColorTable(colors)
         band.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
+        # Classes reais para o estilo .qml (o 0 é NoData nesta conversão).
+        return [(value, label, colors.GetColorEntry(value)[:3])
+                for value, (label, _color) in sorted(categories.items()) if value != 0]
+    return None
 
 
 @with_gdal_exceptions
@@ -261,8 +269,7 @@ def convert_vector_to_tif(vector_source, tiff_path, field_name, pixel_size,
             band.SetNoDataValue(fill)
             # Não aplicar NoData=0 indiscriminadamente às classes de código 0?
             # Aqui 0 é reservado para FUNDO (mesma convenção do formato RS2).
-            if mode != 'real':
-                _write_categories(band, categories, gdal)
+            style_classes = _write_categories(band, categories, gdal) if mode != 'real' else None
             options = ['ATTRIBUTE=VS_VALUE'] + (['ALL_TOUCHED=TRUE'] if all_touched else [])
             callback_failed = [False]
             def raster_progress(fraction, message, unused):
@@ -281,6 +288,8 @@ def convert_vector_to_tif(vector_source, tiff_path, field_name, pixel_size,
             band = raster = None
             writer = intermediary = None
             src_layer = src_ds = None  # noqa: F841 (fecha datasets GDAL)
+            if style_classes:
+                write_qml_style(stage, style_classes)
             # A família de auxiliares gerada junto ao raster deve ser publicada atomicamente.
             publish_geotiff(stage, output)
         finally:
