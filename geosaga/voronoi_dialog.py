@@ -21,7 +21,7 @@ from qgis.core import (
 )
 from qgis.gui import QgsMapLayerComboBox
 
-from .ui_shared import use_tab_background, temporary_destination, materialize_in_memory
+from .ui_shared import use_tab_background, temporary_destination, materialize_in_memory, layer_name, result_name
 from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .voronoi_core import Generator
 from .voronoi_engine import grid_from_extent, run_voronoi
@@ -49,6 +49,11 @@ VECTOR_RESULT_HINT = (
     'antes de fechar o QGIS). Com um arquivo indicado (GeoPackage, Shapefile, GeoJSON ou '
     'FlatGeobuf), ele é salvo em disco e carregado no QGIS. Além do mapa, são gerados '
     '_centros.csv e _resumo.txt; sem arquivo indicado, eles ficam na pasta temporária do QGIS.')
+
+
+# Nome dos resultados temporários por modalidade ("Análises Voronoi - modalidade"; pedido do autor, 1.5.0),
+# na ordem da lista Modalidade.
+VORONOI_MODES = ('Simples', 'Com Massa', 'Com Atrito', 'Com Massa e Atrito')
 
 
 class _WrapLabel(QLabel):
@@ -1008,7 +1013,7 @@ class VoronoiDialog(QDialog):
                     raise ValueError('Escolha um arquivo de saída {0}.'.format('.tif'))
             else:
                 suffix=vector_extension(chosen) if chosen else '.gpkg'
-            destination=chosen or temporary_destination('voronoi_espacial',suffix)
+            destination=chosen or temporary_destination(result_name('Análises Voronoi', VORONOI_MODES[self.mode.currentIndex()]),suffix)
             prefix=os.path.splitext(destination)[0]
             # Vetorial com atrito: o GeoTIFF de cálculo usa o mesmo nome-base e é descartado.
             raster_destination=None if direct else (prefix+'.tif' if kind=='vector' else destination)
@@ -1172,7 +1177,7 @@ class VoronoiDialog(QDialog):
 
     def _load_output(self,result):
         import colorsys
-        raster = (QgsRasterLayer(result['output'],'Análises Voronoi','gdal')
+        raster = (QgsRasterLayer(result['output'],layer_name(result['output']),'gdal')
                   if result.get('output') else None)
         if raster is not None and raster.isValid():
             if len(result['rows']) <= 75:
@@ -1186,9 +1191,9 @@ class VoronoiDialog(QDialog):
         vector_path = result.get('vector') or result.get('gpkg')
         if vector_path:
             # Padrão do plugin: sem arquivo indicado, camada temporária em memória.
-            vector = (materialize_in_memory(layer_uri(vector_path), 'Análises Voronoi')
+            vector = (materialize_in_memory(layer_uri(vector_path), layer_name(vector_path))
                       if self._temporary else
-                      QgsVectorLayer(layer_uri(vector_path), 'Análises Voronoi', 'ogr'))
+                      QgsVectorLayer(layer_uri(vector_path), layer_name(vector_path), 'ogr'))
             if vector is None:
                 raise RuntimeError('Não foi possível carregar o resultado no QGIS.')
             if vector.isValid():

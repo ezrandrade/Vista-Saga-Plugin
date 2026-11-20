@@ -14,7 +14,7 @@ from qgis.PyQt.QtWidgets import (
 from qgis.core import (Qgis, QgsApplication, QgsPalettedRasterRenderer,
                        QgsProject, QgsRasterLayer, QgsMessageLog)
 from qgis.gui import QgsMapLayerComboBox
-from .ui_shared import use_tab_background, temporary_destination, enable_table_copy
+from .ui_shared import use_tab_background, temporary_destination, enable_table_copy, result_name
 from .ui_shared import RUN_TEXT, FooterStatus, TaskProgressWindow, report_outcome
 
 
@@ -263,7 +263,7 @@ class MonitoringDialog(QDialog):
             before = self._selected_file(self.before_layer, self.before_file)
             after = self._selected_file(self.after_layer, self.after_file)
             chosen = self.output_edit.text().strip()
-            output = chosen or temporary_destination('monitoria_raster', '.tif')
+            output = chosen or temporary_destination(result_name('Monitoria', 'Raster'), '.tif')
             if not output.lower().endswith(('.tif', '.tiff')):
                 raise ValueError('A saída deve ter extensão .tif ou .tiff.')
             basename = Path(output).with_suffix('')

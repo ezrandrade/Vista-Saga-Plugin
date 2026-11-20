@@ -10,7 +10,8 @@ from qgis.PyQt.QtWidgets import QHBoxLayout, QInputDialog, QMessageBox, QPushBut
 from qgis.core import QgsProject
 
 from .vector_evaluation_dialog import VectorEvaluationDialog, scan_categories
-from .ui_shared import choose_project_layers, load_vector_source, open_polygon_files, vector_start_directory
+from .ui_shared import (choose_project_layers, load_vector_source, open_polygon_files, result_name,
+                        vector_start_directory)
 from .vector_overlay_engine import validate_overlay_plan, validate_source_layers, evaluate_overlay
 
 PREFERRED_FIELDS = ('CODIGO', 'CLASSE', 'USO', 'TIPO_USO')
@@ -29,8 +30,7 @@ class VectorOverlayEvaluationDialog(VectorEvaluationDialog):
     CRITERION_HEADER = 'Camada → campo'
     EMPTY_CLASSES = 'Adicione um mapa e selecione-o na lista.'
     START_STATUS = 'Adicione duas ou mais camadas com SRC igual e área comum.'
-    RESULT_PREFIX = 'avaliacao_sobreposicao'
-    RESULT_NAME = 'Vista Saga - Avaliação por sobreposição'
+    RESULT_PREFIX = result_name('Avaliação', 'Vetorial (Sobreposição)')
 
     def _build(self):
         super()._build()

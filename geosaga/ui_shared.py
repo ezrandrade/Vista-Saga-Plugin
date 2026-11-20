@@ -18,7 +18,9 @@ def temporary_destination(prefix, suffix):
     Não mantém arquivos temporários em diretórios de entrada nem sobrescreve
     resultados de análises anteriores.
     """
-    safe = ''.join(c if c.isalnum() or c in '-_' else '_' for c in prefix)[:48] or 'vista_saga'
+    # Desde a 1.5.0 o nome é legível ("Módulo - operação", pedido do autor): letras acentuadas, espaços,
+    # hífens e parênteses são mantidos; a camada carregada recebe o nome do arquivo (layer_name).
+    safe = ''.join(c if c.isalnum() or c in ' -_()' else '_' for c in prefix).strip()[:80] or 'vista_saga'
     try:
         from qgis.core import QgsProcessingUtils
         return str(QgsProcessingUtils.generateTempFilename(safe + suffix))
@@ -27,6 +29,16 @@ def temporary_destination(prefix, suffix):
         # seu próprio diretório temporário de Processing.
         folder = Path(tempfile.mkdtemp(prefix='vista_saga_'))
         return str(folder / (safe + suffix))
+
+
+def result_name(module, operation=''):
+    """Nome de resultado temporário: "Módulo - operação" (pedido do autor, 1.5.0). Sempre em português."""
+    return f'{module} - {operation}' if operation else module
+
+
+def layer_name(path):
+    """Nome da camada carregada = nome do arquivo (sem pasta, extensão nem "|layername=")."""
+    return Path(str(path).split('|', 1)[0]).stem
 
 
 def choose_project_layers(parent, layer_type, title='Selecionar camadas do QGIS'):

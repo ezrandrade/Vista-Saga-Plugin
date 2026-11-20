@@ -18,7 +18,8 @@ from qgis.core import (Qgis, QgsProject, QgsRasterLayer, QgsVectorLayer,
                        QgsRendererCategory, QgsFillSymbol)
 from qgis.gui import QgsMapLayerComboBox
 
-from .ui_shared import choose_project_layers, materialize_in_memory, temporary_destination
+from .ui_shared import (choose_project_layers, layer_name, materialize_in_memory, result_name,
+                        temporary_destination)
 from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .errors import log_exception
 
@@ -410,7 +411,8 @@ class CombinationDialog(QDialog):
         selected = self._sources[mode]
         chosen = getattr(self,f'output_{mode}').text().strip()
         temporary = not chosen
-        dest = (temporary_destination('combinacao', '.tif' if mode == 0 else '.gpkg')
+        dest = (temporary_destination(result_name('Combinação de Mapas', 'Raster' if mode == 0 else 'Vetorial'),
+                                      '.tif' if mode == 0 else '.gpkg')
                 if temporary else chosen)
         if len(selected)<2:
             QMessageBox.warning(self,tr('Combinação'),tr('Adicione pelo menos dois mapas para combinar.'))
@@ -451,7 +453,7 @@ class CombinationDialog(QDialog):
                     progress=notify,cancelled=cancelled)
             # O resultado é sempre carregado no QGIS.
             if mode == 0:
-                layer = QgsRasterLayer(result['output'],'Combinação de Mapas','gdal')
+                layer = QgsRasterLayer(result['output'],layer_name(result['output']),'gdal')
                 if layer.isValid() and len(result['rows']) <= 75:
                     import colorsys
                     classes = []
@@ -462,8 +464,8 @@ class CombinationDialog(QDialog):
                     layer.setRenderer(QgsPalettedRasterRenderer(layer.dataProvider(),1,classes))
             else:
                 uri = result['output']+'|layername=combinacao_mapas'
-                layer = (materialize_in_memory(uri, 'Combinação de Mapas') if temporary
-                         else QgsVectorLayer(uri,'Combinação de Mapas','ogr'))
+                layer = (materialize_in_memory(uri, layer_name(uri)) if temporary
+                         else QgsVectorLayer(uri, layer_name(uri), 'ogr'))
                 if layer is None:
                     raise RuntimeError('Não foi possível carregar o resultado no QGIS.')
                 if layer.isValid() and len(result['rows']) <= 75:

@@ -17,7 +17,7 @@ from qgis.core import (Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsSettin
 from qgis.gui import QgsMapLayerComboBox, QgsProjectionSelectionWidget
 
 from .rs2_batch import prepare_batch, source_mode, alignment_warnings
-from .ui_shared import use_tab_background, choose_project_layers, temporary_destination
+from .ui_shared import use_tab_background, choose_project_layers, result_name, temporary_destination
 from .rs2_format import RS2Reader
 from .rs2_outputs import output_conflicts
 from .rs2_vector import (VECTOR_FORMATS, convert_rs2_to_vector, vector_conflicts)
@@ -29,6 +29,9 @@ from .vector_rs2 import convert_vector_to_rs2
 
 RS2_CRS_SETTING = 'VistaSagaPlugin/rs2_crs'
 RS2_SOURCE_OPERATIONS = (0, 2)
+# Nome dos resultados temporários por operação ("Conversor de Formatos - operação"; pedido do autor, 1.5.0).
+CONVERSION_NAMES = ('RS2 para GeoTIFF', 'GeoTIFF para RS2', 'RS2 para Vetor', 'GeoTIFF para Vetor',
+                    'Vetor para GeoTIFF', 'Vetor para RS2')
 
 
 class RS2ConverterDialog(QDialog):
@@ -689,7 +692,7 @@ class RS2ConverterDialog(QDialog):
         operation = self.mode.currentIndex()
         if self.batch.isChecked():
             sources = [self.batch_list.item(i).text() for i in range(self.batch_list.count())]
-            folder = (str(Path(temporary_destination('lote', '.tmp')).parent)
+            folder = (str(Path(temporary_destination(result_name('Conversor de Formatos', 'Lote'), '.tmp')).parent)
                       if self.temporary_check.isChecked() and operation != 1
                       else self.batch_folder.text().strip())
             _, plans, _ = prepare_batch(
@@ -699,7 +702,7 @@ class RS2ConverterDialog(QDialog):
             return operation, plans
         ext = ('.tif' if operation in (0, 4) else '.rs2' if operation in (1, 5)
                else self.vector_format.currentData())
-        output_file = (temporary_destination('conversao', ext)
+        output_file = (temporary_destination(result_name('Conversor de Formatos', CONVERSION_NAMES[operation]), ext)
                        if self.temporary_check.isChecked() and operation not in (1, 5)
                        else self.destination.text().strip())
         if operation in (4, 5):

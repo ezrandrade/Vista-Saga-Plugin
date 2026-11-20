@@ -312,7 +312,8 @@ check('processing: geosaga:assinatura (vetor EPSG:4326)', alg_assinatura_reproje
 check('processing: JSON inválido tratado', alg_erro_controlado)
 
 # --------------------------------------------------------------- motores
-from geosaga import raster_engine, monitoring_engine, signature_engine  # noqa: E402
+from geosaga import raster_engine, monitoring_engine  # noqa: E402
+from geosaga import signature_raster, signature_vector, signature_reports  # noqa: E402
 from geosaga import combination_raster, combination_vector, voronoi_engine  # noqa: E402
 from geosaga import voronoi_vector, rs2_converter, rs2_vector, tiff_vector  # noqa: E402
 from geosaga import vector_raster, vector_monitoring_engine, gif_codec  # noqa: E402
@@ -339,13 +340,25 @@ def eng_monitoring():
 
 
 def eng_signature_raster():
-    return signature_engine.run_signature(L['ras_a'], L['aoi'], 'raster', '',
-                                          os.path.join(OUT, 'eng_assin_r.csv'), area_name_field='nome')
+    # Assinatura 1.5.0: referência = mapa A, todas as classes marcadas; mapas assinados A e B (mesma grade).
+    maps = [signature_raster.open_raster_map(p) for p in (ras_a, ras_b)]
+    keys = [k for k, _n, _c in signature_raster.scan_reference_classes(maps[0])]
+    result = signature_raster.run_raster_signature(maps, keys)
+    signature_reports.write_csv(os.path.join(OUT, 'eng_assin_r.csv'), result)
+    return result
 
 
 def eng_signature_vector():
-    return signature_engine.run_signature(L['the_a'], L['aoi'], 'vector', 'classe',
-                                          os.path.join(OUT, 'eng_assin_v.csv'), area_name_field='nome')
+    # Referência = áreas (todas as feições selecionadas); mapa assinado = tema A, campo "classe".
+    def vector_map(layer, field):
+        feats = [(f.id(), bytes(f.geometry().asWkb()), f[field] if field else f.id(), None)
+                 for f in layer.getFeatures()]
+        return signature_vector.VectorMap(layer.name(), layer.crs().toWkt(), feats)
+    selected = [(f.id(), f['nome'], bytes(f.geometry().asWkb())) for f in L['aoi'].getFeatures()]
+    result = signature_vector.run_vector_signature([vector_map(L['aoi'], ''), vector_map(L['the_a'], 'classe')],
+                                                   selected)
+    signature_reports.write_csv(os.path.join(OUT, 'eng_assin_v.csv'), result)
+    return result
 
 
 def eng_comb_raster():

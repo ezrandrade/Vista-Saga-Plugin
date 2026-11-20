@@ -20,7 +20,7 @@ def output_family(tiff):
     p = Path(tiff)
     return [p, Path(str(p) + '.rs2.json'), Path(str(p) + '.aux.xml'),
             Path(str(p) + '.xml'), p.with_suffix('.tfw'),
-            Path(str(p) + 'w')]
+            Path(str(p) + 'w'), p.with_suffix('.qml')]
 
 
 def output_conflicts(tiff):
@@ -81,6 +81,25 @@ def publish_geotiff(staged, final):
             except OSError:
                 pass
     return final
+
+
+def write_qml_style(tiff, classes):
+    """Estilo padrão do QGIS (``<nome>.qml``) com só as classes reais, em simbologia Paletado.
+
+    O GeoTIFF de 8 bits guarda sempre uma paleta de 256 cores, e o QGIS listaria as 256 na legenda
+    (as sem nome como "4", "5"...). O QGIS carrega sozinho o ``.qml`` de mesmo nome ao abrir o arquivo.
+    ``classes``: [(código, nome, (r, g, b))].
+    """
+    from xml.sax.saxutils import quoteattr
+    entries = ''.join(
+        f'        <paletteEntry value="{int(code)}" color="#{r:02x}{g:02x}{b:02x}" alpha="255" '
+        f'label={quoteattr(str(label))}/>\n' for code, label, (r, g, b) in classes)
+    Path(tiff).with_suffix('.qml').write_text(
+        "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>\n"
+        '<qgis version="3.34.0" styleCategories="Symbology">\n  <pipe>\n'
+        '    <rasterrenderer type="paletted" band="1" opacity="1" alphaBand="-1" nodataColor="">\n'
+        f'      <colorPalette>\n{entries}      </colorPalette>\n'
+        '    </rasterrenderer>\n  </pipe>\n</qgis>\n', encoding='utf-8')
 
 
 def write_worldfile(tiff, x_min, y_max, pixel_x, pixel_y):

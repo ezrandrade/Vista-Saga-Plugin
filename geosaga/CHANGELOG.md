@@ -1,3 +1,31 @@
+## 1.5.0 — Assinatura no modelo do Vista SAGA (2026-11-20)
+
+- **Assinatura refeita no modelo do Vista SAGA** (decisões do autor de 20/11/2026; ver
+  `NOTAS_DA_VERSAO_150.md`): lista de mapas com a **referência no topo**; a seleção na referência é o limite;
+  **todos os mapas da lista são assinados**, inclusive a referência; resultado da **união** e, opcionalmente,
+  **por feição**; colunas do Vista SAGA (total e assinado, **% Área Asn.** e **% Categoria**); FUNDO e NoData
+  contam como classe.
+- **Guia Raster:** formatos do GDAL e **RS2**; mesmo SRC projetado em metros e mesma grade obrigatórios (o
+  plugin não reprojeta); seleção por lista de classes ("Marcar todas" = "Assinar o mapa inteiro"); nomes das
+  classes do arquivo ou do estilo da camada no QGIS. **Validada contra o Vista SAGA original** em três casos
+  (mapa inteiro 100%; seleções parciais iguais, salvo as células da classe ligadas só pela diagonal, que o
+  balde do Vista SAGA exclui e a seleção por classe inclui).
+- **Guia Vetorial:** interseção exata; seleção pelas ferramentas do QGIS ("Selecionar no mapa", "Selecionar
+  todas", "Desselecionar todas"); linhas "Sem classe" e "Sobreposição excluída"; **lascas e frestas com largura
+  média < 1 cm toleradas** e registradas (regra da Combinação).
+- **Saídas:** relatórios TXT e CSV, sem o GeoPackage das áreas e sem as caixas "temporário"/"carregar";
+  "Remover todas" na lista de mapas. O algoritmo Processing `geosaga:assinatura` fica **obsoleto e oculto**
+  (modelos e scripts antigos continuam funcionando). Corrige a reprojeção silenciosa do módulo antigo.
+- **Conversor de Formatos:** Vetor → GeoTIFF grava sempre a paleta (o QGIS abria em tons de cinza, sem os
+  nomes das classes); Vetor → GeoTIFF e RS2 → GeoTIFF gravam um estilo `.qml` só com as classes reais (a
+  legenda listava 256 entradas); Vetor → RS2 não deixa mais pastas temporárias `.vista_vector_rs2_*` na saída
+  (Windows).
+- **Nomes dos resultados em todos os módulos:** temporário com o nome "Módulo - operação" (arquivo e camada);
+  resultado salvo carregado com o nome do arquivo.
+- Testes: `test_150_assinatura_motor.py`, `test_150_assinatura_janela.py`, `integration_signature_150_qgis.py`,
+  `test_150_vetor_geotiff_paleta.py`, `test_150_vetor_rs2_temporarios.py`, `test_150_nomes_resultados.py`;
+  `scripts/comparar_assinatura_vista_saga.py`.
+
 ## 1.4.2 — Sequenciador: guias com a mesma altura (2026-11-19)
 
 - **Sequenciador de Mapas: as guias Raster, Vetorial e Mista têm a mesma altura, compacta** (264 px no

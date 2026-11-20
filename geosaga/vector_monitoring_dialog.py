@@ -14,7 +14,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.core import Qgis, QgsProject, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
-from .ui_shared import enable_table_copy, materialize_in_memory, temporary_destination
+from .ui_shared import enable_table_copy, layer_name, materialize_in_memory, result_name, temporary_destination
 from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 
 
@@ -210,7 +210,7 @@ class VectorMonitoringDialog(QWidget):
         nb = self.after_select[3].currentData() or ''
         chosen = self.dest.text().strip()
         temporary = not chosen
-        path = chosen or temporary_destination('monitoria_vetorial', '.gpkg')
+        path = chosen or temporary_destination(result_name('Monitoria', 'Vetorial'), '.gpkg')
         try:
             validate_vector_monitoring(a, b, fa, fb, path, na, nb)
         except (ValueError, OSError) as exc:
@@ -253,7 +253,7 @@ class VectorMonitoringDialog(QWidget):
             self._show_result(result)
             # O resultado é sempre carregado no QGIS: em memória, se não houver arquivo.
             uri = path + '|layername=monitoria_vetorial'
-            name = tr('Monitoria vetorial') if temporary else Path(path).stem
+            name = layer_name(path)
             layer = (materialize_in_memory(uri, name) if temporary
                      else QgsVectorLayer(uri, name, 'ogr'))
             if layer is not None and layer.isValid():

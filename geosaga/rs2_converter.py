@@ -14,7 +14,7 @@ import numpy as np
 from .gdal_scope import with_gdal_exceptions
 from .rs2_format import RS2Error, RS2Header, RS2Reader, write_rs2
 from .rs2_rgb import RS2RGBMapper, discover_rgb_palette
-from .rs2_outputs import publish_geotiff, write_worldfile
+from .rs2_outputs import publish_geotiff, write_qml_style, write_worldfile
 
 
 def _gdal():
@@ -125,13 +125,19 @@ def convert_rs2_to_tif(rs2_path, tiff_path, epsg='', progress=None,
                                                   ensure_ascii=False, indent=2),
                                        encoding='utf-8')
         write_worldfile(temp, h.xmin, h.ymax, h.pixel_x, h.pixel_y)
+        if kind == gdal.GDT_Byte:
+            # Estilo .qml só com as classes da legenda (a paleta de 8 bits tem sempre 256 cores).
+            nodata = background if mark_background_nodata else None
+            write_qml_style(temp, [(code, label, tuple(int(c) for c in color[:3]))
+                                   for code, label, color in h.legend() if code != nodata])
         publish_geotiff(temp, target)
         return target
     except Exception:
         dst = None
         for leftover in (Path(temp), Path(str(temp) + '.rs2.json'),
                          Path(str(temp) + '.aux.xml'), Path(str(temp) + '.xml'),
-                         Path(temp).with_suffix('.tfw'), Path(str(temp) + 'w')):
+                         Path(temp).with_suffix('.tfw'), Path(str(temp) + 'w'),
+                         Path(temp).with_suffix('.qml')):
             leftover.unlink(missing_ok=True)
         raise
 

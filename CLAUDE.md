@@ -7,7 +7,8 @@ Instruções para o Claude ao trabalhar neste repositório. Leia também `CONTRI
 - Complemento independente para **QGIS 4.x / Qt6 / Python 3.12**, inspirado no Vista SAGA/UFRJ,
   **sem código do programa original**. Sete módulos: Assinatura, Monitoria, Avaliação, Análises
   Voronoi, Combinação de Mapas, Conversor de Formatos e Sequenciador de Mapas.
-- O autor usa o plugin na **tese de doutorado**. Mudanças em algoritmos são decisões de método:
+- **Projeto pessoal do autor; não é a tese de doutorado dele** (registro do autor em 20/11/2026,
+  corrigindo a menção anterior). Mesmo assim, mudanças em algoritmos são decisões de método:
   exigem teste de regressão, justificativa escrita e, quando envolvem o formato RS2 ou resultados
   comparáveis ao Vista SAGA, validação do autor no **Vista SAGA original**.
 - Converse com o autor em **português brasileiro**. Documentação e mensagens de commit também.
@@ -96,6 +97,17 @@ essas bibliotecas faltam.
   células da área de estudo, ≥ 90% das divergências na fronteira, ≤ 1% de diferença de área por região;
   conferir com `scripts/comparar_caso_bacia.py` antes de mudar o atrito. Na bacia real, a guia Raster
   falha no critério 3 no Com Atrito (1,33%, região pequena), declarado sem rever o critério.
+- **Assinatura (1.5.0, decisões do autor de 20/11/2026; `docs/ASSINATURA_150_PROPOSTA.md` e
+  `NOTAS_DA_VERSAO_150.md`):** modelo do Vista SAGA — referência no topo da lista, seleção como limite, todos
+  os mapas assinados (inclusive a referência), união e por feição, % Área Asn. e % Categoria; sem mistura de
+  formatos; mesmo SRC projetado em metros e, no raster, mesma grade; feição raster = classe inteira (diferença
+  aceita para o balde do Vista SAGA); FUNDO/NoData contam como classe; vetor com "Sem classe",
+  "Sobreposição excluída" e lascas < 1 cm toleradas; TXT e CSV, sem GeoPackage nem projeto
+  (Novo/Abrir/Salvar descartado); `geosaga:assinatura` obsoleto e oculto. Validar mudanças com
+  `scripts/comparar_assinatura_vista_saga.py`.
+- **Nomes dos resultados (1.5.0, todos os módulos):** temporário com o nome "Módulo - operação"
+  (`ui_shared.result_name`) no arquivo e na camada; resultado salvo carregado com o nome do arquivo
+  (`ui_shared.layer_name`). Nunca nome fixo de camada.
 - **Mann–Kendall** saiu da Monitoria na 1.2.0 e volta como módulo próprio na 2.0;
   `monitoring_trends.py` e as funções de relatório ficam reservadas.
 - **Avaliação:** as três guias têm o mesmo leiaute (projeto, escala, critérios e pesos, classes,

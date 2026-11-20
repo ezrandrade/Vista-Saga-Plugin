@@ -375,6 +375,9 @@ def convert_vector_to_rs2(vector_source, rs2_path, field_name, pixel_size=None,
             raster.SetGeoTransform(grid.geotransform)
             raster.SetProjection(wkt)
             raster.GetRasterBand(1).Fill(0)
+        # A variável do laço manteria o cobertura.tif aberto até o fim; no Windows o arquivo aberto
+        # impedia a limpeza da pasta temporária, que ficava na pasta de saída (até a 1.4.2).
+        raster = None
         touched = ['ALL_TOUCHED=TRUE'] if all_touched else []
         cancelled = [False]
 

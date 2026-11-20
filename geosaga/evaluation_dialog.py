@@ -22,7 +22,8 @@ from qgis.core import QgsApplication, QgsProject, QgsRasterLayer, QgsPalettedRas
 from .evaluation_task import EvaluationTask
 from .ui_shared import (use_tab_background, HeaderSort, OutputSection, RASTER_OUTPUT_HINT, centered_check,
                         choose_project_layers, class_sort_key, install_column_tab_navigation,
-                        score_spin, table_item, temporary_destination, weight_spin)
+                        layer_name, result_name, score_spin, table_item, temporary_destination,
+                        weight_spin)
 from .evaluation_config import config_path_for, pending_classes
 from .ui_shared import PENDING_HEADER, class_count_text, mark_pending, pending_messages
 from .ui_shared import RUN_TEXT, FooterStatus, TaskProgressWindow, report_outcome
@@ -642,7 +643,7 @@ class EvaluationDialog(QDialog):
             return
         try:
             config = self._collect_configuration()
-            dest = (temporary_destination('avaliacao_raster', '.tif')
+            dest = (temporary_destination(result_name('Avaliação', 'Raster'), '.tif')
                     if self.output.is_temporary() else self.output.path())
             if not dest.lower().endswith(('.tif', '.tiff')):
                 raise ValueError('A carta de avaliação deve ser salva em GeoTIFF (.tif).')
@@ -700,7 +701,7 @@ class EvaluationDialog(QDialog):
             msg += '\n' + tr('Pesos e notas: ') + config
         except (OSError, ValueError) as exc:
             msg += '\n' + tr('Atenção: não foi possível gravar os pesos e as notas: ') + str(exc)
-        layer = self.iface.addRasterLayer(task.destination, task.title or 'Vista Saga - Avaliação')
+        layer = self.iface.addRasterLayer(task.destination, layer_name(task.destination))
         if not layer or not layer.isValid():
             msg += '\n\n' + tr('Atenção: não foi possível carregar o resultado no QGIS.')
         self.status.setText(tr('Avaliação concluída.'))
