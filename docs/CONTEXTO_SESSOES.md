@@ -24,7 +24,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 | 1.4.0 | fechada, homologada, **mesclada** | `feat/voronoi-atrito-fiel` / [#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13) | `49056f9` |
 | 1.4.1 | fechada, homologada, **mesclada** | `feat/interface-padrao` / [#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14) | `5c6c876` |
 | 1.4.2 | fechada, homologada, **mesclada** | `fix/sequenciador-guias` / [#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) | `0d58783` |
-| 1.5.0 | **em andamento** (Assinatura: dev1 = motor, concluído) | `feat/assinatura-e-dicas` / PR a abrir com o ZIP do dev2 | - |
+| 1.5.0 | **em andamento** (Assinatura: dev2 = janela nova, em teste pelo autor) | `feat/assinatura-e-dicas` / PR da 1.5.0 | - |
 
 **Pendências do autor (o proxy das sessões recusa criar tags):**
 1. Tags (no remoto só existe a `v1.0.4`, conferido em 20/11/2026): `v1.3.0` = `87406de`,
@@ -144,7 +144,24 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
      célula diagonal do Poço (1 célula em cada mapa), diferença prevista e aceita.
    - **Decisão do autor (20/11/2026):** na guia Vetorial, a sobreposição excluída entra na base como linha
      própria ("Sobreposição excluída"), e as porcentagens de cada mapa somam 100%.
-   - Próximo: dev2 (janela nova) e PR da 1.5.0 com o ZIP `-dev2`.
+   **dev2 (20/11/2026): janela nova da Assinatura**, ZIP `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip`
+   (aguardando teste do autor no QGIS 4):
+   - `signature_dialog.py` reescrito: guias Raster/Vetorial; "1. Mapas - o primeiro é a referência" (camada
+     do QGIS, várias do QGIS, arquivos; Remover, Mover para cima/baixo); Raster: lista de classes com caixas,
+     "Marcar todas"/"Desmarcar todas"; RS2 sem `.rs2.json` pede o SRC ao adicionar; Vetorial: campos de
+     classe e legenda por mapa, "Feições selecionadas em X: N" atualizado pela seleção do QGIS, "Selecionar
+     todas", campo de nome da feição; "3. Opções" (Resultado por feição ligado; sobreposição só no vetor);
+     "4. Resultado" (Título; Salvar em = CSV, TXT ao lado; vazio = pasta temporária); guia Resultados com
+     recorte (união ou feição) e tabela copiável. Dicas (`setToolTip`) em todos os botões e campos novos.
+     Execução no thread da GUI com janela de progresso e Cancelar (como antes).
+   - Testes: `test_150_assinatura_janela.py` (estrutura) e `integration_signature_150_qgis.py` (QGIS real,
+     Raster e Vetorial; aprovado no QGIS 3.34 do contêiner). Suítes: 505 (3 pulados) e 42.
+   - `tests/qgis/smoke_qgis.py` e `gui_monkey.py` não carregam o plugin no QGIS 3.34 do contêiner
+     (`Qgis.ProcessingSourceType` é do QGIS 4); igual na `main`, sem relação com a 1.5.0. O macaco deu as
+     mesmas 4 exceções antes e depois.
+   - O motor antigo (`signature_engine.py`, `signature_core.py`) ficou sem uso pela janela; sai no dev3
+     junto com os testes dele (o algoritmo Processing legado não depende dele).
+   - Próximo: dev3 (projeto como na Avaliação, legado obsoleto e oculto, limpeza do motor antigo).
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -219,6 +236,7 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
   GDAL + RS2, projeto como na Avaliação.
 - dev1 (motor novo da Assinatura) concluído: 22 testes; comparação com o Vista SAGA 100% no mapa inteiro e só a
   diferença prevista (célula diagonal) na seleção de 4 bairros.
+- dev2 (janela nova da Assinatura) pronto; ZIP `-dev2` enviado ao autor; PR da 1.5.0 aberto.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
