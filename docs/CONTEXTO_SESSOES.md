@@ -142,8 +142,8 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
    - `scripts/comparar_assinatura_vista_saga.py`, rodado pelo Claude com os dados do autor: relatório 2
      (mapa inteiro) 31/31 classes = 100%; relatório 1 (4 bairros) 28/31: as 3 diferenças são exatamente a
      célula diagonal do Poço (1 célula em cada mapa), diferença prevista e aceita.
-   - Decisão de implementação a confirmar com o autor: na guia Vetorial, a sobreposição excluída entra na
-     base como linha própria ("Sobreposição excluída"), para as porcentagens somarem 100%.
+   - **Decisão do autor (20/11/2026):** na guia Vetorial, a sobreposição excluída entra na base como linha
+     própria ("Sobreposição excluída"), e as porcentagens de cada mapa somam 100%.
    - Próximo: dev2 (janela nova) e PR da 1.5.0 com o ZIP `-dev2`.
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
