@@ -125,9 +125,10 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
    - **Perguntas 1 a 5 encerradas.** Proposta consolidada em `docs/ASSINATURA_150_PROPOSTA.md`,
      aguardando aprovação do autor.
    **Decisões do autor sobre a proposta (20/11/2026):** manter o algoritmo Processing antigo (disposição no
-   plugin em discussão); saídas TXT e CSV no padrão do plugin; **SRC somente UTM**; guia Raster com os
-   formatos do GDAL (OSGeo) e o RS2; projeto como na Avaliação (`*.geosaga.json`, Novo/Abrir/Salvar).
-   Em aberto: GeoPackage das áreas (proposta: retirar); disposição do algoritmo legado.
+   Processing **obsoleto e oculto**); saídas TXT e CSV no padrão do plugin, **sem GeoPackage**; **qualquer
+   SRC projetado em metros** (revendo "somente UTM" após a ressalva do Claude); guia Raster com os formatos
+   do GDAL (OSGeo) e o RS2; projeto como na Avaliação (`*.geosaga.json`, Novo/Abrir/Salvar).
+   **Proposta sem pendências**; próximo passo: aprovação do plano de lotes e programação.
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -198,6 +199,8 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - Pergunta 3: falta de dado aparece como "Sem classe" na base, com aviso; sobreposição como na 0.5.1.
 - Pergunta 4 encerrada: sem mistura de formatos (perda do caso misto aceita), mesmo SRC e mesma grade obrigatórios.
 - Pergunta 5 encerrada (recomendações aceitas por hora); proposta em `docs/ASSINATURA_150_PROPOSTA.md`.
+- Pendências da proposta resolvidas: legado obsoleto e oculto, TXT+CSV sem GeoPackage, SRC projetado em metros,
+  GDAL + RS2, projeto como na Avaliação.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 

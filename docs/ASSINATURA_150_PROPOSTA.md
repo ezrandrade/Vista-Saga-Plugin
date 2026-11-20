@@ -1,8 +1,8 @@
 # Assinatura 1.5.0 - proposta de escopo
 
 Proposta do Claude para aprovação do autor (20/11/2026), consolidando as decisões das perguntas 1 a 5
-registradas em `docs/CONTEXTO_SESSOES.md`. Nada foi programado ainda. Itens marcados **[decidir]** ainda
-dependem do autor.
+registradas em `docs/CONTEXTO_SESSOES.md`. Nada foi programado ainda. Todos os itens
+[decidir] foram respondidos pelo autor em 20/11/2026.
 
 ## 1. Conceito
 
@@ -22,8 +22,9 @@ dependem do autor.
   erro com a sugestão de alinhar antes. Raster categórico de uma banda, nos formatos lidos pelo GDAL
   (OSGeo) **e o RS2** (decisão do autor, 20/11/2026); o SRC do RS2 vem do `.rs2.json` ou da confirmação
   do usuário, como nos demais módulos.
-- **SRC somente UTM** (decisão do autor, 20/11/2026), reconhecido pela definição do SRC (projeção
-  `utm`), nunca pelas coordenadas; qualquer datum.
+- **SRC projetado em metros** (decisão do autor, 20/11/2026, revendo "somente UTM": aceita UTM, Albers,
+  Policônica, LTM/RTM etc.; recusa SRC geográfico em graus e unidades que não sejam metros), verificado
+  pela definição do SRC, nunca pelas coordenadas.
 - Nada selecionado: execução recusada com mensagem (o plugin não supõe "mapa inteiro").
 
 ## 3. Seleção
@@ -49,7 +50,7 @@ qualquer. Na guia Vetorial, a parte do limite sem polígono, ou fora da extensã
 linha **"Sem classe"**, dentro da base, com aviso no resumo. Sobreposição de classes num mapa vetorial
 assinado: tratamento atual (exclui a região ambígua e registra a área, ou modo estrito).
 
-Áreas: raster = células × área da célula; vetor = área planimétrica no SRC UTM dos mapas.
+Áreas: raster = células × área da célula; vetor = área planimétrica no SRC projetado dos mapas.
 
 ## 5. Saídas
 
@@ -60,8 +61,8 @@ TXT e CSV no padrão do plugin (decisão do autor, 20/11/2026) (campo "Salvar em
 - `*.csv`: as mesmas linhas em formato de tabela (`MAPA`, `FEICAO`, `CODIGO`, `CLASSE`, as seis colunas),
   separador `;`, UTF-8 com BOM, como os demais relatórios do plugin;
 - guia "Resultados" com a tabela copiável para planilhas (`enable_table_copy`);
-- GeoPackage das áreas (`_areas.gpkg`) do módulo atual: **[decidir]** (explicado ao autor em 20/11/2026;
-  proposta do Claude: retirar).
+- **Sem GeoPackage:** o `_areas.gpkg` do módulo atual é retirado (decisão do autor, 20/11/2026); pode
+  voltar como saída opcional se fizer falta.
 
 ## 6. Projeto
 
@@ -74,8 +75,9 @@ resultados.
 
 - O identificador Processing `geosaga:assinatura` não pode ser renomeado. Hoje ele faz o caso misto
   (união dos polígonos + raster, centro da célula, reprojeção do vetor). **Decisão do autor: manter o
-  algoritmo antigo** com o cálculo intacto. Disposição no plugin: **[decidir]** (só na Caixa de
-  Ferramentas, com "(legado)" no nome, ou oculto como obsoleto, funcionando só em modelos e scripts).
+  algoritmo antigo** com o cálculo intacto. Disposição: **marcado como obsoleto e oculto** (decisão
+  do autor, 20/11/2026): some da Caixa de Ferramentas e do Modelador, mas modelos e scripts antigos
+  continuam funcionando (indicador de obsoleto do Processing; conferir o nome no QGIS 4).
 
 ## 8. Validação
 
