@@ -115,7 +115,16 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
    - **Guia Raster: mesma grade obrigatória** (resolução, extensão, alinhamento), como o Vista SAGA
      (decisão do autor); grades diferentes geram erro com sugestão de alinhar antes.
    - Pergunta 4 encerrada.
-   - Em aberto: pergunta 5 (como selecionar; parcialmente respondida na pergunta 1).
+   **Pergunta 5 (20/11/2026, recomendações do Claude aceitas "por hora"; ajustes depois):**
+   - Lista de mapas na janela, **referência no topo**, ordem por "Mover para cima/baixo"; todos assinados.
+   - Raster: lista de classes com caixas, "Marcar todas" (= mapa inteiro) e "Desmarcar todas".
+   - Vetorial: **só a seleção do QGIS** na camada de referência; janela mostra "N feições selecionadas";
+     botão "Selecionar todas"; campo opcional de nome.
+   - Nada selecionado: execução recusada com mensagem.
+   - Caixa **"Resultado por feição", ligada por padrão**.
+   - **Perguntas 1 a 5 encerradas.** Proposta consolidada em `docs/ASSINATURA_150_PROPOSTA.md`,
+     aguardando aprovação do autor (itens [decidir]: saídas, GeoPackage, Processing legado, SRC geográfico,
+     RS2 como entrada).
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -185,6 +194,7 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - Pergunta 2: duas porcentagens do Vista SAGA; FUNDO/NoData contam como classe (recomendação aceita).
 - Pergunta 3: falta de dado aparece como "Sem classe" na base, com aviso; sobreposição como na 0.5.1.
 - Pergunta 4 encerrada: sem mistura de formatos (perda do caso misto aceita), mesmo SRC e mesma grade obrigatórios.
+- Pergunta 5 encerrada (recomendações aceitas por hora); proposta em `docs/ASSINATURA_150_PROPOSTA.md`.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
