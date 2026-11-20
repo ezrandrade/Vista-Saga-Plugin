@@ -158,13 +158,16 @@ class SignatureDialog(QDialog):
         remove = QPushButton(tr('Remover selecionadas'))
         remove.setToolTip(tr('Retira da lista os mapas selecionados (não altera o projeto do QGIS).'))
         remove.clicked.connect(lambda _c=False, m=mode: self._remove(m))
+        remove_all = QPushButton(tr('Remover todas'))
+        remove_all.setToolTip(tr('Esvazia a lista de mapas desta guia (não altera o projeto do QGIS).'))
+        remove_all.clicked.connect(lambda _c=False, m=mode: self._remove_all(m))
         up = QPushButton(tr('Mover para cima'))
         up.setToolTip(tr('Sobe o mapa selecionado; o mapa do topo é a referência.'))
         up.clicked.connect(lambda _c=False, m=mode: self._move(m, -1))
         down = QPushButton(tr('Mover para baixo'))
         down.setToolTip(tr('Desce o mapa selecionado na lista.'))
         down.clicked.connect(lambda _c=False, m=mode: self._move(m, 1))
-        for button in (remove, up, down):
+        for button in (remove, remove_all, up, down):
             order.addWidget(button)
         order.addStretch(1)
         form.addRow('', order)
@@ -417,6 +420,10 @@ class SignatureDialog(QDialog):
         rows = sorted((listing.row(item) for item in listing.selectedItems()), reverse=True)
         for row in rows:
             self._entries(mode).pop(row)
+        self._refresh_list(mode)
+
+    def _remove_all(self, mode):
+        self._entries(mode).clear()
         self._refresh_list(mode)
 
     def _move(self, mode, delta):

@@ -22,6 +22,20 @@ class AssinaturaAlgorithm(QgsProcessingAlgorithm):
     def name(self):
         return 'assinatura'
 
+    def flags(self):
+        """Obsoleto e oculto desde a 1.5.0 (decisão do autor, 20/11/2026).
+
+        O módulo Assinatura passou ao modelo do Vista SAGA (referência + mapas assinados, sem mistura de
+        formatos e sem reprojeção). Este algoritmo (união dos polígonos sobre um raster, centro da célula,
+        vetor reprojetado) sai da Caixa de Ferramentas e do Modelador, mas o identificador
+        ``geosaga:assinatura`` continua funcionando em modelos e scripts antigos.
+        """
+        try:
+            deprecated = Qgis.ProcessingAlgorithmFlag.Deprecated
+        except AttributeError:  # QGIS anterior à 3.36
+            deprecated = QgsProcessingAlgorithm.FlagDeprecated
+        return super().flags() | deprecated
+
     def displayName(self):
         return tr('Assinatura espacial - classes em polígonos')
 

@@ -1682,5 +1682,7 @@
   "Desselecionar todas": "Deselect all",
   "Limpa a seleção da camada de referência.": "Clears the selection of the reference layer.",
   "Selecione no mapa as feições de {0}; a janela da Assinatura continua aberta.": "Select the features of {0} on the map; the Signature window stays open.",
-  "Nenhuma feição selecionada em {0}. Use \"Selecionar no mapa\" e clique nas feições no mapa do QGIS, ou \"Selecionar todas\".": "No feature selected in {0}. Use \"Select on map\" and click the features on the QGIS map, or \"Select all\"."
+  "Nenhuma feição selecionada em {0}. Use \"Selecionar no mapa\" e clique nas feições no mapa do QGIS, ou \"Selecionar todas\".": "No feature selected in {0}. Use \"Select on map\" and click the features on the QGIS map, or \"Select all\".",
+  "Remover todas": "Remove all",
+  "Esvazia a lista de mapas desta guia (não altera o projeto do QGIS).": "Empties the map list of this tab (the QGIS project is not changed)."
 }

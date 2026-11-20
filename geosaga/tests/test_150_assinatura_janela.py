@@ -38,6 +38,22 @@ class AssinaturaJanela150(unittest.TestCase):
         self.assertIn("tr('Mover para baixo')", self.code)
         self.assertIn("'1. Mapas - o primeiro é a referência'", self.code)
 
+    def test_menu_e_processing_legado(self):
+        import os, sys
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import _support
+        base = SRC.parent
+        self.assertIn(('Assinatura', 'open_signature'), _support.menu_entries())
+        self.assertIn('self.addAlgorithm(AssinaturaAlgorithm())', (base / 'provider.py').read_text(encoding='utf-8'))
+        legacy = (base / 'algorithms' / 'assinatura.py').read_text(encoding='utf-8')
+        self.assertIn("return 'assinatura'", legacy)  # identificador geosaga:assinatura preservado
+        self.assertIn('Qgis.ProcessingAlgorithmFlag.Deprecated', legacy)  # obsoleto e oculto (1.5.0)
+        self.assertFalse((base / 'signature_engine.py').exists())  # motor antigo retirado
+
+    def test_remover_todas(self):
+        self.assertIn("tr('Remover todas')", self.code)
+        self.assertIn('def _remove_all(self, mode):', self.code)
+
     def test_botoes_e_campos_com_dica(self):
         """Todo QPushButton criado na janela recebe dica (setToolTip), exceto os do rodapé padrão já cobertos."""
         names = set()

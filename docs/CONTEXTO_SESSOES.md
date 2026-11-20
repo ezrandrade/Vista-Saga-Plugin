@@ -90,6 +90,24 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   `SignatureResult.notes`; testes de lasca e fresta abaixo e acima de 1 cm. Suítes: 514 (3 pulados) e 42.
   ZIP `Vista_Saga_Plugin_QGIS4_v1.5.0-dev7.zip`. O lote projeto + legado + limpeza passa a ser o **dev8**.
 
+### dev8 (20/11/2026)
+
+- **Decisão do autor: sem Novo/Abrir/Salvar projeto na Assinatura** (item retirado do escopo; a proposta
+  previa replicar a Avaliação).
+- Botão **"Remover todas"** no grupo "1. Mapas - o primeiro é a referência" (pedido do autor).
+- Algoritmo Processing `geosaga:assinatura` **obsoleto e oculto** (`flags()` com
+  `Qgis.ProcessingAlgorithmFlag.Deprecated`, com recuo para `FlagDeprecated` antes do QGIS 3.36);
+  conferido no QGIS 3.34: oculto na Caixa de Ferramentas e no Modelador; identificador preservado.
+- **Motor antigo retirado:** `signature_engine.py`, `signature_core.py` e seus testes (`test_signature_core`,
+  `test_signature_overlap`, `integration_signature_qgis`, `integration_signature_overlap_qgis`);
+  `tests/qgis/smoke_qgis.py` passa a usar o motor novo; verificações de menu e Processing movidas para
+  `test_150_assinatura_janela.py`. Suítes: 500 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.5.0-dev8.zip`.
+- **Pedido do autor, em esclarecimento:** "nome do arquivo temporário = nome da função que está sendo
+  executada" e "nome da camada carregada = nome do arquivo salvo". A Assinatura não carrega camadas; o
+  levantamento mostrou nomes inconsistentes no plugin inteiro (ex.: Combinação e Voronoi carregam o arquivo
+  salvo com nome fixo, "Combinação de Mapas"/"Análises Voronoi"; temporários com nomes técnicos como
+  `voronoi_espacial`, `avaliacao_raster`, `conversao`). Perguntado ao autor o alcance e o que é "função".
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
@@ -98,10 +116,8 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
    Poço); (b) "Marcar todas" e comparar com `assinatura02.txt` (esperado: 100%); (c) guia Vetorial com
    camadas do autor, seleção pelas ferramentas do QGIS e contador da janela; (d) leiaute, textos, dicas e o
    que faltar em relação ao módulo antigo.
-2. Ajustes conforme o teste (dev3 feito: nomes pelo estilo do QGIS); depois **dev8**: projeto como na Avaliação (`*.geosaga.json`,
-   Novo/Abrir/Salvar), algoritmo Processing `geosaga:assinatura` marcado como obsoleto e oculto (conferir o
-   nome do indicador no QGIS 4), retirada do motor antigo (`signature_engine.py`, `signature_core.py` e
-   seus testes; atualizar `tests/qgis/smoke_qgis.py`, que ainda chama `signature_engine`).
+2. dev8 feito (Remover todas, legado obsoleto e oculto, motor antigo retirado; projeto descartado pelo
+   autor). Pendente: nomes de temporários e de camadas carregadas (esclarecimento com o autor).
 3. Fechamento da Assinatura (CHANGELOG, `metadata.txt` 1.5.0, `NOTAS_DA_VERSAO_150.md`, homologação) e
    então as dicas em todos os módulos (a janela da Assinatura já tem dicas em todos os botões e campos).
 4. Para comparar de novo com o Vista SAGA, os dados do autor (3 RS2, 2 relatórios, 2 vídeos) **não ficam
