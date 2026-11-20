@@ -76,6 +76,7 @@ class SignatureResult:
     srs_name: str = ''
     cell_ha: object = None
     warnings: list = field(default_factory=list)
+    notes: list = field(default_factory=list)  # registros sem alerta (ex.: lascas toleradas)
 
 
 def is_special(key):
@@ -120,19 +121,19 @@ def raster_map_signature(name, legend, totals, inside, cell_ha):
 
 
 def vector_map_signature(name, legend, totals_ha, inside_ha, mask_ha, conflict_total_ha=0.0,
-                         conflict_inside_ha=0.0):
+                         conflict_inside_ha=0.0, no_class_ha=None):
     """Assinatura de um mapa vetorial a partir das áreas (ha) por classe.
 
-    A diferença entre a área do limite e a soma das classes e da sobreposição excluída vira
-    "Sem classe" (falta de dado dentro do limite).
+    ``no_class_ha``: área do limite sem polígono do mapa ("Sem classe"), já sem as frestas toleradas.
+    Sem ela, a diferença entre a área do limite e a soma das classes e da sobreposição excluída vira
+    "Sem classe".
     """
     inside = dict(inside_ha)
     totals = dict(totals_ha)
     if conflict_total_ha > 0 or conflict_inside_ha > 0:
         totals[CONFLICT_KEY] = conflict_total_ha
         inside[CONFLICT_KEY] = conflict_inside_ha
-    covered = sum(inside.values())
-    missing = mask_ha - covered
+    missing = mask_ha - sum(inside.values()) if no_class_ha is None else no_class_ha
     # Resíduo numérico de interseções (abaixo de 1 cm², em ha) não é falta de dado.
     if missing > 1e-8:
         inside[NO_CLASS_KEY] = missing

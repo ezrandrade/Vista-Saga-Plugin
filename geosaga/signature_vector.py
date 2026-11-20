@@ -8,9 +8,15 @@ opcionalmente, uma por feição); parte do limite sem polígono = "Sem classe".
 Sobreposição entre classes diferentes de um mesmo mapa (tratamento da 0.5.1): ``'exclude'`` retira a
 região ambígua de todas as classes e a informa à parte; ``'strict'`` interrompe. Polígonos sobrepostos
 da mesma classe contam uma vez (dissolvidos).
+
+Tolerância de lascas (decisão do autor, 20/11/2026, a mesma da Combinação vetorial na 1.2.0): pedaços de
+sobreposição entre classes e de fresta sem polígono com largura média < 1 cm são imprecisão de
+coordenadas; não viram "Sobreposição excluída" nem "Sem classe" e são registrados no resumo do TXT. A
+lasca de sobreposição tolerada fica nas duas classes (área duplicada, informada).
 """
 from dataclasses import dataclass, field
 
+from .combination_core import SLIVER_WIDTH_M, mean_width
 from .gdal_scope import with_gdal_exceptions
 from .signature_model import FeatureSignature, SignatureResult, sort_key, vector_map_signature
 
@@ -69,6 +75,23 @@ def _area(geom):
     return 0.0 if geom is None or geom.IsEmpty() else geom.GetArea()
 
 
+def _without_slivers(geom):
+    """(geometria sem as lascas, área das lascas em m², nº de lascas). Lasca: largura média < 1 cm."""
+    if geom is None or geom.IsEmpty():
+        return None, 0.0, 0
+    keep, sliver_area, slivers = [], 0.0, 0
+    for part in _polygons(geom):
+        area = part.GetArea()
+        if area <= 0.0:
+            continue
+        if mean_width(area, part.Boundary().Length()) < SLIVER_WIDTH_M:
+            sliver_area += area
+            slivers += 1
+        else:
+            keep.append(part)
+    return (_union(keep) if keep else None), sliver_area, slivers
+
+
 def _check_srs(maps):
     from osgeo import osr
     ref = osr.SpatialReference()
@@ -110,26 +133,35 @@ def _resolve(classes, policy, map_name):
     """Retira a sobreposição entre classes diferentes (``exclude``) ou interrompe (``strict``)."""
     codes = list(classes)
     pieces = []
+    tolerated = [0.0, 0]  # lascas de sobreposição: área (m²) e quantidade
     for i, a in enumerate(codes):
         for b in codes[i + 1:]:
-            inter = classes[a].Intersection(classes[b])
+            inter, sliver_area, slivers = _without_slivers(classes[a].Intersection(classes[b]))
+            tolerated[0] += sliver_area
+            tolerated[1] += slivers
             if inter is not None and _area(inter) > _AREA_EPS_M2:
                 if policy == 'strict':
                     raise ValueError(f'Classes diferentes se sobrepõem no mapa {map_name} (códigos {a} e {b}). '
                                      'Corrija a camada ou escolha excluir a sobreposição.')
                 pieces.append(inter)
     if not pieces:
-        return classes, None
+        return classes, None, tolerated
     conflict = _union(pieces)
-    return {code: geom.Difference(conflict) for code, geom in classes.items()}, conflict
+    return {code: geom.Difference(conflict) for code, geom in classes.items()}, conflict, tolerated
 
 
-def _map_signature(vmap, legend, classes, conflict, mask, mask_ha):
+def _map_signature(prepared, mask, mask_ha):
+    """Assinatura de um mapa num recorte e as frestas toleradas (área m², quantidade) dentro dele."""
+    vmap, legend, classes, conflict, covered = prepared
     totals = {code: _area(geom) / 10000.0 for code, geom in classes.items()}
     inside = {code: _area(geom.Intersection(mask)) / 10000.0 for code, geom in classes.items()}
     conflict_total = _area(conflict) / 10000.0
     conflict_inside = _area(conflict.Intersection(mask)) / 10000.0 if conflict is not None else 0.0
-    return vector_map_signature(vmap.name, legend, totals, inside, mask_ha, conflict_total, conflict_inside)
+    gap = mask.Difference(covered) if covered is not None and not covered.IsEmpty() else mask.Clone()
+    gap, gap_slivers_m2, gap_slivers = _without_slivers(gap)
+    signature = vector_map_signature(vmap.name, legend, totals, inside, mask_ha, conflict_total, conflict_inside,
+                                     no_class_ha=_area(gap) / 10000.0)
+    return signature, (gap_slivers_m2, gap_slivers)
 
 
 @with_gdal_exceptions
@@ -153,18 +185,28 @@ def run_vector_signature(maps, selected, *, per_feature=True, overlap='exclude',
     union_ha = _area(union_geom) / 10000.0
     if union_ha <= 0:
         raise ValueError('As feições selecionadas não têm área.')
-    warnings = []
+    warnings, notes = [], []
     prepared = []
     for i, vmap in enumerate(maps):
         classes, legend = _classes(vmap, warnings, cancelled)
-        classes, conflict = _resolve(classes, overlap, vmap.name)
+        covered = _union(list(classes.values())) if classes else None
+        classes, conflict, (overlap_m2, overlaps) = _resolve(classes, overlap, vmap.name)
         if conflict is not None:
             warnings.append(f'Mapa {vmap.name}: {_area(conflict) / 10000.0:.4f} ha de sobreposição entre '
                             'classes diferentes foram excluídos.')
-        prepared.append((vmap, legend, classes, conflict))
+        if overlaps:
+            notes.append(f'Mapa {vmap.name}: {overlaps} lascas de sobreposição entre classes ({overlap_m2:.4f} m²) '
+                         'mantidas nas duas classes.')
+        prepared.append((vmap, legend, classes, conflict, covered))
         if progress:
             progress(0.5 * (i + 1) / len(maps))
-    union_maps = [_map_signature(v, lg, c, cf, union_geom, union_ha) for v, lg, c, cf in prepared]
+    union_maps = []
+    for item in prepared:
+        signature, (gap_m2, gaps) = _map_signature(item, union_geom, union_ha)
+        union_maps.append(signature)
+        if gaps:
+            notes.append(f'Mapa {signature.name}: {gaps} frestas sem polígono no limite ({gap_m2:.4f} m²) não '
+                         'contadas como Sem classe.')
     for signature in union_maps:
         missing = sum(r.asn_ha for r in signature.rows if r.key == 'SEM_CLASSE')
         if missing > 0:
@@ -176,9 +218,9 @@ def run_vector_signature(maps, selected, *, per_feature=True, overlap='exclude',
                 raise InterruptedError('Assinatura cancelada.')
             area_ha = _area(geom) / 10000.0
             features.append(FeatureSignature(fid, name, [
-                _map_signature(v, lg, c, cf, geom, area_ha) for v, lg, c, cf in prepared]))
+                _map_signature(item, geom, area_ha)[0] for item in prepared]))
             if progress:
                 progress(0.5 + 0.5 * (n + 1) / len(cuts))
     selection = [name for _fid, name, _geom in cuts]
     union = FeatureSignature('UNIAO', 'União da seleção', union_maps)
-    return SignatureResult('vector', reference.name, selection, union, features, srs_name, None, warnings)
+    return SignatureResult('vector', reference.name, selection, union, features, srs_name, None, warnings, notes)

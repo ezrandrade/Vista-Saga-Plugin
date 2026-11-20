@@ -271,6 +271,30 @@ class VectorSignatureTests(unittest.TestCase):
         uso = run_vector_signature([self.ref, self.uso], self.selected).union.maps[1]
         self.assertEqual(self.row(uso, 1).display, '1 - Edificada')
 
+    def test_slivers_under_1cm_are_tolerated(self):
+        # Decisão do autor (20/11/2026): largura média < 1 cm é imprecisão de coordenadas (regra da Combinação).
+        sliver = VectorMap('Lasca', self.wkt, [(1, _square(0, 0, 10.005, 10), 1, 'X'),
+                                               (2, _square(10, 0, 20, 10), 2, 'Y')])
+        result = run_vector_signature([self.ref, sliver], self.selected, per_feature=False)
+        msig = result.union.maps[1]
+        self.assertFalse(any(r.key in (CONFLICT_KEY, NO_CLASS_KEY) for r in msig.rows))
+        self.assertTrue(any('lascas de sobreposição' in n for n in result.notes))
+        self.assertFalse(any('sobreposição' in w for w in result.warnings))
+        run_vector_signature([self.ref, sliver], self.selected, overlap='strict')  # lasca não interrompe
+        gap = VectorMap('Fresta', self.wkt, [(1, _square(0, 0, 9.995, 10), 1, 'X'),
+                                             (2, _square(10, 0, 20, 10), 2, 'Y')])
+        result = run_vector_signature([self.ref, gap], self.selected, per_feature=False)
+        self.assertFalse(any(r.key == NO_CLASS_KEY for r in result.union.maps[1].rows))
+        self.assertTrue(any('frestas sem polígono' in n for n in result.notes))
+        self.assertEqual(result.warnings, [])
+
+    def test_overlap_and_gap_from_1cm_still_count(self):
+        wide = VectorMap('Larga', self.wkt, [(1, _square(0, 0, 10.05, 10), 1, 'X'),
+                                             (2, _square(10, 0, 19.95, 10), 2, 'Y')])
+        msig = run_vector_signature([self.ref, wide], self.selected, per_feature=False).union.maps[1]
+        self.assertAlmostEqual(self.row(msig, CONFLICT_KEY).asn_ha, 0.5 / 10000)  # 5 cm × 10 m
+        self.assertAlmostEqual(self.row(msig, NO_CLASS_KEY).asn_ha, 0.5 / 10000)  # 5 cm × 10 m
+
     def test_strict_overlap_stops(self):
         with self.assertRaisesRegex(ValueError, 'se sobrepõem'):
             run_vector_signature([self.ref, self.uso], self.selected, overlap='strict')

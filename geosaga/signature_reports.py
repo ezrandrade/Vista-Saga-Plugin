@@ -98,6 +98,11 @@ def write_txt(path, result, *, title='', maps_detail=None, overlap=''):
             stream.write('Avisos:\n')
             for warning in result.warnings:
                 stream.write(f'  - {warning}\n')
+        if not raster:
+            stream.write('Tolerância de lascas (largura média < 1 cm, a mesma da Combinação vetorial): '
+                         'imprecisão de coordenadas entre polígonos vizinhos, sem linha própria.\n')
+            for note in result.notes or ['Nenhuma lasca encontrada.']:
+                stream.write(f'  - {note}\n')
         stream.write('\n' + '=' * 70 + '\nUNIÃO DA SELEÇÃO\n' + '=' * 70 + '\n')
         for msig in result.union.maps:
             _table(stream, msig, raster)

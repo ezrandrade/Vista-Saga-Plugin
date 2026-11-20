@@ -80,11 +80,15 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   5,27% no vetor × 5,36% no raster; Barro Duro 157,60 ha × 157,83 ha).
 - **Corrigido (sem ZIP ainda):** nome repetido quando o código da classe é texto ("Barro Duro - Barro Duro");
   agora "código - nome" só quando são diferentes (`ClassRow.display`). Teste novo; suítes 512 (3 pulados) e 42.
-- **Em aberto, decisão de método do autor:** resíduos geométricos minúsculos entre polígonos vizinhos geram
-  linhas e avisos de "0,0000 ha" ("Sobreposição excluída" e "Sem classe" no Barro Duro; 0,0015 ha sem
-  classe na bacia inteira). Proposta do Claude: adotar a regra da Combinação vetorial (decisão do autor na
-  1.2.0): sobreposições e lacunas com largura média < 1 cm toleradas, sem linha própria, e registradas no
-  resumo do TXT; acima disso, como hoje.
+- Resíduos geométricos minúsculos entre polígonos vizinhos geravam linhas e avisos de "0,0000 ha".
+  **Decisão do autor (20/11/2026, opção b): regra da Combinação vetorial (1.2.0)** — pedaços de
+  sobreposição entre classes e de fresta sem polígono com largura média < 1 cm (2 × área ÷ perímetro;
+  `combination_core.SLIVER_WIDTH_M`, `mean_width`) não viram "Sobreposição excluída" nem "Sem classe" nem
+  aviso; ficam no resumo do TXT ("Tolerância de lascas"). A lasca de sobreposição fica nas duas classes
+  (área duplicada informada). Lascas não interrompem o modo estrito. "Sem classe" passa a ser calculado
+  geometricamente (limite menos a união dos polígonos do mapa, sem as frestas toleradas). **dev7**:
+  `SignatureResult.notes`; testes de lasca e fresta abaixo e acima de 1 cm. Suítes: 514 (3 pulados) e 42.
+  ZIP `Vista_Saga_Plugin_QGIS4_v1.5.0-dev7.zip`. O lote projeto + legado + limpeza passa a ser o **dev8**.
 
 ### Próximo passo (início da sessão 6)
 
@@ -94,7 +98,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
    Poço); (b) "Marcar todas" e comparar com `assinatura02.txt` (esperado: 100%); (c) guia Vetorial com
    camadas do autor, seleção pelas ferramentas do QGIS e contador da janela; (d) leiaute, textos, dicas e o
    que faltar em relação ao módulo antigo.
-2. Ajustes conforme o teste (dev3 feito: nomes pelo estilo do QGIS); depois **dev7**: projeto como na Avaliação (`*.geosaga.json`,
+2. Ajustes conforme o teste (dev3 feito: nomes pelo estilo do QGIS); depois **dev8**: projeto como na Avaliação (`*.geosaga.json`,
    Novo/Abrir/Salvar), algoritmo Processing `geosaga:assinatura` marcado como obsoleto e oculto (conferir o
    nome do indicador no QGIS 4), retirada do motor antigo (`signature_engine.py`, `signature_core.py` e
    seus testes; atualizar `tests/qgis/smoke_qgis.py`, que ainda chama `signature_engine`).
