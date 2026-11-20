@@ -238,6 +238,25 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   complementos do QGIS" (o catálogo ainda está na 1.0.3); "Combinação de Mapas" fala em "tipo de operação
   configurada" (não há operações a escolher); seção "Documentação visual" promete capturas que agora existem.
 
+### Tutorial e roteiros de vídeo (20/11/2026)
+
+- **Tutorial** (`docs/tutorial/`, ver README): exercício guiado pelos 7 módulos sobre a cidade fictícia de
+  **Vila Serena** (dados sintéticos, semente fixa, 200 x 200 células de 10 m, EPSG:31985). Números do texto vêm da
+  execução real dos motores (`executar_tutorial.py` -> `numeros.json`); janelas capturadas com os dados; GIF e PNGs
+  gerados pelo próprio Sequenciador. DOCX em pt-BR (26 p.). Pacotes de dados pt/en/es (~25 KB cada).
+- **Roteiros** (`docs/videos/`): 7 vídeos (4 a 6 min) por idioma, com ficha, cenas, narração, texto na tela,
+  descrição, capítulos e tags; rótulos da interface conferidos nos catálogos en/es.
+- **Achados para o autor decidir (não alterados):**
+  1. Vetor -> GeoTIFF grava as classes como "Classe N" (sem campo de nome): o tutorial ensina a renomear na
+     Simbologia, porque a Assinatura usa os nomes do estilo. Sugestão futura: campo de legenda na rasterização.
+  2. O relatório da Avaliação agrupa as notas finais por **half-up** ("Agrupamento de notas" no TXT), enquanto a
+     regra registrada no CLAUDE.md para converter médias em classes é **"meio para par"**. O raster mantém o valor
+     contínuo; a diferença só aparece no resumo por nota (no tutorial: nota 6 = 70,35 ha em half-up contra 85,26 ha
+     em meio-para-par). Conferir qual é o comportamento do Vista SAGA no relatório.
+  3. O TXT da Avaliação rodado pelo motor mostrou códigos (não nomes) na coluna Legenda dos critérios, mesmo com
+     `legendas` na configuração; conferir se ocorre também pela janela.
+  4. Título real da seção do Sequenciador é "3. Saídas e prévia" (o tutorial foi corrigido).
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
