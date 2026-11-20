@@ -272,6 +272,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   XML-RPC com a conta OSGeo salva na sessão foi recusado pelo servidor (HTTP 403, depois de injetada a credencial:
   usuário/senha incorretos ou conta sem permissão). O autor recusou fornecer um token do plugin
   (plugins.qgis.org/plugins/geosaga/tokens/). Alternativa: enviar o ZIP pela página do plugin ("Add version").
+- **Recusa do catálogo ao envio manual do autor:** o validador lê o `metadata.txt` com `ConfigParser` e o '%' do "about" e do changelog (desde a 1.4.0) quebrava a leitura. Corrigido trocando '%' por "percent" e criado `tests/unit/test_metadata_catalogo.py` (lê como o catálogo e proíbe '%'). ZIP 1.6.0 gerado de novo (só o metadata e o CHANGELOG mudam). Nova tentativa de publicação (Release e catálogo) também bloqueada; o autor envia manualmente.
 - Uma credencial "Conta OSGeo (catálogo de complementos do QGIS)" ficou salva no ambiente pessoal
   "Vista-Saga-Plugin"; como foi recusada, o autor pode removê-la nas configurações do ambiente.
 
