@@ -61,9 +61,26 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
      selecionados. É contagem **mapa a mapa** dentro do limite, não cruzamento de combinações.
    - Diferenças para o plugin atual: referência só vetorial (sem classes de raster como limite); todas as
      feições da camada de áreas, sem seleção; um único mapa temático; sem modo "um mapa sozinho".
-   - Em aberto (perguntado ao autor): várias feições/classes selecionadas formam um limite único (união)
-     ou uma assinatura por feição; base do percentual (área total do mapa, com ou sem fundo/NoData, ou
-     área selecionada); mistura raster/vetor e grades diferentes entre os mapas.
+   **Caso de referência do autor (20/11/2026; 2 vídeos, 2 relatórios, 3 RS2 de 1108 × 496 células de
+   10 m: `Bairros_Reginaldo`, `UsoSolo`, `Escolaridade`; dados só na sessão, nunca no repositório).**
+   O Claude reproduziu o relatório 1 com 100% de coincidência (contagens e percentuais). Conclusões:
+   - **Pergunta 1 respondida: resultado único da união** do que foi marcado (4 bairros: Antares, Gruta de
+     Lourdes, Jacintinho, Poço = 82.191 células), não um resultado por feição.
+   - **A seleção é uma máscara pintada sobre a referência**, com as "Ferramentas de Pintura": lápis e
+     borracha; balde; retângulo, elipse, polígono e linha; lista de classes; botão "Assinar o mapa
+     inteiro"; transparência da pintura. Projeto salvo em `*.ASN`.
+   - **O balde preenche a região conexa por 4 vizinhos** (não a classe inteira): o Poço tem 17.415
+     células, mas 1 célula só toca o resto na diagonal (linha 934, coluna 277) e ficou de fora (17.414,
+     "99,99%"). Ou seja, no raster "feição" = região conexa por 4 vizinhos.
+   - **Todos os mapas da lista são assinados, inclusive a referência**, na ordem da lista ("Lista de mapas a
+     serem assinados em ordem de assinatura"; status "Processando assinatura - mapa 2 de 3").
+   - Colunas do relatório por mapa: `Cat. - Legendas`, `Total Pixels`, `Total Ha` (classe no mapa inteiro),
+     `Pixels Asn.`, `Área Asn. Ha`, `% Área Asn.` (= células da classe na máscara / células da máscara) e
+     `% Categoria` (= células da classe na máscara / células da classe no mapa); linha `Total` com o total
+     do mapa e o total da máscara. Todas as classes aparecem, inclusive as zeradas e o FUNDO.
+   - **Base do percentual = a própria máscara, com o FUNDO dentro dela se ele for marcado**: no relatório 2
+     ("Assinar o mapa inteiro") o FUNDO entra com 57,36% e 100,00%.
+   - Ainda em aberto: perguntas 2 a 5 (o autor quer discuti-las uma a uma, com colocações e inspirações).
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -126,6 +143,8 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - Levantamento inicial da Assinatura (achados na Retomada rápida); informação do autor: no Vista SAGA a
   Assinatura aceita um mapa ou vários; depois, descrição do funcionamento (mapa de referência por cima,
   seleção de feições/classes como limite, contagem mapa a mapa), registrada na Retomada rápida.
+- Vídeos e relatórios do Vista SAGA analisados; relatório 1 reproduzido com 100% de coincidência;
+  pergunta 1 respondida (união); seleção = máscara pintada, balde por 4 vizinhos.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
