@@ -2,7 +2,8 @@
 
 > **Como usar:** copie tudo a partir da linha "INÍCIO DO PROMPT" e cole numa conversa nova com a IA de sua
 > escolha (ChatGPT, Gemini, Claude, Copilot etc.). Antes de colar, preencha os três campos entre colchetes da
-> seção 0. Se a IA gerar imagens, anexe as figuras indicadas na seção 7 (pasta `docs/site/` do repositório).
+> seção 0. Anexe na mesma conversa as imagens da pasta `imagens/` (ou do arquivo
+> `Divulgacao_Vista_Saga_Plugin_1.6.1.zip`), descritas na seção 7.
 > Revise todo o material antes de publicar: o prompt exige fidelidade aos fatos, mas a IA pode errar.
 
 ---
@@ -107,14 +108,18 @@ usar esses números, diga que são de um **exemplo fictício** do tutorial.
 
 ## 7. Imagens disponíveis (já existem; peça ao usuário para anexá-las)
 
-Pasta `docs/site/` do repositório:
+Pasta `docs/divulgacao/imagens/` do repositório (o arquivo `LEIA-ME.md` dessa pasta traz o uso sugerido e o
+texto alternativo de cada imagem; use esses textos como base):
 
-- `janelas/01_assinatura.png` a `janelas/07_sequenciador_mapas.png`: a janela de cada módulo, preenchida.
-- `resultados/00_panorama_modulos.png`: os sete módulos num só quadro.
-- `resultados/01_assinatura_resultado.png` a `resultados/07_sequenciador_resultado.png`: o resultado de cada
-  módulo em infográfico.
-- `resultados/08_painel_validacao.png`: painel da validação contra o Vista SAGA.
-- No tutorial há também o GIF da expansão urbana de Vila Serena (2000, 2010, 2020), bom para vídeos curtos.
+- `1_janelas/01_assinatura.png` a `1_janelas/07_sequenciador_mapas.png`: a janela de cada módulo, preenchida.
+- `2_resultados/00_panorama_modulos.png`: os sete módulos num só quadro.
+- `2_resultados/01_assinatura_resultado.png` a `2_resultados/07_sequenciador_resultado.png`: o resultado de
+  cada módulo em infográfico.
+- `2_resultados/08_painel_validacao.png`: painel da validação contra o Vista SAGA.
+- `3_vila_serena/vila_serena_2000_2020.gif` (e os quadros `quadro_001_2000.png`, `quadro_002_2010.png`,
+  `quadro_003_2020.png`): a expansão urbana de Vila Serena, bom para vídeos curtos.
+- `3_vila_serena/vila_serena_transicoes.png`, `vila_serena_voronoi.png`, `vila_serena_aptidao.png`: resultados
+  do exemplo fictício (Monitoria, Voronoi, Avaliação).
 
 Se você gerar imagens novas, não reproduza logotipos de instituições (UFRJ, QGIS) nem crie telas falsas do
 programa: use as capturas reais acima.
