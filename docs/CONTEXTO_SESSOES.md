@@ -123,8 +123,11 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
    - Nada selecionado: execução recusada com mensagem.
    - Caixa **"Resultado por feição", ligada por padrão**.
    - **Perguntas 1 a 5 encerradas.** Proposta consolidada em `docs/ASSINATURA_150_PROPOSTA.md`,
-     aguardando aprovação do autor (itens [decidir]: saídas, GeoPackage, Processing legado, SRC geográfico,
-     RS2 como entrada).
+     aguardando aprovação do autor.
+   **Decisões do autor sobre a proposta (20/11/2026):** manter o algoritmo Processing antigo (disposição no
+   plugin em discussão); saídas TXT e CSV no padrão do plugin; **SRC somente UTM**; guia Raster com os
+   formatos do GDAL (OSGeo) e o RS2; projeto como na Avaliação (`*.geosaga.json`, Novo/Abrir/Salvar).
+   Em aberto: GeoPackage das áreas (proposta: retirar); disposição do algoritmo legado.
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).

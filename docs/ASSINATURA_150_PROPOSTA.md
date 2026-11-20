@@ -19,8 +19,11 @@ dependem do autor.
 - **Mesmo SRC em todos os mapas**, com mensagem clara; o plugin não reprojeta (corrige o defeito da
   reprojeção silenciosa em `signature_engine.py:316`).
 - **Guia Raster: mesma grade** (resolução, extensão, alinhamento) em todos os mapas; grades diferentes geram
-  erro com a sugestão de alinhar antes. Raster categórico de uma banda (GeoTIFF; RS2 pelo leitor do plugin
-  **[decidir]**).
+  erro com a sugestão de alinhar antes. Raster categórico de uma banda, nos formatos lidos pelo GDAL
+  (OSGeo) **e o RS2** (decisão do autor, 20/11/2026); o SRC do RS2 vem do `.rs2.json` ou da confirmação
+  do usuário, como nos demais módulos.
+- **SRC somente UTM** (decisão do autor, 20/11/2026), reconhecido pela definição do SRC (projeção
+  `utm`), nunca pelas coordenadas; qualquer datum.
 - Nada selecionado: execução recusada com mensagem (o plugin não supõe "mapa inteiro").
 
 ## 3. Seleção
@@ -46,29 +49,35 @@ qualquer. Na guia Vetorial, a parte do limite sem polígono, ou fora da extensã
 linha **"Sem classe"**, dentro da base, com aviso no resumo. Sobreposição de classes num mapa vetorial
 assinado: tratamento atual (exclui a região ambígua e registra a área, ou modo estrito).
 
-Áreas: raster = células × área da célula; vetor = área planimétrica no SRC dos mapas. SRC geográfico
-(graus): **[decidir]** recusar (proposta) ou calcular área elipsoidal.
+Áreas: raster = células × área da célula; vetor = área planimétrica no SRC UTM dos mapas.
 
-## 5. Saídas **[decidir]**
+## 5. Saídas
 
-Proposta, no padrão de resultado do plugin (campo "Salvar em"; sem as caixas "temporário" e "carregar"):
+TXT e CSV no padrão do plugin (decisão do autor, 20/11/2026) (campo "Salvar em"; sem as caixas "temporário" e "carregar"):
 
 - `*.txt`: relatório no leiaute do Vista SAGA (um bloco por mapa, na ordem da lista: colunas acima e linha
   `Total`), seguido dos blocos por feição; cabeçalho com mapas, SRC, seleção e avisos;
 - `*.csv`: as mesmas linhas em formato de tabela (`MAPA`, `FEICAO`, `CODIGO`, `CLASSE`, as seis colunas),
   separador `;`, UTF-8 com BOM, como os demais relatórios do plugin;
 - guia "Resultados" com a tabela copiável para planilhas (`enable_table_copy`);
-- GeoPackage das áreas (`_areas.gpkg`) do módulo atual: manter só na guia Vetorial, retirar ou substituir
-  por uma camada do limite **[decidir]**.
+- GeoPackage das áreas (`_areas.gpkg`) do módulo atual: **[decidir]** (explicado ao autor em 20/11/2026;
+  proposta do Claude: retirar).
 
-## 6. Compatibilidade
+## 6. Projeto
+
+Como na Avaliação (decisão do autor, 20/11/2026): botões **Novo projeto**, **Abrir projeto…** e **Salvar
+projeto…**, arquivo `*.geosaga.json` com caminhos relativos à pasta do arquivo quando possível. Guarda a
+configuração (mapas e ordem, classes marcadas no raster, feições selecionadas no vetor, opções), nunca os
+resultados.
+
+## 7. Compatibilidade
 
 - O identificador Processing `geosaga:assinatura` não pode ser renomeado. Hoje ele faz o caso misto
-  (polígonos + raster), que a interface deixará de oferecer. **[decidir]**: (a) manter o algoritmo antigo
-  como está, só para compatibilidade, ou (b) atualizá-lo para o novo modelo, quebrando modelos antigos.
-  Proposta: (a), com aviso de "legado" na descrição.
+  (união dos polígonos + raster, centro da célula, reprojeção do vetor). **Decisão do autor: manter o
+  algoritmo antigo** com o cálculo intacto. Disposição no plugin: **[decidir]** (só na Caixa de
+  Ferramentas, com "(legado)" no nome, ou oculto como obsoleto, funcionando só em modelos e scripts).
 
-## 7. Validação
+## 8. Validação
 
 - Teste de regressão com dados sintéticos que reproduzem a estrutura do caso de referência (célula ligada só
   pela diagonal, classes zeradas, FUNDO).
@@ -76,7 +85,7 @@ Proposta, no padrão de resultado do plugin (campo "Salvar em"; sem as caixas "t
   rodar com os dados reais: esperado 100% no relatório 2 (mapa inteiro) e diferença de 1 célula no
   relatório 1 (Poço), pela decisão da feição = classe inteira.
 
-## 8. Fora deste escopo
+## 9. Fora deste escopo
 
 Ferramentas de pintura; clique por região no raster; mistura de formatos; percentual só entre classes
-reais; projeto de assinatura (`*.ASN`); dicas em todos os módulos (item 2 da 1.5.0, depois da Assinatura).
+reais; dicas em todos os módulos (item 2 da 1.5.0, depois da Assinatura).
