@@ -12,6 +12,20 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 
 ## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026, fim da sessão 5: 1.5.0-dev2 em teste pelo autor) <<<
 
+### Teste do autor com o dev2 (20/11/2026, manhã; guia Raster; vetorial a seguir)
+
+- O autor rodou o **plugin nos GeoTIFF** (`Bairros_10m.tif`, `Escolaridade_10m.tif`, `UsoSolo_10m.tif`) e o
+  **Vista SAGA nos RS2**, em dois casos: bairro Barro Duro e mapa inteiro. **Os TIF não são os mesmos dados
+  dos RS2:** grade 495 × 1107 contra 496 × 1108, origem deslocada cerca de 8 m e outra numeração de classes
+  (Barro Duro = 7 no TIF, 2 no RS2); provavelmente rasterizados de vetores. Comparação TIF × RS2 não vale.
+- O Claude rodou o **plugin nos mesmos RS2** (`scripts/comparar_assinatura_vista_saga.py`): mapa inteiro
+  **31/31 = 100%**; Barro Duro 27/31, e as 4 diferenças são **4 células do Barro Duro ligadas só pela
+  diagonal** (linhas 571-573, colunas 435-436), excluídas pelo balde do Vista SAGA (15.779 × 15.783).
+  Mesma causa do Poço; diferença aceita. Segundo caso de referência confirmado.
+- Achado de usabilidade: nos TIF sem legenda gravada, o plugin mostra "Classe N" (o `UsoSolo_10m.tif`
+  mostrou nomes, provavelmente de um `.rs2.json` ao lado). Proposta do Claude: ler os nomes do estilo da
+  camada no QGIS (valores únicos/paletado) quando o mapa vier do projeto (aguardando o autor).
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
