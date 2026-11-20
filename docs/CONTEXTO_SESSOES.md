@@ -10,7 +10,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026, fim da sessão 5: 1.5.0-dev2 em teste pelo autor) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026: 1.6.0 fechada, revisão geral feita, manual DOCX em revisão pelo autor) <<<
 
 ### Teste do autor com o dev2 (20/11/2026, manhã; guia Raster; vetorial a seguir)
 
@@ -197,6 +197,22 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 - **Correções de texto (sem cálculo):** README do ZIP (dizia 1.3.0, "1 + atrito" e "equivalência não
   demonstrada"), README do repositório e "Sobre" do `metadata.txt` atualizados para a 1.6.0 e as validações.
 - Próximo: manual do usuário em DOCX (pt-BR, en, es).
+
+### Manual do usuário em DOCX (20/11/2026)
+
+- Três arquivos em `docs/manual/saida/`: `Manual_Vista_Saga_Plugin_1.6.0_pt-BR.docx` (45 p.),
+  `User_Manual_Vista_Saga_Plugin_1.6.0_en.docx` (44 p.) e `Manual_Usuario_Vista_Saga_Plugin_1.6.0_es.docx` (45 p.).
+- Estrutura: capa, sumário, Apresentação (panorama + referência rápida), Instalação, Conceitos, um capítulo por
+  módulo (para que serve, diferenças para rotinas similares, facilidade de uso, janelas, tabela de campos com o
+  texto real das dicas, rotina, resultados, dicas ocultas, erros comuns), Validação (painel), Solução de
+  problemas e Glossário.
+- Fontes reprodutíveis em `docs/manual/` (ver `README.md` ali): `capture_windows.py` (capturas no QGIS com dados
+  **sintéticos** e `campos.json`), `build_figures.py` (infográficos calculados pelos motores do plugin),
+  `content_<idioma>.py` (texto), `build_manual.py` + `build_docx.js` (DOCX com sumário estático em duas passadas).
+- No espanhol, os nomes dos módulos seguem a interface: Firma espacial, Monitoreo, Evaluación, Análisis de
+  Voronoi, Combinación de mapas, Conversor de formatos, Secuenciador de mapas.
+- Pendência: o autor revisa o conteúdo (sobretudo afirmações conceituais e as "dicas ocultas") antes de
+  divulgar. O manual não vai no ZIP do plugin (decisão a confirmar com o autor).
 
 ### Próximo passo (início da sessão 6)
 
