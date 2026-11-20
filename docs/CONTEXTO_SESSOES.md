@@ -107,13 +107,14 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
      região ambígua e registra a área (padrão) ou modo estrito.
    **Pergunta 4 (20/11/2026):**
    - **Decisão do autor: sem mistura de formatos.** Guia Raster: referência e mapas assinados todos raster;
-     guia Vetorial: todos vetoriais. Consequência apontada ao autor: some o caso atual "polígonos como
-     limite + mapa temático raster" (confirmar se ele aceita a perda).
-   - **Achado (defeito antigo):** o motor atual reprojeta as áreas para o SRC do mapa temático sem avisar
-     (`signature_engine.py:316`), contra a regra do `CLAUDE.md`. Proposta do Claude: exigir o mesmo SRC em
-     todos os mapas, com mensagem clara (aguardando o autor).
-   - Proposta do Claude para a guia Raster: exigir a mesma grade (resolução, extensão, alinhamento), como
-     o Vista SAGA (aguardando o autor).
+     guia Vetorial: todos vetoriais. **O autor aceita a perda** do caso atual "polígonos como limite + mapa
+     temático raster" (converter antes, no Conversor ou no QGIS).
+   - **Mesmo SRC obrigatório em todos os mapas** (decisão do autor), com mensagem clara. Corrige o defeito
+     antigo: o motor atual reprojeta as áreas para o SRC do mapa temático sem avisar
+     (`signature_engine.py:316`), contra a regra do `CLAUDE.md`.
+   - **Guia Raster: mesma grade obrigatória** (resolução, extensão, alinhamento), como o Vista SAGA
+     (decisão do autor); grades diferentes geram erro com sugestão de alinhar antes.
+   - Pergunta 4 encerrada.
    - Em aberto: pergunta 5 (como selecionar; parcialmente respondida na pergunta 1).
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
@@ -183,7 +184,7 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - Guia Raster: feição = classe inteira, por lista de classes (recomendação do Claude aceita). Pergunta 1 encerrada.
 - Pergunta 2: duas porcentagens do Vista SAGA; FUNDO/NoData contam como classe (recomendação aceita).
 - Pergunta 3: falta de dado aparece como "Sem classe" na base, com aviso; sobreposição como na 0.5.1.
-- Pergunta 4: sem mistura de formatos (decisão do autor); mesmo SRC e mesma grade aguardando confirmação.
+- Pergunta 4 encerrada: sem mistura de formatos (perda do caso misto aceita), mesmo SRC e mesma grade obrigatórios.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
