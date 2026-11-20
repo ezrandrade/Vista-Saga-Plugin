@@ -47,7 +47,10 @@ def _srs_from_text(text):
     return srs
 
 
-def _gdal_legend(path, band):
+def _gdal_legend(path, ds, band):
+    # O GDAL 3.8 só carrega o .aux.xml (onde o GeoTIFF guarda os nomes das classes) depois de outra
+    # consulta ao arquivo; sem ela, GetCategoryNames devolve vazio. GetFileList força a carga.
+    ds.GetFileList()
     names = band.GetCategoryNames() or []
     legend = {i: str(name) for i, name in enumerate(names) if name}
     sidecar = Path(str(path) + '.rs2.json')
@@ -63,12 +66,26 @@ def _gdal_legend(path, band):
     return legend
 
 
+def _with_labels(legend, labels):
+    """Nomes vindos do estilo da camada no QGIS prevalecem; rótulos iguais ao próprio código são ignorados."""
+    if not labels:
+        return legend
+    merged = dict(legend)
+    for code, label in labels.items():
+        label = str(label or '').strip()
+        if label and label != str(code):
+            merged[int(code)] = label
+    return dict(sorted(merged.items()))
+
+
 @with_gdal_exceptions
-def open_raster_map(path, *, crs=''):
+def open_raster_map(path, *, crs='', labels=None):
     """Abre um mapa categórico de uma banda (formatos do GDAL ou RS2).
 
     ``crs`` (EPSG ou WKT) é usado quando o arquivo não registra SRC: o RS2 nunca registra, e o SRC
     vem do ``.rs2.json`` ou da confirmação do usuário na janela. Nunca é deduzido das coordenadas.
+    ``labels`` ({código: nome}) são os nomes das classes no estilo da camada do QGIS, quando o mapa vem
+    do projeto; eles prevalecem sobre a legenda gravada no arquivo.
     """
     path = str(path)
     name = os.path.basename(path)
@@ -82,7 +99,7 @@ def open_raster_map(path, *, crs=''):
         if not text:
             raise ValueError(f'O RS2 {name} não registra SRC: informe o SRC do mapa.')
         geotransform = (float(header.xmin), header.pixel_x, 0.0, float(header.ymax), 0.0, -header.pixel_y)
-        legend = {code: label for code, label, _color in header.legend()}
+        legend = _with_labels({code: label for code, label, _color in header.legend()}, labels)
         return RasterMap(path, name, 'rs2', header.width, header.height, geotransform,
                          _srs_from_text(text).ExportToWkt(), legend)
     from osgeo import gdal
@@ -98,7 +115,7 @@ def open_raster_map(path, *, crs=''):
     wkt = ds.GetProjection() or (_srs_from_text(crs).ExportToWkt() if crs else '')
     if not wkt:
         raise ValueError(f'O mapa {name} não tem SRC definido.')
-    legend = _gdal_legend(path, band)
+    legend = _with_labels(_gdal_legend(path, ds, band), labels)
     nodata = band.GetNoDataValue()
     if nodata is not None and np.isfinite(nodata) and float(nodata).is_integer() and int(nodata) in legend:
         # NoData com nome na legenda (ex.: FUNDO de um RS2 convertido): conta como essa classe.

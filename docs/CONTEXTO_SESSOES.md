@@ -22,9 +22,21 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   **31/31 = 100%**; Barro Duro 27/31, e as 4 diferenças são **4 células do Barro Duro ligadas só pela
   diagonal** (linhas 571-573, colunas 435-436), excluídas pelo balde do Vista SAGA (15.779 × 15.783).
   Mesma causa do Poço; diferença aceita. Segundo caso de referência confirmado.
-- Achado de usabilidade: nos TIF sem legenda gravada, o plugin mostra "Classe N" (o `UsoSolo_10m.tif`
-  mostrou nomes, provavelmente de um `.rs2.json` ao lado). Proposta do Claude: ler os nomes do estilo da
-  camada no QGIS (valores únicos/paletado) quando o mapa vier do projeto (aguardando o autor).
+- Nos TIF do ZIP, o plugin mostrou "Classe N": os arquivos vieram **sem o `.aux.xml`**, onde o GeoTIFF
+  guarda os nomes das classes (o `UsoSolo_10m.tif` mostrou nomes, provavelmente de um `.rs2.json` ao lado).
+- **dev3 (20/11/2026, pedido do autor): nomes das classes pelo estilo da camada no QGIS** (simbologia
+  Paletado/Valores únicos), quando o mapa vem do projeto; prevalecem sobre a legenda do arquivo; rótulos
+  iguais ao código são ignorados. Também força a leitura do `.aux.xml` (o GDAL 3.8 só o carrega depois de
+  outra consulta ao arquivo; o motor já fazia essa consulta antes, agora explícita). Testes novos (motor e
+  integração em QGIS real). Suítes: 507 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.5.0-dev3.zip`.
+  Renumeração: o lote "projeto + legado + limpeza do motor antigo" passa a ser o **dev4**.
+- **Observação do autor sobre o Conversor (em investigação):** convertido e carregado como temporário, o
+  TIF mostra os nomes das classes; salvo em pasta e carregado no QGIS, perde os nomes. Achados do Claude:
+  o Conversor carrega o resultado do mesmo jeito nos dois casos e publica o `.aux.xml` junto do TIF salvo
+  (RS2 → GeoTIFF e Vetor → GeoTIFF); o QGIS 3.34 do contêiner lê os nomes de um TIF convertido e salvo.
+  Hipóteses: o TIF foi copiado/salvo sem o `.aux.xml` (ex.: "Exportar/Salvar como" do QGIS), ou, no Vetor →
+  GeoTIFF sem cores, o TIF sai sem paleta e o QGIS o abre em tons de cinza, sem mostrar os nomes. Pedido ao
+  autor: qual conversão, como salvou e quais arquivos ficaram ao lado do TIF.
 
 ### Próximo passo (início da sessão 6)
 
@@ -34,7 +46,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
    Poço); (b) "Marcar todas" e comparar com `assinatura02.txt` (esperado: 100%); (c) guia Vetorial com
    camadas do autor, seleção pelas ferramentas do QGIS e contador da janela; (d) leiaute, textos, dicas e o
    que faltar em relação ao módulo antigo.
-2. Ajustes do dev2 conforme o teste; depois **dev3**: projeto como na Avaliação (`*.geosaga.json`,
+2. Ajustes conforme o teste (dev3 feito: nomes pelo estilo do QGIS); depois **dev4**: projeto como na Avaliação (`*.geosaga.json`,
    Novo/Abrir/Salvar), algoritmo Processing `geosaga:assinatura` marcado como obsoleto e oculto (conferir o
    nome do indicador no QGIS 4), retirada do motor antigo (`signature_engine.py`, `signature_core.py` e
    seus testes; atualizar `tests/qgis/smoke_qgis.py`, que ainda chama `signature_engine`).

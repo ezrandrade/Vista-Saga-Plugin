@@ -74,6 +74,21 @@ def run():
         assert os.path.isfile(os.path.join(folder, 'raster.txt'))
         assert dialog.cut_choice.count() == 2  # união + classe A
 
+        # Nomes do estilo da camada no QGIS (Paletado/Valores únicos) prevalecem sobre o arquivo.
+        from qgis.core import QgsPalettedRasterRenderer, QgsProject, QgsRasterLayer
+        from qgis.PyQt.QtGui import QColor
+        layer = QgsRasterLayer(uso, 'uso', 'gdal')
+        classes = [QgsPalettedRasterRenderer.Class(5, QColor('red'), 'Casas'),
+                   QgsPalettedRasterRenderer.Class(6, QColor('green'), 'Mata')]
+        layer.setRenderer(QgsPalettedRasterRenderer(layer.dataProvider(), 1, classes))
+        QgsProject.instance().addMapLayer(layer)
+        dialog._raster[1]['layer_id'] = layer.id()
+        dialog.run()
+        labels = {r['CODIGO']: r['CLASSE'] for r in _rows(os.path.join(folder, 'raster.csv'))
+                  if r['MAPA'] == 'uso.tif'}
+        assert labels == {'5': 'Casas', '6': 'Mata'}, labels
+        QgsProject.instance().removeMapLayer(layer.id())
+
         bairros = _layer('Bairros', [(1, 'Centro', _square(0, 100)), (2, 'Farol', _square(100, 200))])
         usos = _layer('Usos', [(10, 'Edificada', _square(0, 150)), (20, 'Vegetação', _square(150, 200))])
         dialog.type_tabs.setCurrentIndex(1)

@@ -131,6 +131,19 @@ class RasterSignatureTests(unittest.TestCase):
         self.assertIsNone(fundo.nodata)
         self.assertEqual(self.row(ref, 0).asn_cells, 21)
 
+    def test_names_saved_only_in_aux_xml_are_read(self):
+        # O GeoTIFF guarda os nomes das classes no .aux.xml; o GDAL 3.8 só o carrega após outra consulta.
+        path = self.tif('Nomes.tif', USO, names=['', 'Edificada', 'Vegetação'])
+        self.assertTrue(os.path.isfile(path + '.aux.xml'))
+        self.assertEqual(open_raster_map(path).legend, {1: 'Edificada', 2: 'Vegetação'})
+
+    def test_style_labels_from_qgis_prevail(self):
+        legend = open_raster_map(self.uso, labels={1: 'Casas', 2: '2', 9: 'Nova'}).legend
+        self.assertEqual(legend, {1: 'Casas', 2: 'Vegetação', 9: 'Nova'})  # rótulo "2" = código, ignorado
+        rs2 = open_raster_map(self.ref, crs='EPSG:31985', labels={1: 'Antares'}).legend
+        self.assertEqual(rs2[1], 'Antares')
+        self.assertEqual(rs2[0], 'FUNDO')
+
     def test_selection_without_cells_is_refused(self):
         with self.assertRaisesRegex(ValueError, 'nenhuma célula'):
             run_raster_signature(self.maps(self.uso), [3])

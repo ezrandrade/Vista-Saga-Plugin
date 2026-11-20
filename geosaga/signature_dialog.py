@@ -336,7 +336,7 @@ class SignatureDialog(QDialog):
                 QMessageBox.warning(self, tr('Assinatura'), tr('A camada {0} não está num arquivo local; exporte-a '
                                                                'para GeoTIFF.').format(layer.name()))
                 return
-            self._append_raster(path, layer.crs().authid() or layer.crs().toWkt())
+            self._append_raster(path, layer.crs().authid() or layer.crs().toWkt(), layer.id())
             return
         if not isinstance(layer, QgsVectorLayer) or not layer.isValid():
             return
@@ -350,7 +350,7 @@ class SignatureDialog(QDialog):
         label_field = next((n for n in LABEL_CANDIDATES if n in names and n != class_field), '')
         self._vector.append({'layer': layer, 'class_field': class_field, 'label_field': label_field})
 
-    def _append_raster(self, path, crs=''):
+    def _append_raster(self, path, crs='', layer_id=''):
         path = os.path.abspath(path)
         if any(os.path.normcase(e['path']) == os.path.normcase(path) for e in self._raster):
             return
@@ -361,7 +361,26 @@ class SignatureDialog(QDialog):
                 crs = self._ask_crs(os.path.basename(path))
                 if not crs:
                     return
-        self._raster.append({'path': path, 'crs': crs})
+        self._raster.append({'path': path, 'crs': crs, 'layer_id': layer_id})
+
+    def _open_raster(self, entry):
+        """Mapa raster da lista, com os nomes das classes do estilo da camada, se ela estiver no projeto."""
+        from .signature_raster import open_raster_map
+        return open_raster_map(entry['path'], crs=entry['crs'], labels=self._style_labels(entry))
+
+    @staticmethod
+    def _style_labels(entry):
+        """{código: nome} da simbologia "Paletado/Valores únicos" da camada no QGIS; vazio se não houver."""
+        layer = QgsProject.instance().mapLayer(entry.get('layer_id') or '')
+        renderer = layer.renderer() if isinstance(layer, QgsRasterLayer) else None
+        if renderer is None or not hasattr(renderer, 'classes'):
+            return {}
+        labels = {}
+        for item in renderer.classes():
+            value = float(item.value)
+            if value.is_integer() and item.label:
+                labels[int(value)] = item.label
+        return labels
 
     def _ask_crs(self, name):
         from qgis.gui import QgsProjectionSelectionDialog
@@ -462,10 +481,10 @@ class SignatureDialog(QDialog):
             return
         entry = self._raster[0]
         try:
-            from .signature_raster import open_raster_map, scan_reference_classes
+            from .signature_raster import scan_reference_classes
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
-                classes = scan_reference_classes(open_raster_map(entry['path'], crs=entry['crs']))
+                classes = scan_reference_classes(self._open_raster(entry))
             finally:
                 QApplication.restoreOverrideCursor()
         except Exception as exc:
@@ -615,8 +634,8 @@ class SignatureDialog(QDialog):
 
         try:
             if mode == RASTER:
-                from .signature_raster import open_raster_map, run_raster_signature
-                maps = [open_raster_map(e['path'], crs=e['crs']) for e in self._raster]
+                from .signature_raster import run_raster_signature
+                maps = [self._open_raster(e) for e in self._raster]
                 result = run_raster_signature(maps, selected, per_feature=self.per_feature.isChecked(),
                                               progress=progress, cancelled=cancelled)
                 overlap = ''
