@@ -27,7 +27,7 @@ Anexe estas imagens na conversa com a IA junto com o `PROMPT_REDES_SOCIAIS.md`. 
 | 05_combinacao_resultado.png | Post da Combinação | Infográfico da Combinação: dois mapas cruzados geram um mapa com um código para cada associação de classes. |
 | 06_conversor_resultado.png | Post do Conversor | Diagrama das seis conversões entre RS2, GeoTIFF e vetor. |
 | 07_sequenciador_resultado.png | Post do Sequenciador | Quadros de mapas em ordem que se transformam num GIF animado. |
-| 08_painel_validacao.png | Cartão da validação; post acadêmico | Painel de validação: percentual de células iguais ao Vista SAGA original em cada caso de teste das Análises Voronoi e da Assinatura. |
+| 08_painel_validacao.png | Cartão da validação; post acadêmico | Painel de validação contra o Vista SAGA original: percentual de células iguais em cada caso de teste das Análises Voronoi e percentual de classes coincidentes em cada caso da Assinatura. |
 
 ## 3_vila_serena - exemplo fictício do tutorial (diga sempre que é um exemplo)
 
