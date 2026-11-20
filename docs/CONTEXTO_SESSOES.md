@@ -84,8 +84,15 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
    - **Sem ferramentas de pintura** (lápis, borracha, retângulo, elipse, polígono): eram limitação
      tecnológica do Vista SAGA. No plugin, **só selecionar e desselecionar**, nas guias Vetorial e Raster.
    - **Resultado da união (como o Vista SAGA) e também o resultado por feição** (como o plugin já faz).
-   - Ainda em aberto: o que é "feição" e como se seleciona na guia Raster (o QGIS não seleciona células);
-     perguntas 2 a 5 (o autor quer discuti-las uma a uma, com colocações e inspirações).
+   - **Guia Raster: feição = classe inteira**, marcada numa lista de classes com caixas na janela (sem
+     ferramenta de clique no mapa). Diferença conhecida para o Vista SAGA, aceita pelo autor: o balde dele
+     marca a região conexa por 4 vizinhos; no caso de referência, a máscara do plugin terá 82.192 células
+     contra 82.191 (a célula diagonal do Poço). Resultado por feição no raster = um por classe marcada.
+     "Qualquer arrependimento posterior, refazemos de outra forma" (autor). Clique por região: fora do
+     escopo, possível no futuro.
+   - **Guia Vetorial (proposta do Claude, a confirmar ao discutir a interface):** a seleção da camada de
+     referência feita com as ferramentas nativas do QGIS.
+   - Pergunta 1 encerrada. Em aberto: perguntas 2 a 5 (uma a uma, com colocações do autor).
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -151,6 +158,7 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - Vídeos e relatórios do Vista SAGA analisados; relatório 1 reproduzido com 100% de coincidência;
   pergunta 1 respondida (união); seleção = máscara pintada, balde por 4 vizinhos.
 - Decisão do autor: sem pintura, só selecionar/desselecionar (Raster e Vetorial); união e também por feição.
+- Guia Raster: feição = classe inteira, por lista de classes (recomendação do Claude aceita). Pergunta 1 encerrada.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
