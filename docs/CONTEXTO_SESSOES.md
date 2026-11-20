@@ -211,8 +211,14 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   `content_<idioma>.py` (texto), `build_manual.py` + `build_docx.js` (DOCX com sumário estático em duas passadas).
 - No espanhol, os nomes dos módulos seguem a interface: Firma espacial, Monitoreo, Evaluación, Análisis de
   Voronoi, Combinación de mapas, Conversor de formatos, Secuenciador de mapas.
-- Pendência: o autor revisa o conteúdo (sobretudo afirmações conceituais e as "dicas ocultas") antes de
-  divulgar. O manual não vai no ZIP do plugin (decisão a confirmar com o autor).
+- **Sessão pausada pelo autor (20/11/2026); decisões ficam para a próxima sessão:**
+  1. Revisão do conteúdo pelo autor, sobretudo as tabelas "em que difere das rotinas similares" (QGIS, GRASS,
+     Vista SAGA) e as "dicas ocultas" (ex.: empate no Voronoi vai para o primeiro ponto da lista).
+  2. Autoria na capa: "Esdras Andrade (IGDEMA/UFAL)" - confirmar.
+  3. Inglês e espanhol escritos pelo Claude, sem revisão nativa - o autor decide se busca revisor.
+  4. Manual dentro do ZIP (cerca de 2,7 MB por idioma) ou só no GitHub com link no README (recomendação do
+     Claude: só no GitHub).
+  5. Continuam pendentes: merge do PR #16, PR da 1.6.0 (base `main`), tags `v1.5.0` e `v1.6.0`.
 
 ### Próximo passo (início da sessão 6)
 
