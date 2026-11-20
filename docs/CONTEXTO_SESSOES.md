@@ -51,6 +51,19 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
    - Mensagens de erro do motor montadas com f-string e traduzidas por `tr(str(exc))` provavelmente não
      casam com o catálogo (a confirmar).
    - Sem registro de validação contra o Vista SAGA original (a 0.5.0 consta como "homologação pendente").
+   **Funcionamento no Vista SAGA (descrição do autor, 20/11/2026; o plugin deve funcionar de forma análoga):**
+   - **Um mapa:** selecionam-se todas as classes (no mapa ou na legenda) e calculam-se a área e o
+     percentual de cada classe em relação à área total.
+   - **Vários mapas:** carregam-se todos; o **mapa de referência fica por cima** e dita a assinatura. As
+     feições ou classes selecionadas nele (uma ou mais) servem de limite, e dentro desse limite calculam-se
+     as áreas e os percentuais de todas as classes/feições dos demais mapas. Exemplo: mapas de bairros,
+     escolaridade e uso do solo; mede-se quanto de escolaridade e de uso do solo cai nos bairros
+     selecionados. É contagem **mapa a mapa** dentro do limite, não cruzamento de combinações.
+   - Diferenças para o plugin atual: referência só vetorial (sem classes de raster como limite); todas as
+     feições da camada de áreas, sem seleção; um único mapa temático; sem modo "um mapa sozinho".
+   - Em aberto (perguntado ao autor): várias feições/classes selecionadas formam um limite único (união)
+     ou uma assinatura por feição; base do percentual (área total do mapa, com ou sem fundo/NoData, ou
+     área selecionada); mistura raster/vetor e grades diferentes entre os mapas.
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -111,7 +124,8 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - PR #15 já mesclado (`0d58783`); branch `feat/assinatura-e-dicas` criada para a 1.5.0.
 - Registro do autor: o plugin é projeto pessoal, não a tese; `CLAUDE.md` corrigido.
 - Levantamento inicial da Assinatura (achados na Retomada rápida); informação do autor: no Vista SAGA a
-  Assinatura aceita um mapa ou vários.
+  Assinatura aceita um mapa ou vários; depois, descrição do funcionamento (mapa de referência por cima,
+  seleção de feições/classes como limite, contagem mapa a mapa), registrada na Retomada rápida.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
