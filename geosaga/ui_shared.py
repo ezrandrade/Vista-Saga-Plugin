@@ -8,6 +8,7 @@ O usuário deve exportar/salvar a camada para persistência.
 from .i18n import tr
 
 from pathlib import Path
+import contextlib
 import os
 import tempfile
 
@@ -687,7 +688,7 @@ def report_outcome(status, title, text, level='info', iface=None):
     """Registra o desfecho de uma execução (concluída, cancelada, falha) na barra de mensagens do QGIS."""
     if status is not None:
         status.setText(text)
-    try:
+    with contextlib.suppress(Exception):  # sem QGIS (testes) ou barra indisponível: o texto fica só no status
         from qgis.core import Qgis
         if iface is None:
             from qgis.utils import iface as qgis_iface
@@ -698,8 +699,6 @@ def report_outcome(status, title, text, level='info', iface=None):
                   'warning': Qgis.MessageLevel.Warning, 'critical': Qgis.MessageLevel.Critical}
         iface.messageBar().pushMessage(tr(title), str(text), level=levels.get(level, Qgis.MessageLevel.Info),
                                        duration=8)
-    except Exception:  # sem QGIS (testes) ou barra indisponível: o texto fica só no status
-        pass
 
 
 class TaskProgressWindow:

@@ -49,7 +49,8 @@ def same_source(a, b):
     pb, sb = split_source(b)
     if not pa or not pb:
         return False
-    norm = lambda p: os.path.normcase(os.path.realpath(os.path.abspath(p)))
+    def norm(path):
+        return os.path.normcase(os.path.realpath(os.path.abspath(path)))
     return norm(pa) == norm(pb) and sa == sb
 
 

@@ -136,7 +136,8 @@ def _read_legend_lookup(csv_path, initial_label, final_label):
     return initial, final
 
 
-def _temporal_analysis(  # reservado para o módulo de tendências (2.0)before, after, extras, before_label, after_label,
+# Reservado para o módulo de tendências (2.0).
+def _temporal_analysis(before, after, extras, before_label, after_label,
                        reference, osr, progress, cancelled):
     """MK de áreas por classe usando área espacial comparável em todas as datas."""
     # 'Inicial'/'Final' são descritores válidos para a comparação, mas não anos.

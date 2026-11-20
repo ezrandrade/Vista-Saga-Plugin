@@ -276,6 +276,19 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 - Uma credencial "Conta OSGeo (catálogo de complementos do QGIS)" ficou salva no ambiente pessoal
   "Vista-Saga-Plugin"; como foi recusada, o autor pode removê-la nas configurações do ambiente.
 
+### 1.6.1 - varredura de segurança do catálogo (20/11/2026)
+
+- O autor enviou a 1.6.0 ao catálogo: **bloqueada** pela varredura (Bandit e detect-secrets bloqueiam com qualquer
+  achado; Flake8 só informa). Achados: 3 x B110 (`try/except Exception: pass` em `errors.py` e
+  `ui_shared.report_outcome`) e B406 (`xml.sax.saxutils.quoteattr` em `rs2_outputs.write_qml_style`).
+- Corrigido sem mudar comportamento (`contextlib.suppress`; `_quoteattr` local idêntico ao original, conferido);
+  defeito latente na assinatura de `monitoring_engine._temporal_analysis` (comentário engolia os parâmetros);
+  avisos do Flake8. Testes novos `test_metadata_catalogo.py` e `test_varredura_catalogo.py`.
+- Versão **1.6.1** (o catálogo pede versão nova após bloqueio): CHANGELOG, `NOTAS_DA_VERSAO_161.md`, READMEs
+  (catálogo atual: 1.0.4). ZIP `Vista_Saga_Plugin_QGIS4_v1.6.1.zip` conferido com Bandit, detect-secrets e
+  Flake8 locais: sem achados.
+- **Antes de cada envio ao catálogo:** rodar `bandit -r geosaga` e `detect-secrets scan` no conteúdo do ZIP.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.

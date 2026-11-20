@@ -6,9 +6,9 @@
 
 **Site oficial e apresentação do projeto:** [vistasagaplugin.wordpress.com](https://vistasagaplugin.wordpress.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
 
-**Versão do código-fonte: `1.6.0` (20/11/2026): dicas em todos os botões, campos, caixas de marcar e listas dos sete módulos.** Versão `1.5.0` (20/11/2026): **Assinatura** refeita no modelo do Vista SAGA e validada contra o programa original; Conversor de Formatos com paleta e estilo `.qml` nos GeoTIFF; resultados temporários com o nome "Módulo - operação". Versões `1.4.x` (19/11/2026): **Voronoi fiel ao Vista SAGA** (M/d²; atrito pelo custo do Vista SAGA), validado célula a célula; rodapé padrão em todos os módulos. Histórico completo no [CHANGELOG](geosaga/CHANGELOG.md). A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
+**Versão do código-fonte: `1.6.1` (20/11/2026): dicas em todos os botões, campos, caixas de marcar e listas dos sete módulos (1.6.0) e aprovação na varredura de segurança do catálogo do QGIS (1.6.1).** Versão `1.5.0` (20/11/2026): **Assinatura** refeita no modelo do Vista SAGA e validada contra o programa original; Conversor de Formatos com paleta e estilo `.qml` nos GeoTIFF; resultados temporários com o nome "Módulo - operação". Versões `1.4.x` (19/11/2026): **Voronoi fiel ao Vista SAGA** (M/d²; atrito pelo custo do Vista SAGA), validado célula a célula; rodapé padrão em todos os módulos. Histórico completo no [CHANGELOG](geosaga/CHANGELOG.md). A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.4`**, até que a nova seja submetida e aprovada.
 
-> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.6.0](geosaga/NOTAS_DA_VERSAO_160.md) · [Testes](tests/README.md).
+> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.6.1](geosaga/NOTAS_DA_VERSAO_161.md) · [Testes](tests/README.md).
 
 ## Módulos
 
@@ -60,6 +60,7 @@ python scripts/build_release.py
 
 ## Histórico, suporte e licença
 
+- [Notas da versão 1.6.1 (varredura de segurança do catálogo)](geosaga/NOTAS_DA_VERSAO_161.md)
 - [Notas da versão 1.6.0 (dicas em todos os módulos)](geosaga/NOTAS_DA_VERSAO_160.md)
 - [Notas da versão 1.5.0 (Assinatura no modelo do Vista SAGA)](geosaga/NOTAS_DA_VERSAO_150.md)
 - [Notas da versão 1.4.2](geosaga/NOTAS_DA_VERSAO_142.md) · [1.4.1](geosaga/NOTAS_DA_VERSAO_141.md) · [1.4.0 (Voronoi fiel ao Vista SAGA)](geosaga/NOTAS_DA_VERSAO_140.md)
