@@ -99,9 +99,13 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
    - **FUNDO (RS2) e NoData (GeoTIFF) contam como classe qualquer**, dentro da base, como no Vista SAGA
      (o caso de referência valida a conta inteira). Percentual só entre classes reais: não incluído
      (possível coluna extra, se o autor pedir).
-   - Guia Vetorial, parte da máscara sem polígono num mapa assinado: por coerência, linha "Sem classe"
-     dentro da base (equivalente do FUNDO); confirmar na pergunta 3.
-   - Em aberto: perguntas 3 a 5 (uma a uma).
+   **Decisões do autor (20/11/2026, pergunta 3, recomendações do Claude aceitas): mostrar a falta de dado.**
+   - Guia Vetorial, parte do limite sem polígono no mapa assinado: linha **"Sem classe"**, dentro da base.
+   - Mapa assinado que não cobre toda a extensão do limite: a parte de fora também vai para "Sem classe",
+     com aviso no resumo da área do limite fora do mapa.
+   - Sobreposição de classes num mapa vetorial assinado: mantém o tratamento atual (0.5.1): exclui a
+     região ambígua e registra a área (padrão) ou modo estrito.
+   - Em aberto: perguntas 4 e 5 (uma a uma).
 2. **Dicas (tooltips) em todos os módulos:** em todos os campos e botões, a explicação do que são e do que
    fazem, nas caixas amarelas do QGIS (`setToolTip`), como as dicas das guias Vetorial e Misto do
    Sequenciador na 1.4.2. Textos via `tr()`, com modelos em `en.json` e `es.json` (regra do `CLAUDE.md`).
@@ -169,6 +173,7 @@ Branch `feat/assinatura-e-dicas`, criada da `main` (`0d58783`) em 20/11/2026; um
 - Decisão do autor: sem pintura, só selecionar/desselecionar (Raster e Vetorial); união e também por feição.
 - Guia Raster: feição = classe inteira, por lista de classes (recomendação do Claude aceita). Pergunta 1 encerrada.
 - Pergunta 2: duas porcentagens do Vista SAGA; FUNDO/NoData contam como classe (recomendação aceita).
+- Pergunta 3: falta de dado aparece como "Sem classe" na base, com aviso; sobreposição como na 0.5.1.
 
 ## 19/11/2026 (sessão 4) — resumo do encerramento
 
