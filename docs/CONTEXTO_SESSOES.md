@@ -178,6 +178,16 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 - Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev3.zip`.
 - Próximo: aprovação do autor e fechamento da 1.6.0 (CHANGELOG, `metadata.txt` 1.6.0, `NOTAS_DA_VERSAO_160.md`).
 
+### 1.6.0 fechada (20/11/2026)
+
+- Autor aprovou os textos do dev3 e a explicação da leitura dos relatórios da Assinatura. **1.6.0 fechada e
+  homologada:** CHANGELOG, `metadata.txt` 1.6.0 (changelog em inglês), `NOTAS_DA_VERSAO_160.md`. ZIP
+  `Vista_Saga_Plugin_QGIS4_v1.6.0.zip`.
+- Pendências: merge do PR #16 (1.5.0) e então PR da 1.6.0 (base `main`); tags `v1.5.0` e `v1.6.0`.
+- Pedidos seguintes do autor: (1) revisão de tudo o que foi feito em todos os módulos, pendências e registros
+  para versões futuras; (2) **manual do usuário em DOCX** (pt-BR, en, es), detalhado, apresentável, com figuras,
+  conceitos, diferenças para rotinas similares, rotinas de uso, resultados e dicas ocultas.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
@@ -207,7 +217,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 | 1.4.1 | fechada, homologada, **mesclada** | `feat/interface-padrao` / [#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14) | `5c6c876` |
 | 1.4.2 | fechada, homologada, **mesclada** | `fix/sequenciador-guias` / [#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) | `0d58783` |
 | 1.5.0 | fechada, homologada, **sem merge** | `feat/assinatura-e-dicas` / [#16](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/16) (base `main`) | - |
-| 1.6.0 | **em andamento** (dicas em todos os módulos) | `feat/dicas-todos-modulos` (a partir da 1.5.0) / PR depois do merge do #16 | - |
+| 1.6.0 | fechada, homologada, **sem PR** | `feat/dicas-todos-modulos` (a partir da 1.5.0) / PR depois do merge do #16 | - |
 
 **Pendências do autor (o proxy das sessões recusa criar tags):**
 1. Tags (no remoto só existe a `v1.0.4`, conferido em 20/11/2026): `v1.3.0` = `87406de`,
