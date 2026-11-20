@@ -216,8 +216,8 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
      Vista SAGA) e as "dicas ocultas" (ex.: empate no Voronoi vai para o primeiro ponto da lista).
   2. Autoria na capa: "Esdras Andrade (IGDEMA/UFAL)" - confirmar.
   3. Inglês e espanhol escritos pelo Claude, sem revisão nativa - o autor decide se busca revisor.
-  4. Manual dentro do ZIP (cerca de 2,7 MB por idioma) ou só no GitHub com link no README (recomendação do
-     Claude: só no GitHub).
+  4. **Decidido pelo autor (20/11/2026): o manual será postado no site oficial**, não vai no ZIP. Falta o
+     endereço (URL) para pôr o link no README, no `metadata.txt` (homepage) e nas notas da versão.
   5. Continuam pendentes: merge do PR #16, PR da 1.6.0 (base `main`), tags `v1.5.0` e `v1.6.0`.
 
 ### Próximo passo (início da sessão 6)
