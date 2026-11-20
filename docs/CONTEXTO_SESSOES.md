@@ -155,7 +155,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   de camadas raster…", "Divide 100% igualmente…"); `tests/unit/test_i18n.py` passou a conferir o texto e a
   dica de `button()`. Dica da nota sem o caractere "—" (o teste de travessão barrou).
 - Testes antigos que procuravam `button('Fechar', self.close)` etc. ajustados para o começo da chamada.
-  Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.5.0`→ `-1.6.0-dev1` (versão só no ZIP; o
+  Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev1.zip` (versão só no ZIP; o
   `metadata.txt` fica 1.5.0 até o fechamento da 1.6.0).
 
 ### Próximo passo (início da sessão 6)
