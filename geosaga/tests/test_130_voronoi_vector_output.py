@@ -39,7 +39,8 @@ class VectorOutputHelpersTests(unittest.TestCase):
         self.assertNotIn('temp_output', content)
         self.assertNotIn('load_project', content)
         self.assertNotIn('poligonização)', content)
-        self.assertIn("materialize_in_memory(layer_uri(vector_path), 'Análises Voronoi')", content)
+        # 1.5.0: a camada carregada recebe o nome do arquivo (temporário = "Análises Voronoi - modalidade").
+        self.assertIn("materialize_in_memory(layer_uri(vector_path), layer_name(vector_path))", content)
         self.assertIn("'[Camada temporária em memória]'", content)
 
 

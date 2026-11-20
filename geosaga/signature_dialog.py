@@ -23,7 +23,7 @@ from .i18n import tr
 from .signature_model import is_special
 from .ui_shared import (
     RUN_TEXT, FooterStatus, choose_project_layers, enable_table_copy, open_polygon_files, report_outcome,
-    table_item, temporary_destination, use_tab_background, vector_start_directory,
+    result_name, table_item, temporary_destination, use_tab_background, vector_start_directory,
 )
 
 RASTER, VECTOR = 0, 1
@@ -598,7 +598,8 @@ class SignatureDialog(QDialog):
             self.path.setText(path if path.lower().endswith('.csv') else path + '.csv')
 
     def _destinations(self):
-        csv_path = self.path.text().strip() or temporary_destination('assinatura', '.csv')
+        operation = 'Raster' if self._mode() == RASTER else 'Vetorial'
+        csv_path = self.path.text().strip() or temporary_destination(result_name('Assinatura', operation), '.csv')
         if not csv_path.lower().endswith('.csv'):
             csv_path += '.csv'
         folder = os.path.dirname(os.path.abspath(csv_path))

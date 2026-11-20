@@ -20,7 +20,7 @@ from qgis.gui import QgsMapLayerComboBox
 from .ui_shared import (
     EMPTY_FIELD_HEADER, PENDING_HEADER, class_count_text, mark_pending, pending_messages,
     HeaderSort, OutputSection, class_sort_key, install_column_tab_navigation, VECTOR_OUTPUT_HINT, cell_check, centered_check, materialize_in_memory,
-    open_polygon_files, load_vector_source, score_spin, table_item, temporary_destination,
+    open_polygon_files, load_vector_source, score_spin, table_item, temporary_destination, layer_name, result_name,
     vector_start_directory, weight_spin,
 )
 from .ui_shared import RUN_TEXT as STANDARD_RUN_TEXT, FooterStatus, report_outcome
@@ -83,8 +83,7 @@ class VectorEvaluationDialog(QWidget):
     CRITERION_HEADER = 'Campo'
     EMPTY_CLASSES = 'Selecione um campo à esquerda.'
     START_STATUS = 'Selecione um campo temático para iniciar.'
-    RESULT_PREFIX = 'avaliacao_atributos'
-    RESULT_NAME = 'Vista Saga - Avaliação vetorial'
+    RESULT_PREFIX = result_name('Avaliação', 'Vetorial (Atributos)')
     RUN_TEXT = STANDARD_RUN_TEXT  # rodapé padrão (1.4.1)
 
     def __init__(self, iface, parent=None, embedded=False):
@@ -743,11 +742,11 @@ class VectorEvaluationDialog(QWidget):
     def _load_result(self, dest, temporary):
         """Temporário: camada em memória; senão, o GeoPackage salvo."""
         if temporary:
-            layer = materialize_in_memory(dest, self.RESULT_NAME)
+            layer = materialize_in_memory(dest, layer_name(dest))
             if layer is not None:
                 QgsProject.instance().addMapLayer(layer)
             return layer
-        layer = self.iface.addVectorLayer(dest, self.RESULT_NAME, 'ogr')
+        layer = self.iface.addVectorLayer(dest, layer_name(dest), 'ogr')
         return layer if layer and layer.isValid() else None
 
     def execute(self):

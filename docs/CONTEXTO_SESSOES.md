@@ -102,11 +102,24 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   `test_signature_overlap`, `integration_signature_qgis`, `integration_signature_overlap_qgis`);
   `tests/qgis/smoke_qgis.py` passa a usar o motor novo; verificações de menu e Processing movidas para
   `test_150_assinatura_janela.py`. Suítes: 500 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.5.0-dev8.zip`.
-- **Pedido do autor, em esclarecimento:** "nome do arquivo temporário = nome da função que está sendo
-  executada" e "nome da camada carregada = nome do arquivo salvo". A Assinatura não carrega camadas; o
-  levantamento mostrou nomes inconsistentes no plugin inteiro (ex.: Combinação e Voronoi carregam o arquivo
-  salvo com nome fixo, "Combinação de Mapas"/"Análises Voronoi"; temporários com nomes técnicos como
-  `voronoi_espacial`, `avaliacao_raster`, `conversao`). Perguntado ao autor o alcance e o que é "função".
+
+### dev9 (20/11/2026): nomes dos resultados em todos os módulos
+
+- **Decisão do autor:** em **todos os módulos**, o resultado temporário (arquivo e camada carregada) se chama
+  **"Módulo - operação"**, e o resultado salvo é carregado com o **nome do arquivo**. Implementação:
+  `ui_shared.result_name(módulo, operação)` e `ui_shared.layer_name(caminho)`; `temporary_destination` passa a
+  manter acentos, espaços, hífens e parênteses (até 80 caracteres); a camada recebe sempre o nome do arquivo,
+  e como o temporário já tem o nome da operação, a regra é uma só. Nomes: "Avaliação - Raster",
+  "Avaliação - Vetorial (Atributos)", "Avaliação - Vetorial (Sobreposição)", "Monitoria - Raster",
+  "Monitoria - Vetorial", "Análises Voronoi - Simples/Com Massa/Com Atrito/Com Massa e Atrito"
+  (`VORONOI_MODES`), "Combinação de Mapas - Raster/Vetorial", "Conversor de Formatos - RS2 para GeoTIFF"
+  etc. (`CONVERSION_NAMES`; pasta de lote "Conversor de Formatos - Lote"), "Assinatura - Raster/Vetorial"
+  (CSV e TXT). Retirados os nomes fixos ("Combinação de Mapas", "Análises Voronoi", "Vista Saga -
+  Avaliação", "Monitoria vetorial") e as constantes `RESULT_NAME`. Conferido no QGIS 3.34: temporário
+  "Avaliação - Vetorial (Atributos).gpkg" carregado com esse nome. Teste `test_150_nomes_resultados.py`;
+  `test_130_voronoi_vector_output` atualizado. Suítes: 503 (3 pulados) e 42. ZIP
+  `Vista_Saga_Plugin_QGIS4_v1.5.0-dev9.zip`. Ponto a conferir no Windows: nomes com acento na pasta
+  temporária.
 
 ### Próximo passo (início da sessão 6)
 
@@ -117,7 +130,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
    camadas do autor, seleção pelas ferramentas do QGIS e contador da janela; (d) leiaute, textos, dicas e o
    que faltar em relação ao módulo antigo.
 2. dev8 feito (Remover todas, legado obsoleto e oculto, motor antigo retirado; projeto descartado pelo
-   autor). Pendente: nomes de temporários e de camadas carregadas (esclarecimento com o autor).
+   autor); dev9 feito (nomes dos resultados em todos os módulos). Pendente: teste do autor (dev7 a dev9).
 3. Fechamento da Assinatura (CHANGELOG, `metadata.txt` 1.5.0, `NOTAS_DA_VERSAO_150.md`, homologação) e
    então as dicas em todos os módulos (a janela da Assinatura já tem dicas em todos os botões e campos).
 4. Para comparar de novo com o Vista SAGA, os dados do autor (3 RS2, 2 relatórios, 2 vídeos) **não ficam
