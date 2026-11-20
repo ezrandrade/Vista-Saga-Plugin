@@ -97,6 +97,17 @@ essas bibliotecas faltam.
   células da área de estudo, ≥ 90% das divergências na fronteira, ≤ 1% de diferença de área por região;
   conferir com `scripts/comparar_caso_bacia.py` antes de mudar o atrito. Na bacia real, a guia Raster
   falha no critério 3 no Com Atrito (1,33%, região pequena), declarado sem rever o critério.
+- **Assinatura (1.5.0, decisões do autor de 20/11/2026; `docs/ASSINATURA_150_PROPOSTA.md` e
+  `NOTAS_DA_VERSAO_150.md`):** modelo do Vista SAGA — referência no topo da lista, seleção como limite, todos
+  os mapas assinados (inclusive a referência), união e por feição, % Área Asn. e % Categoria; sem mistura de
+  formatos; mesmo SRC projetado em metros e, no raster, mesma grade; feição raster = classe inteira (diferença
+  aceita para o balde do Vista SAGA); FUNDO/NoData contam como classe; vetor com "Sem classe",
+  "Sobreposição excluída" e lascas < 1 cm toleradas; TXT e CSV, sem GeoPackage nem projeto
+  (Novo/Abrir/Salvar descartado); `geosaga:assinatura` obsoleto e oculto. Validar mudanças com
+  `scripts/comparar_assinatura_vista_saga.py`.
+- **Nomes dos resultados (1.5.0, todos os módulos):** temporário com o nome "Módulo - operação"
+  (`ui_shared.result_name`) no arquivo e na camada; resultado salvo carregado com o nome do arquivo
+  (`ui_shared.layer_name`). Nunca nome fixo de camada.
 - **Mann–Kendall** saiu da Monitoria na 1.2.0 e volta como módulo próprio na 2.0;
   `monitoring_trends.py` e as funções de relatório ficam reservadas.
 - **Avaliação:** as três guias têm o mesmo leiaute (projeto, escala, critérios e pesos, classes,

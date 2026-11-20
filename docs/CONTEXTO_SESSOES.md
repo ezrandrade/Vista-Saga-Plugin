@@ -121,6 +121,17 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   `Vista_Saga_Plugin_QGIS4_v1.5.0-dev9.zip`. Ponto a conferir no Windows: nomes com acento na pasta
   temporária.
 
+### Homologação e fechamento da Assinatura (20/11/2026)
+
+- **Autor testou o dev9: "está tudo certo"** — Assinatura (Raster e Vetorial), correções do Conversor e nomes
+  dos resultados **homologados**.
+- Fechamento da parte Assinatura: `metadata.txt` 1.5.0 (com `changelog=` em inglês), seção 1.5.0 no
+  `CHANGELOG.md` (marcada "em andamento: dicas em todos os módulos"), `NOTAS_DA_VERSAO_150.md` e regras no
+  `CLAUDE.md`. ZIPs seguintes da versão: `-dev10` em diante (só dentro do ZIP).
+- **Próximo: item 2 da 1.5.0, dicas (tooltips) em todos os módulos.** Método proposto: inventário dos
+  widgets sem dica por módulo, textos curtos e padronizados via `tr()` (en/es), teste que confira a
+  cobertura (como `test_150_assinatura_janela.test_botoes_e_campos_com_dica`). A Assinatura já tem.
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
@@ -130,7 +141,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
    camadas do autor, seleção pelas ferramentas do QGIS e contador da janela; (d) leiaute, textos, dicas e o
    que faltar em relação ao módulo antigo.
 2. dev8 feito (Remover todas, legado obsoleto e oculto, motor antigo retirado; projeto descartado pelo
-   autor); dev9 feito (nomes dos resultados em todos os módulos). Pendente: teste do autor (dev7 a dev9).
+   autor); dev9 feito (nomes dos resultados em todos os módulos); tudo homologado pelo autor. Próximo: dicas.
 3. Fechamento da Assinatura (CHANGELOG, `metadata.txt` 1.5.0, `NOTAS_DA_VERSAO_150.md`, homologação) e
    então as dicas em todos os módulos (a janela da Assinatura já tem dicas em todos os botões e campos).
 4. Para comparar de novo com o Vista SAGA, os dados do autor (3 RS2, 2 relatórios, 2 vídeos) **não ficam
@@ -149,7 +160,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 | 1.4.0 | fechada, homologada, **mesclada** | `feat/voronoi-atrito-fiel` / [#13](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/13) | `49056f9` |
 | 1.4.1 | fechada, homologada, **mesclada** | `feat/interface-padrao` / [#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14) | `5c6c876` |
 | 1.4.2 | fechada, homologada, **mesclada** | `fix/sequenciador-guias` / [#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) | `0d58783` |
-| 1.5.0 | **em andamento** (Assinatura: dev2 = janela nova, em teste pelo autor) | `feat/assinatura-e-dicas` / [#16](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/16) | - |
+| 1.5.0 | **em andamento** (Assinatura e Conversor homologados; falta: dicas em todos os módulos) | `feat/assinatura-e-dicas` / [#16](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/16) | - |
 
 **Pendências do autor (o proxy das sessões recusa criar tags):**
 1. Tags (no remoto só existe a `v1.0.4`, conferido em 20/11/2026): `v1.3.0` = `87406de`,
