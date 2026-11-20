@@ -216,8 +216,11 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
      Vista SAGA) e as "dicas ocultas" (ex.: empate no Voronoi vai para o primeiro ponto da lista).
   2. Autoria na capa: "Esdras Andrade (IGDEMA/UFAL)" - confirmar.
   3. Inglês e espanhol escritos pelo Claude, sem revisão nativa - o autor decide se busca revisor.
-  4. **Decidido pelo autor (20/11/2026): o manual será postado no site oficial**, não vai no ZIP. Falta o
-     endereço (URL) para pôr o link no README, no `metadata.txt` (homepage) e nas notas da versão.
+  4. **Decidido pelo autor (20/11/2026): o manual será postado no site oficial**
+     (https://vistasagaplugin.wordpress.com/), não vai no ZIP. O site já é o `homepage` do `metadata.txt` e
+     já tem link nos dois READMEs: nada a mudar agora. Quando houver o endereço da página do manual, pôr o link
+     direto nos READMEs e nas notas da versão; avaliar citar o site na capa/apresentação do próprio manual
+     (hoje o manual não traz endereço nenhum).
   5. Continuam pendentes: merge do PR #16, PR da 1.6.0 (base `main`), tags `v1.5.0` e `v1.6.0`.
 
 ### Próximo passo (início da sessão 6)
