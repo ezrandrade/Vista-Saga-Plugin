@@ -101,9 +101,12 @@ class EvaluationDialog(QDialog):
 
 
         top = QHBoxLayout()
-        top.addWidget(button('Novo projeto', self.new_project))
-        top.addWidget(button('Abrir projeto…', self.open_project))
-        top.addWidget(button('Salvar projeto…', self.save_project))
+        top.addWidget(button('Novo projeto', self.new_project,
+                             'Limpa os mapas, pesos e notas para começar uma avaliação nova.'))
+        top.addWidget(button('Abrir projeto…', self.open_project,
+                             'Reabre um projeto de avaliação salvo (*.geosaga.json), com mapas, pesos e notas.'))
+        top.addWidget(button('Salvar projeto…', self.save_project,
+                             'Salva mapas, pesos e notas num projeto (*.geosaga.json) para reaproveitá-los.'))
         top.addStretch(1)
         outer.addLayout(top)
 
@@ -112,6 +115,7 @@ class EvaluationDialog(QDialog):
         self.scale_combo = QComboBox()
         self.scale_combo.addItem(tr('0 a 10'), 10)
         self.scale_combo.addItem(tr('0 a 100'), 100)
+        self.scale_combo.setToolTip(tr('Escala das notas das classes: de 0 a 10 ou de 0 a 100.'))
         self.scale_combo.currentIndexChanged.connect(self._update_score_limits)
         meta.addWidget(self.scale_combo)
         meta.addStretch(1)
@@ -125,16 +129,20 @@ class EvaluationDialog(QDialog):
         layer_row = QHBoxLayout()
         self.layer_combo = QComboBox()
         self.layer_combo.setMinimumWidth(210)
+        self.layer_combo.setToolTip(tr('Rasters carregados no QGIS que podem entrar na avaliação.'))
         layer_row.addWidget(self.layer_combo, 1)
-        layer_row.addWidget(button('Adicionar', self.add_current_layer))
-        layer_row.addWidget(button('Adicionar várias…', self.add_project_many))
+        layer_row.addWidget(button('Adicionar', self.add_current_layer,
+                                   'Acrescenta à avaliação o raster escolhido ao lado.'))
+        layer_row.addWidget(button('Adicionar várias…', self.add_project_many,
+                                   'Escolhe vários rasters carregados no QGIS de uma vez.'))
         left_layout.addLayout(layer_row)
         actions = QHBoxLayout()
         actions.addWidget(button('Atualizar', self.refresh_available,
                                  'Atualiza a lista de camadas raster carregadas no QGIS.'))
         actions.addWidget(button('Arquivo(s)…', self.add_file,
-                                 'Carregar um raster em arquivo para o projeto QGIS e adicioná-lo à avaliação.'))
-        actions.addWidget(button('Remover', self.remove_map))
+                                 'Carrega um raster em arquivo no projeto do QGIS e o acrescenta à avaliação.'))
+        actions.addWidget(button('Remover', self.remove_map,
+                                 'Retira da avaliação os mapas selecionados na tabela.'))
         actions.addStretch()
         left_layout.addLayout(actions)
 
@@ -183,8 +191,9 @@ class EvaluationDialog(QDialog):
         self.batch_score.setDecimals(2)
         self.batch_score.setRange(0, 10)
         self.batch_score.setSingleStep(1)
+        self.batch_score.setToolTip(tr('Nota a repetir nas classes selecionadas na tabela, com o botão Aplicar.'))
         assign.addWidget(self.batch_score)
-        assign.addWidget(button('Aplicar', self.apply_score))
+        assign.addWidget(button('Aplicar', self.apply_score, 'Dá a nota ao lado a todas as classes selecionadas na tabela.'))
         assign.addStretch()
         right_layout.addLayout(assign)
         hint = QLabel(tr(PENDING_HINT))
@@ -204,12 +213,13 @@ class EvaluationDialog(QDialog):
         self.status = FooterStatus('')
         self._progress_window = None
         footer.addStretch(1)
-        self.validate_button = button('Validar', self.preview_validation)
+        self.validate_button = button('Validar', self.preview_validation, 'Confere pesos, notas e classes pendentes, sem executar a avaliação.')
         footer.addWidget(self.validate_button)
-        self.execute_button = button(RUN_TEXT, self.execute)
+        self.execute_button = button(RUN_TEXT, self.execute,
+                                     'Executa a avaliação e grava a carta e os relatórios.')
         self.execute_button.setDefault(True)
         footer.addWidget(self.execute_button)
-        self.close_button = button('Fechar', self.close)
+        self.close_button = button('Fechar', self.close, 'Fecha a janela da Avaliação.')
         footer.addWidget(self.close_button)
         # Rodapé da janela, fora das guias (como nos demais módulos): nas guias vetoriais, os botões
         # Validar e Executar do formulário da guia são trazidos para cá (_show_embedded_evaluation).

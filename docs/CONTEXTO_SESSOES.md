@@ -10,7 +10,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026, fim da sessão 5: 1.5.0-dev2 em teste pelo autor) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026: 1.6.0 fechada, revisão geral feita, manual DOCX em revisão pelo autor) <<<
 
 ### Teste do autor com o dev2 (20/11/2026, manhã; guia Raster; vetorial a seguir)
 
@@ -142,6 +142,125 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 - **Escopo das dicas (decisão do autor):** só **botões, campos, caixas de marcar e listas** (sem cabeçalhos
   de tabela nem abas). **Começar pela Avaliação.** Lotes de 2-3 módulos, um ZIP por lote.
 
+### 1.6.0-dev1 (20/11/2026): dicas da Avaliação
+
+- Ferramenta `tests/qgis/tooltip_inventory.py`: abre o módulo em QGIS real (todas as guias, inclusive as
+  montadas sob demanda), lista botões, campos, caixas de marcar e listas sem dica e falha se houver algum
+  (ignora peças internas do Qt: botão de canto da tabela, botão de limpar do campo, setas das abas). Sem
+  argumentos, confere os módulos concluídos (`DONE`: Assinatura e Avaliação).
+- **Avaliação: 44 widgets sem dica → 0**, nas três guias. Dicas na seção "3. Resultado" (`OutputSection`) e
+  nos campos de peso e nota das tabelas (`weight_spin`, `score_spin`) ficam no `ui_shared.py` e valem para
+  todos os módulos que os usam. Padrão dos textos: frase curta no indicativo ("Acrescenta…", "Retira…").
+- **Falha antiga corrigida:** dicas passadas à função `button()` nunca eram traduzidas (ex.: "Atualiza a lista
+  de camadas raster…", "Divide 100% igualmente…"); `tests/unit/test_i18n.py` passou a conferir o texto e a
+  dica de `button()`. Dica da nota sem o caractere "—" (o teste de travessão barrou).
+- Testes antigos que procuravam `button('Fechar', self.close)` etc. ajustados para o começo da chamada.
+  Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev1.zip` (versão só no ZIP; o
+  `metadata.txt` fica 1.5.0 até o fechamento da 1.6.0).
+
+### 1.6.0-dev2 (20/11/2026): dicas da Monitoria e das Análises Voronoi
+
+- Autor aprovou os textos da Avaliação (dev1).
+- **Monitoria: 32 widgets sem dica → 0** (guias Raster e Vetorial). **Voronoi: 25 → 0** (inclusive a janela
+  das superfícies de atrito integradas). Rótulos "X mínimo:", "Y mínimo:", "X máximo:", "Y máximo:" do
+  Voronoi não eram traduzidos (sem `tr()`); corrigido.
+- `tests/qgis/tooltip_inventory.py`: mostra o atributo e o rótulo do formulário de cada widget sem dica;
+  opção `--lista arquivo.md` exporta, em português, todas as dicas para revisão; `DONE` com Assinatura,
+  Avaliação, Monitoria e Voronoi. Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev2.zip`.
+- Restam: Combinação de Mapas, Conversor de Formatos e Sequenciador de Mapas (próximo lote).
+
+### 1.6.0-dev3 (20/11/2026): dicas da Combinação, do Conversor e do Sequenciador
+
+- Autor aprovou os textos da Monitoria e do Voronoi (dev2).
+- **Combinação: 24 → 0; Conversor de Formatos: 26 → 0; Sequenciador: 33 → 0.** Com isso, **os sete módulos
+  têm dica em todos os botões, campos, caixas de marcar e listas** (`tests/qgis/tooltip_inventory.py` sem
+  argumentos confere os sete; o seletor de SRC do QGIS conta como peça interna, e o próprio seletor tem dica).
+- Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev3.zip`.
+- Próximo: aprovação do autor e fechamento da 1.6.0 (CHANGELOG, `metadata.txt` 1.6.0, `NOTAS_DA_VERSAO_160.md`).
+
+### 1.6.0 fechada (20/11/2026)
+
+- Autor aprovou os textos do dev3 e a explicação da leitura dos relatórios da Assinatura. **1.6.0 fechada e
+  homologada:** CHANGELOG, `metadata.txt` 1.6.0 (changelog em inglês), `NOTAS_DA_VERSAO_160.md`. ZIP
+  `Vista_Saga_Plugin_QGIS4_v1.6.0.zip`.
+- Pendências: merge do PR #16 (1.5.0) e então PR da 1.6.0 (base `main`); tags `v1.5.0` e `v1.6.0`.
+- Pedidos seguintes do autor: (1) revisão de tudo o que foi feito em todos os módulos, pendências e registros
+  para versões futuras; (2) **manual do usuário em DOCX** (pt-BR, en, es), detalhado, apresentável, com figuras,
+  conceitos, diferenças para rotinas similares, rotinas de uso, resultados e dicas ocultas.
+
+### Revisão geral (20/11/2026)
+
+- Documento `docs/REVISAO_GERAL_1.6.0.md`: versões e pendências administrativas, estado de cada módulo, questões
+  que dependem do autor (atrito vetorial do Voronoi converte os pontos para o SRC dos polígonos; Processing
+  `avaliacao`/`monitoria` visíveis; maiúsculas das modalidades em inglês; textos explicativos fixos → dicas;
+  nomes temporários com acento no Windows) e registros para versões futuras.
+- **Correções de texto (sem cálculo):** README do ZIP (dizia 1.3.0, "1 + atrito" e "equivalência não
+  demonstrada"), README do repositório e "Sobre" do `metadata.txt` atualizados para a 1.6.0 e as validações.
+- Próximo: manual do usuário em DOCX (pt-BR, en, es).
+
+### Manual do usuário em DOCX (20/11/2026)
+
+- Três arquivos em `docs/manual/saida/`: `Manual_Vista_Saga_Plugin_1.6.0_pt-BR.docx` (45 p.),
+  `User_Manual_Vista_Saga_Plugin_1.6.0_en.docx` (44 p.) e `Manual_Usuario_Vista_Saga_Plugin_1.6.0_es.docx` (45 p.).
+- Estrutura: capa, sumário, Apresentação (panorama + referência rápida), Instalação, Conceitos, um capítulo por
+  módulo (para que serve, diferenças para rotinas similares, facilidade de uso, janelas, tabela de campos com o
+  texto real das dicas, rotina, resultados, dicas ocultas, erros comuns), Validação (painel), Solução de
+  problemas e Glossário.
+- Fontes reprodutíveis em `docs/manual/` (ver `README.md` ali): `capture_windows.py` (capturas no QGIS com dados
+  **sintéticos** e `campos.json`), `build_figures.py` (infográficos calculados pelos motores do plugin),
+  `content_<idioma>.py` (texto), `build_manual.py` + `build_docx.js` (DOCX com sumário estático em duas passadas).
+- No espanhol, os nomes dos módulos seguem a interface: Firma espacial, Monitoreo, Evaluación, Análisis de
+  Voronoi, Combinación de mapas, Conversor de formatos, Secuenciador de mapas.
+- **Sessão pausada pelo autor (20/11/2026); decisões ficam para a próxima sessão:**
+  1. Revisão do conteúdo pelo autor, sobretudo as tabelas "em que difere das rotinas similares" (QGIS, GRASS,
+     Vista SAGA) e as "dicas ocultas" (ex.: empate no Voronoi vai para o primeiro ponto da lista).
+  2. Autoria na capa: "Esdras Andrade (IGDEMA/UFAL)" - confirmar.
+  3. Inglês e espanhol escritos pelo Claude, sem revisão nativa - o autor decide se busca revisor.
+  4. **Decidido pelo autor (20/11/2026): o manual será postado no site oficial**
+     (https://vistasagaplugin.wordpress.com/), não vai no ZIP. O site já é o `homepage` do `metadata.txt` e
+     já tem link nos dois READMEs: nada a mudar agora. Quando houver o endereço da página do manual, pôr o link
+     direto nos READMEs e nas notas da versão; avaliar citar o site na capa/apresentação do próprio manual
+     (hoje o manual não traz endereço nenhum).
+  5. Continuam pendentes: merge do PR #16, PR da 1.6.0 (base `main`), tags `v1.5.0` e `v1.6.0`.
+
+### Imagens do site oficial (20/11/2026)
+
+- O site (https://vistasagaplugin.wordpress.com/) tem 7 imagens na página inicial, uma por módulo: capturas de
+  30/10/2026 de janelas **vazias de versão antiga** (títulos com travessão, "Calcular assinatura", "Gerar Voronoi",
+  caixas de temporário). A página "Sobre" ainda é o texto de exemplo do WordPress.
+- Novas imagens em `docs/site/` (ver `README.md` ali): `janelas/` (7 janelas da 1.6.0 preenchidas com dados
+  sintéticos, 2x, barra de título com o título real) e `resultados/` (infográficos do manual). Gerador:
+  `docs/manual/build_site_images.py`; `capture_windows.py` ganhou `VSP_MANUAL_DATA` (pasta de nome legível),
+  SRC explícito nas camadas (listas mostravam "[]") e o Conversor preenchido (Bairros/CODIGO).
+- Ambiente pessoal "Vista-Saga-Plugin" criado (aprovado pelo autor) com acesso ao site e aos servidores de imagem
+  do WordPress; a sessão passou a usá-lo.
+- Achados no texto do site, para o autor decidir: diz que o plugin "pode ser obtido no repositório oficial de
+  complementos do QGIS" (o catálogo ainda está na 1.0.3); "Combinação de Mapas" fala em "tipo de operação
+  configurada" (não há operações a escolher); seção "Documentação visual" promete capturas que agora existem.
+
+### Tutorial e roteiros de vídeo (20/11/2026)
+
+- **Tutorial** (`docs/tutorial/`, ver README): exercício guiado pelos 7 módulos sobre a cidade fictícia de
+  **Vila Serena** (dados sintéticos, semente fixa, 200 x 200 células de 10 m, EPSG:31985). Números do texto vêm da
+  execução real dos motores (`executar_tutorial.py` -> `numeros.json`); janelas capturadas com os dados; GIF e PNGs
+  gerados pelo próprio Sequenciador. DOCX em pt-BR (26 p.). Pacotes de dados pt/en/es (~25 KB cada).
+- **Roteiros** (`docs/videos/`): 7 vídeos (4 a 6 min) por idioma, com ficha, cenas, narração, texto na tela,
+  descrição, capítulos e tags; rótulos da interface conferidos nos catálogos en/es.
+- **Achados para o autor decidir (não alterados):**
+  1. Vetor -> GeoTIFF grava as classes como "Classe N" (sem campo de nome): o tutorial ensina a renomear na
+     Simbologia, porque a Assinatura usa os nomes do estilo. Sugestão futura: campo de legenda na rasterização.
+  2. O relatório da Avaliação agrupa as notas finais por **half-up** ("Agrupamento de notas" no TXT), enquanto a
+     regra registrada no CLAUDE.md para converter médias em classes é **"meio para par"**. O raster mantém o valor
+     contínuo; a diferença só aparece no resumo por nota (no tutorial: nota 6 = 70,35 ha em half-up contra 85,26 ha
+     em meio-para-par). Conferir qual é o comportamento do Vista SAGA no relatório.
+  3. O TXT da Avaliação rodado pelo motor mostrou códigos (não nomes) na coluna Legenda dos critérios, mesmo com
+     `legendas` na configuração; conferir se ocorre também pela janela.
+  4. Título real da seção do Sequenciador é "3. Saídas e prévia" (o tutorial foi corrigido).
+- **Tutorial traduzido (20/11/2026, pedido do autor):** inglês e espanhol, 26 p. cada, com dados, capturas (interface
+  no idioma) e figuras próprias de cada idioma; números idênticos aos do pt (só o tamanho do RS2 varia: 140.002 /
+  139.998 bytes, pelos nomes das classes). Texto em `tutorial_<idioma>.py`; os números da Assinatura em
+  `numeros.json` passaram a ser indexados por código (recorte 'uniao'/'1'/'2', classe '1'…'5').
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
@@ -171,7 +290,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 | 1.4.1 | fechada, homologada, **mesclada** | `feat/interface-padrao` / [#14](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/14) | `5c6c876` |
 | 1.4.2 | fechada, homologada, **mesclada** | `fix/sequenciador-guias` / [#15](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/15) | `0d58783` |
 | 1.5.0 | fechada, homologada, **sem merge** | `feat/assinatura-e-dicas` / [#16](https://github.com/ezrandrade/Vista-Saga-Plugin/pull/16) (base `main`) | - |
-| 1.6.0 | **em andamento** (dicas em todos os módulos) | `feat/dicas-todos-modulos` (a partir da 1.5.0) / PR depois do merge do #16 | - |
+| 1.6.0 | fechada, homologada, **sem PR** | `feat/dicas-todos-modulos` (a partir da 1.5.0) / PR depois do merge do #16 | - |
 
 **Pendências do autor (o proxy das sessões recusa criar tags):**
 1. Tags (no remoto só existe a `v1.0.4`, conferido em 20/11/2026): `v1.3.0` = `87406de`,

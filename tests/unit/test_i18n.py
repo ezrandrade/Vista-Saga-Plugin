@@ -73,6 +73,12 @@ def test_every_user_message_in_code_has_english_translation():
             if not isinstance(node, ast.Call) or not node.args:
                 continue
             name = getattr(node.func, 'id', None) or getattr(node.func, 'attr', None) or ''
+            if name == 'button':
+                # button(texto, ação, dica) dos módulos: o texto e a dica passam por tr() (1.6.0).
+                for extra in [node.args[0]] + node.args[2:3]:
+                    if (isinstance(extra, ast.Constant) and isinstance(extra.value, str)
+                            and extra.value not in en):
+                        missing.add((path.name, extra.value[:80]))
             if not (name == 'tr' or name.endswith(('Error', 'Exception'))
                     or name in ('pushWarning', 'pushInfo', 'reportError')):
                 continue

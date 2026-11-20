@@ -1,3 +1,18 @@
+## 1.6.0 — Dicas em todos os módulos (2026-11-20)
+
+- **Dicas (caixas amarelas do QGIS) em todos os botões, campos, caixas de marcar e listas dos sete módulos**
+  (decisão do autor: sem cabeçalhos de tabela nem abas). Antes, 184 widgets não tinham dica: Avaliação 44,
+  Monitoria 32, Análises Voronoi 25, Combinação de Mapas 24, Conversor de Formatos 26, Sequenciador de Mapas
+  33 (a Assinatura já tinha todas na 1.5.0). Textos curtos, no indicativo, traduzidos para inglês e espanhol.
+- Dicas compartilhadas no `ui_shared.py`: seção "3. Resultado" da Avaliação e campos de peso e nota das tabelas.
+- **Correções de tradução:** dicas passadas à função `button()` nunca eram traduzidas (ex.: "Atualiza a lista de
+  camadas raster…", "Divide 100% igualmente…"); rótulos "X mínimo:", "Y mínimo:", "X máximo:", "Y máximo:" do
+  Voronoi apareciam em português nos outros idiomas.
+- Nenhum cálculo alterado.
+- Testes: `tests/qgis/tooltip_inventory.py` (abre cada módulo em QGIS real, todas as guias, e falha se houver
+  widget sem dica; `--lista` exporta as dicas para revisão); `tests/unit/test_i18n.py` passa a conferir o texto
+  e a dica de `button()`.
+
 ## 1.5.0 — Assinatura no modelo do Vista SAGA (2026-11-20)
 
 - **Assinatura refeita no modelo do Vista SAGA** (decisões do autor de 20/11/2026; ver

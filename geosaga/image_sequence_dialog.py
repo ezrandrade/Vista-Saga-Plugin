@@ -30,6 +30,14 @@ from .ui_shared import RUN_TEXT, FooterStatus, report_outcome
 from .errors import log_exception
 
 
+
+# Dicas dos botões de acrescentar quadros (1.6.0), iguais nas guias Raster e Vetorial.
+ADD_FRAME_TIPS = {
+    'Adicionar': 'Acrescenta um quadro com a camada escolhida acima.',
+    'Adicionar várias do QGIS…': 'Acrescenta um quadro para cada camada escolhida no QGIS.',
+    'Adicionar arquivos…': 'Acrescenta um quadro para cada arquivo escolhido.',
+}
+
 class ImageSequenceDialog(QDialog):
     """Mantém _add/_render para compatibilidade com testes da versão raster."""
 
@@ -83,14 +91,18 @@ class ImageSequenceDialog(QDialog):
         self.listbox.setAlternatingRowColors(True)
         self.listbox.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.listbox.setMinimumHeight(115)
+        self.listbox.setToolTip(tr('Quadros da animação, na ordem de exibição.'))
         sf.addWidget(self.listbox)
         controls = QHBoxLayout()
-        for label, callback in (
-            ('Remover', self._remove), ('Mover para cima', lambda: self._move(-1)),
-            ('Mover para baixo', lambda: self._move(1)), ('Editar data…', self._edit_date),
-            ('Ordenar por data', self._sort),
+        for label, callback, tip in (
+            ('Remover', self._remove, 'Retira os quadros selecionados.'),
+            ('Mover para cima', lambda: self._move(-1), 'Sobe o quadro selecionado na sequência.'),
+            ('Mover para baixo', lambda: self._move(1), 'Desce o quadro selecionado na sequência.'),
+            ('Editar data…', self._edit_date, 'Altera a data ou o período do quadro selecionado.'),
+            ('Ordenar por data', self._sort, 'Ordena os quadros pela data.'),
         ):
             button = QPushButton(tr(label))
+            button.setToolTip(tr(tip))
             button.clicked.connect(callback)
             controls.addWidget(button)
         sf.addLayout(controls)
@@ -101,9 +113,11 @@ class ImageSequenceDialog(QDialog):
         self.width_spin = QSpinBox()
         self.width_spin.setRange(200, 1600)
         self.width_spin.setValue(800)
+        self.width_spin.setToolTip(tr('Largura de cada quadro, em pixels.'))
         self.height_spin = QSpinBox()
         self.height_spin.setRange(150, 1200)
         self.height_spin.setValue(450)
+        self.height_spin.setToolTip(tr('Altura de cada quadro, em pixels.'))
         row = QHBoxLayout()
         for widget in (QLabel(tr('Largura:')), self.width_spin, QLabel(tr('Altura:')), self.height_spin):
             row.addWidget(widget)
@@ -114,11 +128,15 @@ class ImageSequenceDialog(QDialog):
         self.delay.setSingleStep(100)
         self.delay.setValue(1000)
         self.delay.setSuffix(tr(' ms / quadro'))
+        self.delay.setToolTip(tr('Tempo de exibição de cada quadro no GIF.'))
         of.addRow(tr('Duração:'), self.delay)
         self.label_date = QCheckBox(tr('Exibir data/período sobre o mapa'))
         self.label_date.setChecked(True)
         self.label_name = QCheckBox(tr('Exibir nome das camadas'))
         self.label_legend = QCheckBox(tr('Exibir legenda temática (até 10 categorias)'))
+        self.label_date.setToolTip(tr('Escreve a data ou o período sobre cada quadro.'))
+        self.label_name.setToolTip(tr('Escreve o nome das camadas sobre cada quadro.'))
+        self.label_legend.setToolTip(tr('Desenha a legenda das classes (até 10) em cada quadro.'))
         for box in (self.label_date, self.label_name, self.label_legend):
             of.addRow('', box)
         note = QLabel(tr('Simbologia e rótulos são renderizados pelo QGIS. A paleta GIF preserva '
@@ -132,18 +150,23 @@ class ImageSequenceDialog(QDialog):
         path_row = QHBoxLayout()
         self.output = QLineEdit()
         self.output.setPlaceholderText(tr('Sequencia_Temporal.gif'))
+        self.output.setToolTip(tr('Arquivo GIF animado de saída.'))
         path_row.addWidget(self.output, 1)
         browse = QPushButton(tr('Salvar como…'))
+        browse.setToolTip(tr('Escolhe onde salvar o GIF.'))
         browse.clicked.connect(self._save_as)
         path_row.addWidget(browse)
         fo.addRow(tr('GIF animado:'), path_row)
         self.export_png = QCheckBox(tr('Exportar também os quadros individuais em PNG'))
+        self.export_png.setToolTip(tr('Grava também cada quadro como imagem PNG.'))
         fo.addRow('', self.export_png)
         png_row = QHBoxLayout()
         self.png_directory = QLineEdit()
         self.png_directory.setPlaceholderText(tr('Automático: pasta ao lado do GIF'))
+        self.png_directory.setToolTip(tr('Pasta dos PNGs; em branco, uma pasta ao lado do GIF.'))
         png_row.addWidget(self.png_directory, 1)
         png_browse = QPushButton(tr('Pasta…'))
+        png_browse.setToolTip(tr('Escolhe a pasta dos PNGs.'))
         png_browse.clicked.connect(self._choose_png_folder)
         png_row.addWidget(png_browse)
         fo.addRow(tr('Pasta dos PNGs:'), png_row)
@@ -159,9 +182,11 @@ class ImageSequenceDialog(QDialog):
         self.status.setWordWrap(True)
         bottom.addStretch(1)
         self.run_button = QPushButton(tr(RUN_TEXT))
+        self.run_button.setToolTip(tr('Gera o GIF animado e, se marcados, os PNGs.'))
         self.run_button.clicked.connect(self._run)
         bottom.addWidget(self.run_button)
         self.close_button = QPushButton(tr('Fechar'))
+        self.close_button.setToolTip(tr('Fecha a janela do Sequenciador de Mapas.'))
         self.close_button.clicked.connect(self.close)
         bottom.addWidget(self.close_button)
         outer.addLayout(bottom)
@@ -177,6 +202,7 @@ class ImageSequenceDialog(QDialog):
         page = QWidget()
         layout = QFormLayout(page)
         self.selected = self._selector(Qgis.LayerFilter.RasterLayer)
+        self.selected.setToolTip(tr('Raster carregado no QGIS a acrescentar como quadro.'))
         layout.addRow(tr('Camada raster:'), self.selected)
         row = QHBoxLayout()
         for label, callback in (
@@ -185,6 +211,7 @@ class ImageSequenceDialog(QDialog):
             ('Adicionar arquivos…', self._add_files),
         ):
             button = QPushButton(tr(label))
+            button.setToolTip(tr(ADD_FRAME_TIPS[label]))
             button.clicked.connect(callback)
             row.addWidget(button)
         layout.addRow('', row)
@@ -194,6 +221,7 @@ class ImageSequenceDialog(QDialog):
         page = QWidget()
         layout = QFormLayout(page)
         self.vector_selected = self._selector(Qgis.LayerFilter.VectorLayer)
+        self.vector_selected.setToolTip(tr('Camada vetorial carregada no QGIS a acrescentar como quadro.'))
         layout.addRow(tr('Camada vetorial:'), self.vector_selected)
         row = QHBoxLayout()
         for label, callback in (
@@ -202,15 +230,18 @@ class ImageSequenceDialog(QDialog):
             ('Adicionar arquivos…', self._add_vector_files),
         ):
             button = QPushButton(tr(label))
+            button.setToolTip(tr(ADD_FRAME_TIPS[label]))
             button.clicked.connect(callback)
             row.addWidget(button)
         layout.addRow('', row)
         self.vector_field = QComboBox()
+        self.vector_field.setToolTip(tr('Campo de data ou período usado para gerar quadros a partir da camada.'))
         layout.addRow(tr('Campo temporal:'), self.vector_field)
         self.vector_selected.layerChanged.connect(
             lambda *_: self._update_fields(self.vector_selected, self.vector_field))
         self._update_fields(self.vector_selected, self.vector_field)
         self.vector_cumulative = QCheckBox(tr('Mostrar feições de todos os períodos anteriores (acumulativo)'))
+        self.vector_cumulative.setToolTip(tr('Cada quadro mostra também as feições dos períodos anteriores.'))
         layout.addRow('', self.vector_cumulative)
         temporal_button = QPushButton(tr('Gerar quadros por valores do campo temporal'))
         temporal_button.clicked.connect(self._add_vector_temporal)
@@ -226,17 +257,21 @@ class ImageSequenceDialog(QDialog):
         layout = QFormLayout(page)
         self.mixed_raster = self._selector(Qgis.LayerFilter.RasterLayer)
         self.mixed_vector = self._selector(Qgis.LayerFilter.VectorLayer)
+        self.mixed_raster.setToolTip(tr('Raster de fundo do quadro misto.'))
+        self.mixed_vector.setToolTip(tr('Vetor desenhado sobre o raster de fundo.'))
         layout.addRow(tr('Raster de fundo:'), self.mixed_raster)
         layout.addRow(tr('Vetor sobreposto:'), self.mixed_vector)
         add_frame = QPushButton(tr('Adicionar quadro misto (raster + vetor)'))
         add_frame.clicked.connect(self._add_mixed)
         layout.addRow('', add_frame)
         self.mixed_field = QComboBox()
+        self.mixed_field.setToolTip(tr('Campo de data ou período do vetor, usado para gerar quadros.'))
         layout.addRow(tr('Campo temporal do vetor:'), self.mixed_field)
         self.mixed_vector.layerChanged.connect(
             lambda *_: self._update_fields(self.mixed_vector, self.mixed_field))
         self._update_fields(self.mixed_vector, self.mixed_field)
         self.mixed_cumulative = QCheckBox(tr('Manter vetores dos períodos anteriores (acumulativo)'))
+        self.mixed_cumulative.setToolTip(tr('Cada quadro mantém também os vetores dos períodos anteriores.'))
         layout.addRow('', self.mixed_cumulative)
         temporal_button = QPushButton(tr('Gerar quadros pelo campo temporal + fundo raster fixo'))
         temporal_button.clicked.connect(self._add_mixed_temporal)
