@@ -169,6 +169,15 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   Avaliação, Monitoria e Voronoi. Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev2.zip`.
 - Restam: Combinação de Mapas, Conversor de Formatos e Sequenciador de Mapas (próximo lote).
 
+### 1.6.0-dev3 (20/11/2026): dicas da Combinação, do Conversor e do Sequenciador
+
+- Autor aprovou os textos da Monitoria e do Voronoi (dev2).
+- **Combinação: 24 → 0; Conversor de Formatos: 26 → 0; Sequenciador: 33 → 0.** Com isso, **os sete módulos
+  têm dica em todos os botões, campos, caixas de marcar e listas** (`tests/qgis/tooltip_inventory.py` sem
+  argumentos confere os sete; o seletor de SRC do QGIS conta como peça interna, e o próprio seletor tem dica).
+- Suítes: 503 (3 pulados) e 42. ZIP `Vista_Saga_Plugin_QGIS4_v1.6.0-dev3.zip`.
+- Próximo: aprovação do autor e fechamento da 1.6.0 (CHANGELOG, `metadata.txt` 1.6.0, `NOTAS_DA_VERSAO_160.md`).
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.

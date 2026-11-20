@@ -35,7 +35,8 @@ def _internal(widget):
         return True
     parent = widget.parentWidget()
     while parent is not None:
-        if isinstance(parent, (QComboBox, QAbstractSpinBox, QTabBar)) or parent.inherits('QgsFileWidget'):
+        if isinstance(parent, (QComboBox, QAbstractSpinBox, QTabBar)) or parent.inherits('QgsFileWidget') \
+                or parent.inherits('QgsProjectionSelectionWidget'):
             return True
         parent = parent.parentWidget()
     return False
@@ -89,9 +90,11 @@ def missing(dialog):
     return found
 
 
-# Módulos com dicas completas (1.6.0); cada lote acrescenta os seus.
+# Módulos com dicas completas (1.6.0): todos os sete.
 DONE = [('signature_dialog', 'SignatureDialog'), ('evaluation_dialog', 'EvaluationDialog'),
-        ('monitoring_dialog', 'MonitoringDialog'), ('voronoi_dialog', 'VoronoiDialog')]
+        ('monitoring_dialog', 'MonitoringDialog'), ('voronoi_dialog', 'VoronoiDialog'),
+        ('combination_dialog', 'CombinationDialog'), ('rs2_dialog', 'RS2ConverterDialog'),
+        ('image_sequence_dialog', 'ImageSequenceDialog')]
 
 
 def _open(module, cls):
