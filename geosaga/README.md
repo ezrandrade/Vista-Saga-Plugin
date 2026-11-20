@@ -1,12 +1,12 @@
-# Vista Saga Plugin — versão 1.3.0
+# Vista Saga Plugin — versão 1.6.0
 
 Complemento independente para **QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O programa moderniza procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, sem incorporar o código deste. Não há vínculo institucional com os desenvolvedores do Vista SAGA/UFRJ original.
 
-> **Versão 1.3.0:** Análises Voronoi com guias Raster e Vetorial no padrão dos demais módulos; saída vetorial nas quatro modalidades, com fronteiras exatas também Com Massa (círculos de Apolônio), em GeoPackage, Shapefile, GeoJSON ou FlatGeobuf. **Versão 1.2.1:** traduções completas no Sequenciador e texto no botão de opções avançadas do Conversor. **Versão 1.2.0:** o módulo de conversão passa a se chamar **Conversor de Formatos**; Combinação de Mapas e Monitoria carregam o resultado no QGIS automaticamente; a combinação vetorial tolera lascas de precisão e incorpora resíduos ao vizinho; a Monitoria copia tabelas para planilhas e não executa mais Mann–Kendall (volta como módulo na 2.0). **Desde a 1.1.0:** sete módulos em português, inglês e espanhol, inclusive nas mensagens de erro; o idioma segue a configuração do QGIS. No módulo Avaliação, as três guias (Raster, Vetorial (Atributos) e Vetorial (Sobreposição)) têm o mesmo leiaute, e cada execução grava um arquivo de pesos e notas (`*_pesos_notas.geosaga.json`) que pode ser reaberto em “Abrir projeto…”. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin** (ícone de 24 px); se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**. No **QRibbonSkin**, utilize **Complementos → Vista Saga Plugin**; após instalar ou atualizar, volte à interface clássica e reative a Ribbon para que ela reconstrua a guia de complementos.
+> **Versão 1.6.0:** dicas (caixas amarelas do QGIS) em todos os botões, campos, caixas de marcar e listas dos sete módulos. **Versão 1.5.0:** Assinatura refeita no modelo do Vista SAGA (mapa de referência, seleção como limite, todos os mapas assinados, união e por feição), validada contra o programa original; Conversor de Formatos com paleta e estilo `.qml` nos GeoTIFF de classes; resultados temporários com o nome "Módulo - operação". **Versão 1.4.x:** Voronoi fiel ao Vista SAGA (Com Massa = M/d²; atrito pelo custo do Vista SAGA), validado célula a célula; rodapé padrão [Executar] [Fechar] em todos os módulos. Histórico completo em `CHANGELOG.md`. A interface segue o idioma do QGIS (português, inglês ou espanhol); relatórios CSV/TXT sempre em português. Na interface clássica, o botão suspenso está na barra própria **Vista Saga Plugin**; se ocultada, reative em **Exibir → Barras de ferramentas → Vista Saga Plugin**.
 
 ## Sete módulos
 
-1. **Assinatura** — distribuição de classes temáticas dentro de polígonos de interesse.
+1. **Assinatura** — do que é feita uma área selecionada num mapa de referência, em cada mapa da lista (modelo do Vista SAGA).
 2. **Monitoria** — mudanças e permanências entre períodos, mapas, matrizes e relatórios; séries temporais maiores permitem análise de tendências quando atendidas as condições estatísticas.
 3. **Avaliação** — classificação multicritério com pesos e notas, em raster ou vetores.
 4. **Análises Voronoi** — Simples, Massa, Atrito e Massa + Atrito; atrito único ou composição de múltiplos rasters com pesos e notas por classe.
@@ -26,18 +26,18 @@ O diretório interno `geosaga` e identificadores Processing `geosaga:*` são **i
 
 ## Atenção à metodologia
 
-- Para **Atrito** e **Massa + Atrito**, o motor percorre trajetórias retas no raster de resistência; **não** calcula caminhos de menor custo acumulado em rede.
-- O custo experimental por célula é `1 + atrito_integrado`; a influência considera distância e massa conforme a modalidade. A equivalência numérica com as rotinas originais Vista SAGA/UFRJ **não foi demonstrada**.
-- A composição de múltiplas superfícies requer grades com mesmo SRC, resolução e alinhamento. Os pesos são normalizados pela soma; as notas por classe usam, por exemplo, `1=2;2=8`. Para rasters contínuos, recomenda-se padronizar primeiro a resistência para uma escala comum.
-- Em operações raster, resultados vetoriais de poligonização são dependentes da resolução das células. Trabalhe em SRC projetado apropriado para medidas métricas.
-- Resultados temporários devem ser salvos permanentemente antes de encerrar o QGIS.
+- **Voronoi com atrito** segue o modelo do Vista SAGA: custo = soma, nas células da reta entre o polo e a célula, de distância ao polo × nota × passo (a nota é o próprio custo; nota 1 = custo basal). **Não** é caminho de custo mínimo. Validado contra o Vista SAGA original: Simples e Com Massa 100% das células; com atrito, 99,4% a 99,7% (diferenças na fronteira entre regiões).
+- **Assinatura** validada contra o Vista SAGA original em três casos: mapa inteiro 100%; seleções parciais iguais, salvo células da classe ligadas só pela diagonal (o balde do Vista SAGA as exclui; o plugin marca a classe inteira).
+- Mapas analisados em conjunto devem ter o mesmo SRC (projetado, em metros, para áreas) e, no raster, a mesma grade; o plugin não reprojeta sem avisar.
+- Em operações raster, limites e áreas dependem da resolução das células.
+- Resultados temporários devem ser salvos antes de encerrar o QGIS.
 
 ## Verificações adicionais recomendadas
 
 - Instalar em **perfil QGIS 4.x limpo**, sem outros complementos de terceiros.
 - Abrir cada módulo, carregar e processar amostras pequenas, salvar/reabrir o projeto, desativar e reativar o complemento.
 - Reconfirmar a instalação limpa e a iconografia em diferentes distribuições do QGIS; Windows e Linux/Flatpak já foram testados e aprovados pelo responsável.
-- Comparar dados e resultados contra software histórico, quando disponível, para estabelecer o grau de equivalência da metodologia Voronoi com atrito.
+- Para repetir as validações contra o Vista SAGA original, use os scripts do repositório (`scripts/comparar_caso_bacia.py` e `scripts/comparar_assinatura_vista_saga.py`).
 - Verificar os links `homepage`, `repository` e `tracker` no `metadata.txt` antes de submeter ao repositório oficial de complementos QGIS.
 
 ## Licença e atribuição

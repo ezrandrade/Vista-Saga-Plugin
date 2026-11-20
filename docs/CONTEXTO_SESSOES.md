@@ -188,6 +188,16 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   para versões futuras; (2) **manual do usuário em DOCX** (pt-BR, en, es), detalhado, apresentável, com figuras,
   conceitos, diferenças para rotinas similares, rotinas de uso, resultados e dicas ocultas.
 
+### Revisão geral (20/11/2026)
+
+- Documento `docs/REVISAO_GERAL_1.6.0.md`: versões e pendências administrativas, estado de cada módulo, questões
+  que dependem do autor (atrito vetorial do Voronoi converte os pontos para o SRC dos polígonos; Processing
+  `avaliacao`/`monitoria` visíveis; maiúsculas das modalidades em inglês; textos explicativos fixos → dicas;
+  nomes temporários com acento no Windows) e registros para versões futuras.
+- **Correções de texto (sem cálculo):** README do ZIP (dizia 1.3.0, "1 + atrito" e "equivalência não
+  demonstrada"), README do repositório e "Sobre" do `metadata.txt` atualizados para a 1.6.0 e as validações.
+- Próximo: manual do usuário em DOCX (pt-BR, en, es).
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.

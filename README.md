@@ -6,15 +6,15 @@
 
 **Site oficial e apresentação do projeto:** [vistasagaplugin.wordpress.com](https://vistasagaplugin.wordpress.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
 
-**Versão do código-fonte: `1.3.0` (17/11/2026): Análises Voronoi com guias Raster e Vetorial no padrão dos demais módulos; saída vetorial nas quatro modalidades, com fronteiras exatas também Com Massa (círculos de Apolônio), em GeoPackage, Shapefile, GeoJSON ou FlatGeobuf.** Versão `1.2.1` (16/11/2026): correções de interface do Sequenciador (traduções) e do Conversor (texto do botão de opções avançadas). Versão `1.2.0` (16/11/2026): O módulo de conversão passa a se chamar **Conversor de Formatos**; a Combinação de Mapas e a Monitoria carregam o resultado automaticamente no QGIS (temporário ou salvo), a combinação vetorial tolera lascas de precisão e incorpora resíduos de cruzamento ao vizinho (decisões de método documentadas no CHANGELOG), a Monitoria permite copiar as tabelas para planilhas e deixa de executar Mann–Kendall (volta como módulo na 2.0). Desde a `1.1.0`: Módulo Avaliação reorganizado: as guias Vetorial (Atributos) e Vetorial (Sobreposição) seguem o padrão da guia Raster, o resultado é carregado automaticamente no QGIS e cada execução grava um arquivo de pesos e notas reaproveitável; interface completa em **português, inglês e espanhol**. Inclui o ícone principal da 1.0.9, a conversão **Vetor → RS2** e as correções do formato RS2 da 1.0.6 e as correções de estabilidade da 1.0.5. A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
+**Versão do código-fonte: `1.6.0` (20/11/2026): dicas em todos os botões, campos, caixas de marcar e listas dos sete módulos.** Versão `1.5.0` (20/11/2026): **Assinatura** refeita no modelo do Vista SAGA e validada contra o programa original; Conversor de Formatos com paleta e estilo `.qml` nos GeoTIFF; resultados temporários com o nome "Módulo - operação". Versões `1.4.x` (19/11/2026): **Voronoi fiel ao Vista SAGA** (M/d²; atrito pelo custo do Vista SAGA), validado célula a célula; rodapé padrão em todos os módulos. Histórico completo no [CHANGELOG](geosaga/CHANGELOG.md). A **versão publicada atualmente no catálogo oficial do QGIS ainda é a `1.0.3`**, até que a nova seja submetida e aprovada.
 
-> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.3.0](geosaga/NOTAS_DA_VERSAO_130.md) · [Testes](tests/README.md).
+> **ZIP instalável:** gere-o com `python scripts/build_release.py` (cria `dist/Vista_Saga_Plugin_QGIS4_v<versão>.zip`). Não utilize **Code → Download ZIP** como se fosse o ZIP instalável. [Notas da versão 1.6.0](geosaga/NOTAS_DA_VERSAO_160.md) · [Testes](tests/README.md).
 
 ## Módulos
 
 | Módulo | Finalidade |
 | --- | --- |
-| Assinatura | Distribuição de classes temáticas em unidades espaciais de interesse |
+| Assinatura | Do que é feita uma área selecionada num mapa de referência, em cada mapa da lista (modelo do Vista SAGA) |
 | Monitoria | Comparação entre períodos, mudanças e permanências, relatórios e tendências quando estatisticamente apropriado |
 | Avaliação | Análises multicritério por pesos e notas, em raster e vetor |
 | Análises Voronoi | Simples, Massa, Atrito, Massa + Atrito e atrito integrado de várias superfícies ponderadas |
@@ -36,10 +36,10 @@ O código-fonte está em [`geosaga/`](geosaga/); testes de unidade e integraçã
 
 ## Ressalvas metodológicas
 
-- As modalidades com atrito usam **trajetórias retas** sobre uma superfície raster de resistência; **não** calculam caminhos de custo mínimo.
-- Cada célula atravessada contribui com a convenção experimental `1 + atrito_integrado`. A equivalência matemática integral com o **Vista SAGA/UFRJ original não foi demonstrada**.
-- Em análises com múltiplas superfícies, mapas devem compartilhar SRC, grade e resolução. Os pesos são normalizados pela soma; notas por classe podem ser informadas como `1=2;2=8` e requerem correspondência para todas as classes representadas.
-- Em conversões raster-vetor, os limites dependem da resolução da grade. Para cálculos métricos e de área, utilize CRS projetado apropriado.
+- **Voronoi com atrito:** modelo do Vista SAGA (soma, nas células da reta polo-célula, de distância ao polo × nota × passo; a nota é o próprio custo). Não é caminho de custo mínimo. Validação contra o Vista SAGA original: Simples e Com Massa 100% das células; com atrito, 99,4% a 99,7%, diferenças na fronteira entre regiões ([notas da 1.4.0](geosaga/NOTAS_DA_VERSAO_140.md)).
+- **Assinatura:** validada contra o Vista SAGA original (mapa inteiro 100%; seleções parciais iguais, salvo células ligadas à classe só pela diagonal) ([notas da 1.5.0](geosaga/NOTAS_DA_VERSAO_150.md)).
+- Mapas analisados em conjunto devem compartilhar SRC e, no raster, grade e resolução; para áreas, use SRC projetado em metros.
+- Em conversões raster-vetor, os limites dependem da resolução da grade.
 - Salve os resultados temporários antes de encerrar o QGIS.
 
 ## Desenvolvimento e testes
@@ -60,6 +60,9 @@ python scripts/build_release.py
 
 ## Histórico, suporte e licença
 
+- [Notas da versão 1.6.0 (dicas em todos os módulos)](geosaga/NOTAS_DA_VERSAO_160.md)
+- [Notas da versão 1.5.0 (Assinatura no modelo do Vista SAGA)](geosaga/NOTAS_DA_VERSAO_150.md)
+- [Notas da versão 1.4.2](geosaga/NOTAS_DA_VERSAO_142.md) · [1.4.1](geosaga/NOTAS_DA_VERSAO_141.md) · [1.4.0 (Voronoi fiel ao Vista SAGA)](geosaga/NOTAS_DA_VERSAO_140.md)
 - [Notas da versão 1.3.0 (Voronoi com guias Raster e Vetorial; vetor exato Com Massa)](geosaga/NOTAS_DA_VERSAO_130.md)
 - [Notas da versão 1.2.1 (correções de interface)](geosaga/NOTAS_DA_VERSAO_121.md)
 - [Notas da versão 1.2.0 (Conversor de Formatos, Combinação, Sequenciador e Monitoria)](geosaga/NOTAS_DA_VERSAO_120.md)
