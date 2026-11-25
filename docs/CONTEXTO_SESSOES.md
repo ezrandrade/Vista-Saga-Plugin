@@ -29,6 +29,13 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 - O `homepage=` novo **só aparece no catálogo do QGIS na próxima versão enviada**; não houve mudança de versão
   nem do `CHANGELOG.md` agora. Na próxima versão, citar a troca do site no CHANGELOG e nas notas.
 - O endereço do Wix é longo; se o autor registrar um domínio próprio, repetir a troca nestes mesmos arquivos.
+- **Versões em inglês e espanhol do site (25/11/2026, pedido do autor):** `en.html` e `es.html` no Wix, com
+  seletor PT | EN | ES no canto superior direito das três páginas e `hreflang` no cabeçalho. O hospedeiro do Wix
+  **não serve `pasta/index.html` por `/pasta/`** (dá 404), por isso os endereços são `/en.html` e `/es.html`.
+  Nomes de módulos e de lições seguem os catálogos `en.json`/`es.json` e o tutorial (Signature/Firma espacial,
+  Downtown and Riverside/Centro y Ribera). Ficaram em português, de propósito: referências bibliográficas,
+  títulos de obras, o endereço postal e a imagem do notebook (captura com interface em português). Qualquer
+  mudança de texto no site precisa agora ser repetida nas três páginas.
 
 ### Teste do autor com o dev2 (20/11/2026, manhã; guia Raster; vetorial a seguir)
 
