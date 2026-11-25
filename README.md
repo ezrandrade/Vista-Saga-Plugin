@@ -4,7 +4,7 @@
 
 **Complemento independente de geoprocessamento para QGIS 4.x / Qt6**, desenvolvido por **Esdras Andrade (IGDEMA/UFAL)**. O projeto reúne procedimentos de análise geoespacial inspirados conceitualmente no Vista SAGA/UFRJ, **sem incorporar o código do software original** e sem vínculo oficial com seus desenvolvedores.
 
-**Site oficial e apresentação do projeto:** [(https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/)) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
+**Site oficial e apresentação do projeto:** [site do Vista Saga Plugin](https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/) · **Código-fonte:** [GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin)
 
 **Versão do código-fonte: `1.6.1` (20/11/2026): dicas em todos os botões, campos, caixas de marcar e listas dos sete módulos (1.6.0) e aprovação na varredura de segurança do catálogo do QGIS (1.6.1).** Versão `1.5.0` (20/11/2026): **Assinatura** refeita no modelo do Vista SAGA e validada contra o programa original; Conversor de Formatos com paleta e estilo `.qml` nos GeoTIFF; resultados temporários com o nome "Módulo - operação". Versões `1.4.x` (19/11/2026): **Voronoi fiel ao Vista SAGA** (M/d²; atrito pelo custo do Vista SAGA), validado célula a célula; rodapé padrão em todos os módulos. Histórico completo no [CHANGELOG](geosaga/CHANGELOG.md).
 

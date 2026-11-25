@@ -35,7 +35,7 @@ GUIDE = {
         '**Zoom:** use editing zoom (1.5× to 2×) whenever the narration mentions a field or a number.',
         '**Voice-over:** calm pace, about 150 words per minute; record the narration separately and sync in editing.',
         '**Standard opening (5 s):** Vista Saga Plugin logo + module name. **Standard closing (10 s):** "Data and '
-        'tutorial on the official website: vistasagaplugin.wordpress.com" + end cards to the next video.',
+        'tutorial on the official website: headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com" + end cards to the next video.',
         '**Captions:** build them from the Narration column (it is the final voice-over text).',
         '**On-screen text:** short (up to 8 words), lower third, for 3 to 5 seconds.',
     ],
@@ -110,7 +110,7 @@ VIDEOS = [
         'description': 'Learn to use the Format converter of the Vista Saga Plugin for QGIS 4: rasterize a vector on '
                        'your study grid, name the classes and exchange data with the Vista SAGA RS2 format, with a '
                        'lossless round trip. Example data (the fictitious town of Vila Serena) and full tutorial on the '
-                       'official website: https://vistasagaplugin.wordpress.com/',
+                       'official website: https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/',
         'chapters': ['0:00 Opening', '0:25 The six conversions', '0:48 Vector to GeoTIFF', '1:48 Naming the classes',
                      '2:30 GeoTIFF to RS2', '3:25 RS2 back to GeoTIFF', '3:58 Precautions', '4:30 Next video'],
         'tags': 'QGIS, QGIS 4, Vista SAGA, SAGA UFRJ, RS2, GeoTIFF, rasterization, format conversion, GIS, Vista Saga Plugin',
@@ -175,7 +175,7 @@ VIDEOS = [
         'description': 'Signature, in the Vista Saga Plugin, measures what an area is made of: select districts (or any '
                        'boundary) on a reference map and get, for several maps at once, the area and the two Vista SAGA '
                        'percentages (% signed area and % category). Example with the fictitious town of Vila Serena. '
-                       'Data and tutorial: https://vistasagaplugin.wordpress.com/',
+                       'Data and tutorial: https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/',
         'chapters': ['0:00 Opening', '0:22 The first map is the reference', '1:12 Selection on the reference',
                      '1:45 Reading the table', '2:10 % signed area', '2:35 % category', '3:00 Per district',
                      '3:35 TXT and CSV', '4:25 Vector tab', '4:45 Next video'],
@@ -233,7 +233,7 @@ VIDEOS = [
         ],
         'description': 'Monitoring, in the Vista Saga Plugin, compares two maps from different dates and delivers the '
                        'transition map, the transition table and the matrix, with areas and percentages. Example: urban '
-                       'growth in Vila Serena from 2000 to 2020. Data and tutorial: https://vistasagaplugin.wordpress.com/',
+                       'growth in Vila Serena from 2000 to 2020. Data and tutorial: https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/',
         'chapters': ['0:00 Opening', '0:20 Initial and final maps', '0:55 Transition map', '1:32 Largest changes',
                      '2:05 Transition matrix', '2:55 Quality check', '3:15 Options and Vector tab', '4:10 Next video'],
         'tags': 'QGIS, Vista SAGA, change detection, land use land cover, transition matrix, urban growth, Vista Saga Plugin',
@@ -279,7 +279,7 @@ VIDEOS = [
         ],
         'description': 'Map combination, in the Vista Saga Plugin, crosses two or more categorical maps and gives a code '
                        'to each association of classes, with area and percentage. Raster or vector. Example: land use and '
-                       'soils in Vila Serena. Data and tutorial: https://vistasagaplugin.wordpress.com/',
+                       'soils in Vila Serena. Data and tutorial: https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/',
         'chapters': ['0:00 Opening', '0:22 Setting up the combination', '0:55 Combination table',
                      '1:25 City on the floodplain', '2:10 Identify', '2:25 Vector tab', '3:20 Next video'],
         'tags': 'QGIS, Vista SAGA, cross tabulation, map overlay, soils, land use, Vista Saga Plugin',
@@ -347,7 +347,7 @@ VIDEOS = [
         'description': 'Evaluation, in the Vista Saga Plugin, performs multi-criteria analysis with weights and scores, '
                        'following Vista SAGA: weighted average, classes without a score block the run, CSV and TXT '
                        'reports and a reusable project. Example: suitability for urban growth in Vila Serena. Data and '
-                       'tutorial: https://vistasagaplugin.wordpress.com/',
+                       'tutorial: https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/',
         'chapters': ['0:00 Opening', '0:20 Criteria and weights', '0:58 Typing weights', '1:18 Class scores',
                      '2:05 Validate', '2:30 Open project', '3:05 The suitability map', '3:25 Report by score',
                      '4:10 Weight beats score', '5:05 Next video'],
@@ -413,7 +413,7 @@ VIDEOS = [
         'description': 'Voronoi analyses, in the Vista Saga Plugin, delimit areas of influence in four modes (Simple, '
                        'With mass, With friction, With mass and friction), following Vista SAGA and validated against it. '
                        'Raster or vector, with a raster or polygon friction surface. Example: the schools of Vila Serena '
-                       'and the river. Data and tutorial: https://vistasagaplugin.wordpress.com/',
+                       'and the river. Data and tutorial: https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/',
         'chapters': ['0:00 Opening', '0:22 The four modes', '0:38 Simple', '1:22 With mass (M/d²)',
                      '2:25 With friction', '3:15 Cost on the straight line', '3:40 Vector tab', '4:15 Tips',
                      '4:40 Next video'],
@@ -454,11 +454,11 @@ VIDEOS = [
              'QGIS symbology: adjust colours and legend before exporting.', 'Adjust the symbology first'),
             ('2:35', 'Series closing: the seven modules in a mosaic; official website.',
              'With this video, you have met the seven modules of the Vista Saga Plugin. The full tutorial, the manual '
-             'and the Vila Serena data are on the official website. Enjoy your work!', 'vistasagaplugin.wordpress.com'),
+             'and the Vila Serena data are on the official website. Enjoy your work!', 'headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com'),
         ],
         'description': 'The Map sequencer of the Vista Saga Plugin creates an animated GIF (and PNG frames) from ordered '
                        'maps, with date, names and legend on each frame, using the QGIS symbology. Example: urban growth '
-                       'in Vila Serena from 2000 to 2020. Data and tutorial: https://vistasagaplugin.wordpress.com/',
+                       'in Vila Serena from 2000 to 2020. Data and tutorial: https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/',
         'chapters': ['0:00 Opening', '0:22 Adding frames', '0:55 Dimensions and composition', '1:15 Creating the GIF',
                      '1:48 Vector, Mixed and cumulative', '2:15 Tips', '2:35 Series closing'],
         'tags': 'QGIS, Vista SAGA, animated GIF, time series, map animation, urban growth, Vista Saga Plugin',

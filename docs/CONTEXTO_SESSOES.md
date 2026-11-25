@@ -10,7 +10,40 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026: 1.6.0 fechada, revisão geral feita, manual DOCX em revisão pelo autor) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 25/11/2026: 1.6.1 aprovada no catálogo; site oficial migrado para o Wix) <<<
+
+### Site oficial migrado do WordPress para o Wix (25/11/2026, pedido do autor)
+
+- A **1.6.1 está no catálogo do QGIS como "Latest stable version"** (enviada em 20/11/2026), confirmada pelo
+  Claude antes de qualquer mudança.
+- **Novo site oficial:** https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/ (Wix Headless, plano
+  gratuito; feito em sessão do Claude a partir do conteúdo do WordPress). Já mostra a 1.6.1, os PDFs do manual e
+  do tutorial 1.6.1 e capturas reais do QGIS, e foi liberado para os buscadores nesta data.
+- Branch `docs/link-site-wix`: o endereço do WordPress foi trocado pelo do Wix nos arquivos em uso:
+  `README.md`, `geosaga/README.md`, `geosaga/metadata.txt` (`homepage=`), os três roteiros de vídeo
+  (`docs/videos/roteiros_*.py`, inclusive o texto que aparece na tela) e o cabeçalho de
+  `docs/manual/build_site_images.py`.
+- **Mantidos de propósito** (registros históricos, que descrevem o que valia na época): `geosaga/CHANGELOG.md`
+  (entrada da 1.0.4), `geosaga/NOTAS_DA_VERSAO_104.md`, `docs/site/README.md` e as entradas de 20/11/2026
+  abaixo, que descrevem o estado do site WordPress.
+- O `homepage=` novo **só aparece no catálogo do QGIS na próxima versão enviada**; não houve mudança de versão
+  nem do `CHANGELOG.md` agora. Na próxima versão, citar a troca do site no CHANGELOG e nas notas.
+- O endereço do Wix é longo; se o autor registrar um domínio próprio, repetir a troca nestes mesmos arquivos.
+- **Versões em inglês e espanhol do site (25/11/2026, pedido do autor):** `en.html` e `es.html` no Wix, com
+  seletor PT | EN | ES no canto superior direito das três páginas e `hreflang` no cabeçalho. O hospedeiro do Wix
+  **não serve `pasta/index.html` por `/pasta/`** (dá 404), por isso os endereços são `/en.html` e `/es.html`.
+  Nomes de módulos e de lições seguem os catálogos `en.json`/`es.json` e o tutorial (Signature/Firma espacial,
+  Downtown and Riverside/Centro y Ribera). Ficaram em português, de propósito: referências bibliográficas,
+  títulos de obras, o endereço postal e a imagem do notebook (captura com interface em português). Qualquer
+  mudança de texto no site precisa agora ser repetida nas três páginas.
+- **Ajustes do autor no site (25/11/2026):** removida das três páginas a frase "A documentação visual... será
+  ampliada progressivamente"; autor das referências como **XAVIER-DA-SILVA, Jorge** (artigo de 1987 e livro);
+  livro com **228 páginas** (confirmado pelo autor); erros restantes da imagem do notebook **aceitos pelo autor**
+  (não corrigir).
+- O autor editou o link do site no `README.md` direto na `main`, com a sintaxe Markdown quebrada
+  (`[(url))`). O Claude fez o merge da `main` na `docs/link-site-wix` mantendo a forma que renderiza. O PR #21
+  continua necessário: `geosaga/README.md` e `geosaga/metadata.txt` (`homepage=`) ainda apontam para o WordPress
+  na `main`.
 
 ### Teste do autor com o dev2 (20/11/2026, manhã; guia Raster; vetorial a seguir)
 

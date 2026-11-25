@@ -58,4 +58,4 @@ Falhas inesperadas exibem uma mensagem curta e registram o traceback completo em
 
 ## Site oficial
 
-[Vista Saga Plugin — página WordPress](https://vistasagaplugin.wordpress.com/) · [Código-fonte e colaboração no GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin).
+[Vista Saga Plugin - site oficial](https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/) · [Código-fonte e colaboração no GitHub](https://github.com/ezrandrade/Vista-Saga-Plugin).
