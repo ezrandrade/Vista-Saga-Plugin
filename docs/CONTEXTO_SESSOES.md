@@ -36,6 +36,14 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   Downtown and Riverside/Centro y Ribera). Ficaram em português, de propósito: referências bibliográficas,
   títulos de obras, o endereço postal e a imagem do notebook (captura com interface em português). Qualquer
   mudança de texto no site precisa agora ser repetida nas três páginas.
+- **Ajustes do autor no site (25/11/2026):** removida das três páginas a frase "A documentação visual... será
+  ampliada progressivamente"; autor das referências como **XAVIER-DA-SILVA, Jorge** (artigo de 1987 e livro);
+  livro com **228 páginas** (confirmado pelo autor); erros restantes da imagem do notebook **aceitos pelo autor**
+  (não corrigir).
+- O autor editou o link do site no `README.md` direto na `main`, com a sintaxe Markdown quebrada
+  (`[(url))`). O Claude fez o merge da `main` na `docs/link-site-wix` mantendo a forma que renderiza. O PR #21
+  continua necessário: `geosaga/README.md` e `geosaga/metadata.txt` (`homepage=`) ainda apontam para o WordPress
+  na `main`.
 
 ### Teste do autor com o dev2 (20/11/2026, manhã; guia Raster; vetorial a seguir)
 
