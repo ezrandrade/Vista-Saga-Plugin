@@ -10,7 +10,25 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026: 1.6.0 fechada, revisão geral feita, manual DOCX em revisão pelo autor) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 25/11/2026: 1.6.1 aprovada no catálogo; site oficial migrado para o Wix) <<<
+
+### Site oficial migrado do WordPress para o Wix (25/11/2026, pedido do autor)
+
+- A **1.6.1 está no catálogo do QGIS como "Latest stable version"** (enviada em 20/11/2026), confirmada pelo
+  Claude antes de qualquer mudança.
+- **Novo site oficial:** https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/ (Wix Headless, plano
+  gratuito; feito em sessão do Claude a partir do conteúdo do WordPress). Já mostra a 1.6.1, os PDFs do manual e
+  do tutorial 1.6.1 e capturas reais do QGIS, e foi liberado para os buscadores nesta data.
+- Branch `docs/link-site-wix`: o endereço do WordPress foi trocado pelo do Wix nos arquivos em uso:
+  `README.md`, `geosaga/README.md`, `geosaga/metadata.txt` (`homepage=`), os três roteiros de vídeo
+  (`docs/videos/roteiros_*.py`, inclusive o texto que aparece na tela) e o cabeçalho de
+  `docs/manual/build_site_images.py`.
+- **Mantidos de propósito** (registros históricos, que descrevem o que valia na época): `geosaga/CHANGELOG.md`
+  (entrada da 1.0.4), `geosaga/NOTAS_DA_VERSAO_104.md`, `docs/site/README.md` e as entradas de 20/11/2026
+  abaixo, que descrevem o estado do site WordPress.
+- O `homepage=` novo **só aparece no catálogo do QGIS na próxima versão enviada**; não houve mudança de versão
+  nem do `CHANGELOG.md` agora. Na próxima versão, citar a troca do site no CHANGELOG e nas notas.
+- O endereço do Wix é longo; se o autor registrar um domínio próprio, repetir a troca nestes mesmos arquivos.
 
 ### Teste do autor com o dev2 (20/11/2026, manhã; guia Raster; vetorial a seguir)
 

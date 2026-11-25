@@ -1,4 +1,4 @@
-"""Imagens do site oficial (vistasagaplugin.wordpress.com): uma janela por módulo, versão atual.
+"""Imagens do site oficial (https://headless-ceujfwuqhus-ezrandrad0-140a.wix-site-host.com/): uma janela por módulo, versão atual.
 
 Uso, na raiz do repositório:
     QT_SCALE_FACTOR=2 QT_QPA_PLATFORM=offscreen python3.12 docs/manual/capture_windows.py <trabalho> pt
