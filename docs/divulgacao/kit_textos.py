@@ -79,8 +79,8 @@ def build(work):
     image = lambda name, cap, w=4.6: B.append(bm.image(os.path.join(work, name), w, cap))  # noqa: E731
     image('post_lancamento.png', 'Post de lançamento (1080 × 1080)', 3.6)
     tip('Antes de publicar', items=[
-        'Status no catálogo do QGIS: enquanto a 1.6.1 estiver em análise, use a frase "instale pelo ZIP do site '
-        'oficial". Depois da aprovação, troque por "disponível em Complementos > Gerenciar e instalar complementos".',
+        'A 1.6.1 está publicada no catálogo oficial do QGIS (20/11/2026): onde couber, acrescente "Instale no QGIS 4 '
+        'em Complementos > Gerenciar e instalar complementos, buscando Vista Saga Plugin".',
         'O vídeo não tem áudio: acrescente uma trilha livre de direitos (por exemplo, a biblioteca de áudio do YouTube '
         'ou do Instagram) ou grave a narração opcional da seção 7.',
         'No LinkedIn, o carrossel rende mais publicado como documento (PDF): junte os 10 PNG num PDF na ordem.',
@@ -106,6 +106,7 @@ def build(work):
       'e Com Massa, de 99,1% a 99,7% com atrito, e 100% na Assinatura do mapa inteiro.',
       'Novidades da 1.6.1: dicas em todos os botões e campos, Assinatura refeita no modelo do Vista SAGA e a mesma '
       'lógica de uso em todos os módulos. Interface em português, inglês e espanhol; licença GPL-3.0.',
+      '🧩 Instale no QGIS 4: Complementos > Gerenciar e instalar complementos > "Vista Saga Plugin".',
       f'📘 Manual, tutorial passo a passo e dados de exemplo: {SITE}',
       f'💻 Código-fonte: {GITHUB}',
       '#QGIS #Geoprocessamento #SIG #AnáliseAmbiental #PlanejamentoUrbano #SoftwareLivre #OpenSource')
@@ -126,6 +127,7 @@ def build(work):
       'Monitoria, Avaliação, Análises Voronoi, Combinação de Mapas, Conversor de Formatos e Sequenciador de Mapas.',
       'Na 1.6.1, cada botão e campo explica o que faz, e a Assinatura foi refeita no modelo do Vista SAGA. Os '
       'resultados das Análises Voronoi e da Assinatura foram comparados com o programa original, célula a célula.',
+      'Já disponível no catálogo oficial de complementos do QGIS: procure "Vista Saga Plugin".',
       f'Manual, tutorial passo a passo e dados de exemplo: {SITE}')
     h2('X (post único, imagem: post de lançamento)')
     p(f'Saiu o Vista Saga Plugin 1.6.1 para QGIS 4: sete módulos de análise ambiental inspirados no Vista SAGA, '

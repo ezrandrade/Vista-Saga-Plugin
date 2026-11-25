@@ -16,8 +16,8 @@ complemento (plugin) para o QGIS, seguindo **estritamente** os fatos e as regras
 
 ## 0. Dados para preencher antes de usar
 
-- **Situação da versão no catálogo oficial do QGIS:** [APROVADA E DISPONÍVEL NO CATÁLOGO / EM ANÁLISE NO
-  CATÁLOGO, DISPONÍVEL PELO ZIP NO GITHUB]
+- **Situação da versão no catálogo oficial do QGIS:** APROVADA E DISPONÍVEL NO CATÁLOGO desde 20/11/2026
+  (https://plugins.qgis.org/plugins/geosaga/)
 - **Idiomas desejados:** [por exemplo: português do Brasil; ou português, inglês e espanhol]
 - **Redes desejadas:** [por exemplo: LinkedIn, Instagram, Facebook, X/Twitter, YouTube Shorts/Reels]
 
