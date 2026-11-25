@@ -10,7 +10,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 
 ---
 
-## >>> RETOMADA RÁPIDA (atualizada em 20/11/2026: 1.6.0 fechada, revisão geral feita, manual DOCX em revisão pelo autor) <<<
+## >>> RETOMADA RÁPIDA (atualizada em 25/11/2026: 1.6.1 publicada no catálogo oficial do QGIS) <<<
 
 ### Teste do autor com o dev2 (20/11/2026, manhã; guia Raster; vetorial a seguir)
 
@@ -288,6 +288,7 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
   (catálogo atual: 1.0.4). ZIP `Vista_Saga_Plugin_QGIS4_v1.6.1.zip` conferido com Bandit, detect-secrets e
   Flake8 locais: sem achados.
 - **Antes de cada envio ao catálogo:** rodar `bandit -r geosaga` e `detect-secrets scan` no conteúdo do ZIP.
+- **PUBLICADA (conferido em 25/11/2026 na página do catálogo):** 1.6.1 é a "Latest stable version" em https://plugins.qgis.org/plugins/geosaga/ (data 20/11/2026, enviada pelo autor `ezrandrade`). READMEs atualizados. Pendentes: Release `v1.6.1` no GitHub (commit `b5770d1`, fica com o autor); merge das branches `docs/divulgacao` (material promocional) e `docs/contexto-1.6.1-catalogo`; verificação do arredondamento do relatório da Avaliação contra o Vista SAGA.
 - **Changelog (20/11/2026, pedidos do autor):** `docs/CHANGELOG_POR_MODULO.md` (1.0.4 a 1.6.1, por módulo) e `changelog=` do `metadata.txt` trocado por um resumo por módulo das mudanças desde a 1.0.4 (o histórico versão a versão segue no `geosaga/CHANGELOG.md`). ZIP 1.6.1 gerado de novo (Bandit, detect-secrets e Flake8 sem achados). Branch `docs/changelog-por-modulo`, PR #20 **aberto, sem merge** (o merge foi barrado: o autor não o pediu explicitamente); a `main` ainda tem o changelog antigo no metadata.
 
 ### Próximo passo (início da sessão 6)
