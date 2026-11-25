@@ -292,6 +292,22 @@ Histórico completo até a 1.4.2 (validação do Voronoi contra o Vista SAGA, de
 - **Changelog (20/11/2026, pedidos do autor):** `docs/CHANGELOG_POR_MODULO.md` (1.0.4 a 1.6.1, por módulo) e `changelog=` do `metadata.txt` trocado por um resumo por módulo das mudanças desde a 1.0.4 (o histórico versão a versão segue no `geosaga/CHANGELOG.md`). ZIP 1.6.1 gerado de novo (Bandit, detect-secrets e Flake8 sem achados). Branch `docs/changelog-por-modulo`, PR #20 com merge feito depois, a pedido do autor.
 - **PUBLICADA (conferido em 25/11/2026 na página do catálogo):** 1.6.1 é a "Latest stable version" em https://plugins.qgis.org/plugins/geosaga/ (data 20/11/2026, enviada pelo autor `ezrandrade`). READMEs atualizados. Merges a pedido do autor (25/11/2026): `docs/contexto-1.6.1-catalogo` (PR #22), `docs/publicacao-1.6.1` e `docs/divulgacao` (material promocional). Pendentes: Release `v1.6.1` no GitHub (commit `b5770d1`, fica com o autor); verificação do arredondamento do relatório da Avaliação contra o Vista SAGA.
 
+### Limpeza das branches (25/11/2026, pedido do autor)
+
+- **Bloqueada para o Claude:** o proxy das sessões recusa apagar branches (`git push --delete` cortado; API
+  `DELETE /git/refs/heads/...`: "Write access to this GitHub API path is not permitted"), como já recusava tags e
+  Releases. Nenhuma branch foi apagada. A limpeza fica com o autor (Codespaces ou página Branches do GitHub).
+- **23 branches incorporadas à `main` (podem ser apagadas sem perda):** docs/changelog-por-modulo, docs/claude-md,
+  docs/contexto-1.6.1-catalogo, docs/contexto-pos-1.6.0 (commit equivalente já na `main`), docs/divulgacao,
+  docs/publicacao-1.6.1, docs/regras-1.1.0, feat/assinatura-e-dicas, feat/conversor-de-formatos,
+  feat/dicas-todos-modulos, feat/interface-padrao, feat/voronoi-atrito-fiel, feat/voronoi-saida-vetorial,
+  feature/avaliacao-vetorial-interface, feature/icones-modulos, feature/vetor-rs2, fix/1.2.1,
+  fix/metadata-catalogo, fix/sequenciador-guias, fix/varredura-catalogo, release/1.0.5, release/1.0.6,
+  release/1.0.8, release/1.0.9 (e docs/limpeza-branches, depois do merge deste registro).
+- **Ficam, com conteúdo fora da `main` (decisão do autor):** docs/logo-readme (logotipo em SVG; a 1.0.9 trocou
+  de propósito por PNG) e fix/testes-desatualizados (correções de testes da época da 1.0.4; os testes da `main`
+  evoluíram e passam). **Fica também:** docs/link-site-wix (PR #21 aberto, fora desta sessão).
+
 ### Próximo passo (início da sessão 6)
 
 1. O autor testa `Vista_Saga_Plugin_QGIS4_v1.5.0-dev2.zip` no QGIS 4 (roteiro abaixo) e relata o resultado.
